@@ -1,0 +1,85 @@
+"use client"
+
+import { AlertTriangle } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
+import { useEffect, useState } from "react"
+
+import {
+  type Allergy,
+  formatSymptomsList,
+  getAllergiesFromStorage,
+  initialAllergies,
+} from "@/app/(dashboards)/patient/_lib/allergies"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Typography } from "@/components/ui/typography"
+import { cn } from "@/lib/utils"
+
+function getNatureBadgeClass(nature: string) {
+  if (nature === "Very Severe" || nature === "Severe") {
+    return "bg-destructive/10 text-destructive border-destructive/20"
+  }
+  if (nature === "Moderate") {
+    return "bg-amber-100 text-amber-800 border-amber-200"
+  }
+  return "bg-muted text-muted-foreground border-border"
+}
+
+export default function AllergiesOverviewCard() {
+  const [allergies, setAllergies] = useState<Allergy[]>(initialAllergies)
+
+  useEffect(() => {
+    setAllergies(getAllergiesFromStorage())
+  }, [])
+
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div className="flex items-center gap-2">
+          <span className="flex size-8 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+            <AlertTriangle className="size-4" aria-hidden />
+          </span>
+          <CardTitle>Known Allergies</CardTitle>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="rounded-full"
+          asChild
+        >
+          <Link href={"/patient/allergies" as Route}>View all</Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {allergies.slice(0, 2).map((allergy) => (
+          <div
+            key={allergy.id}
+            className="rounded-2xl border border-border/60 bg-muted/30 p-4 transition-colors hover:bg-muted/50"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Typography variant="small" className="font-semibold">
+                  {allergy.allergyType}
+                </Typography>
+                <Typography variant="muted" className="mt-1 text-sm">
+                  {formatSymptomsList(allergy.symptoms, 1)}
+                </Typography>
+              </div>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "shrink-0 rounded-full",
+                  getNatureBadgeClass(allergy.nature)
+                )}
+              >
+                {allergy.nature}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
