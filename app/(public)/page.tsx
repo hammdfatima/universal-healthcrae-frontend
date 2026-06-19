@@ -1,15 +1,19 @@
-import EmergencyQrAccess from "@/app/_components/emergency-qr-access"
+import AreYouPrepared from "@/app/_components/are-you-prepared"
 import Hero from "@/app/_components/hero"
-import ProtectWhatMatters from "@/app/_components/protect-what-matters"
-import WhyUniversal from "@/app/_components/why-universal"
+import HowItWorks from "@/app/_components/how-it-works"
+import LandingPricingSection from "@/app/_components/landing-pricing-section"
+import TestimonialsSlider from "@/app/_components/testimonials-slider"
+import WhoItsFor from "@/app/_components/who-its-for"
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <WhyUniversal />
-      <EmergencyQrAccess />
-      <ProtectWhatMatters />
+      <AreYouPrepared />
+      <HowItWorks />
+      <WhoItsFor />
+      <LandingPricingSection />
+      <TestimonialsSlider />
     </>
   )
 }

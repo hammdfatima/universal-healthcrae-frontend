@@ -42,8 +42,8 @@ export default function Footer() {
               color="inherit"
               className="mt-4 max-w-md text-sm leading-relaxed text-primary-foreground/80"
             >
-              Your secure, cloud-based medical vault — store, access, and share
-              critical health information when it matters most.
+              Your family&apos;s healthcare information, all in one place —
+              secure, accessible, and ready when it matters most.
             </Typography>
           </div>
 

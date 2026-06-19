@@ -51,7 +51,7 @@ export default function LoginPage() {
         Welcome back
       </Typography>
       <Typography variant="muted" className="mt-2">
-        Log in to access your secure medical vault.
+        Log in to access your secure health information .
       </Typography>
 
       <div className="mt-8">

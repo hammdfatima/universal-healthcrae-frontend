@@ -18,8 +18,9 @@ export default function PricingPage() {
             Simple, Transparent Pricing
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Choose the plan that fits your life. Every plan includes secure
-            medical record storage and Emergency QR access.
+            Choose the plan that fits your family. Every plan includes your
+            family&apos;s secure medical information center and Emergency QR
+            access.
           </Typography>
         </div>
       </section>

@@ -2,15 +2,15 @@ import { User, Users } from "lucide-react"
 
 export const pricingPlans = [
   {
-    name: "Individual Plan",
+    name: "Individual",
     price: "$9.95",
     description:
-      "One member profile with secure medical record storage and emergency QR access.",
+      "One member profile with your family's healthcare information in one secure place.",
     members: "1 member profile",
     icon: User,
     highlighted: false,
     features: [
-      "Secure cloud-based medical vault",
+      "Your secure medical information center",
       "Emergency Access QR Code",
       "Medications, allergies & conditions",
       "Emergency contact storage",
@@ -20,16 +20,16 @@ export const pricingPlans = [
     ],
   },
   {
-    name: "Couple Plan",
+    name: "Couple",
     price: "$19.95",
     description:
-      "Two member profiles with secure storage and emergency access.",
+      "Two member profiles — ideal for spouses or partners who want peace of mind together.",
     members: "2 member profiles",
     icon: Users,
     highlighted: true,
     badge: "Most Popular",
     features: [
-      "Everything in Individual Plan",
+      "Everything in Individual",
       "Two fully separate member profiles",
       "Emergency QR access for both members",
       "Shared account, private health records",
@@ -39,15 +39,16 @@ export const pricingPlans = [
     ],
   },
   {
-    name: "Family Plan",
+    name: "Family",
     price: "$29.95",
-    description: "Up to six family member profiles under one account.",
+    description:
+      "Up to six family member profiles — one account for the whole household.",
     members: "Up to 6 member profiles",
     icon: Users,
     highlighted: false,
     badge: "Best Value",
     features: [
-      "Everything in Couple Plan",
+      "Everything in Couple",
       "Up to six family member profiles",
       "One account for the whole household",
       "Perfect for children, parents & caregivers",
