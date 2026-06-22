@@ -1,10 +1,6 @@
 import type { Route } from "next"
 
-export type AdminNotificationType =
-  | "user"
-  | "payment"
-  | "plan"
-  | "system"
+export type AdminNotificationType = "user" | "payment" | "plan" | "system"
 
 export type AdminNotification = {
   id: string

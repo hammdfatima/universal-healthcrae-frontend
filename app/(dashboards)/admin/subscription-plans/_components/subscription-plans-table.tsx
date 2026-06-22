@@ -12,6 +12,7 @@ import {
   saveSubscriptionPlansToStorage,
 } from "@/app/(dashboards)/admin/_lib/subscription-plans"
 import SubscriptionPlanFormDialog from "@/app/(dashboards)/admin/subscription-plans/_components/subscription-plan-form-dialog"
+import { DataTable, type DataTableColumn } from "@/components/data-table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
@@ -30,7 +30,9 @@ import useToast from "@/hooks/use-toast"
 
 export default function SubscriptionPlansTable() {
   const { toastSuccess } = useToast()
-  const [plans, setPlans] = useState<SubscriptionPlan[]>(initialSubscriptionPlans)
+  const [plans, setPlans] = useState<SubscriptionPlan[]>(
+    initialSubscriptionPlans
+  )
   const [formOpen, setFormOpen] = useState(false)
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null)
   const [deletePlan, setDeletePlan] = useState<SubscriptionPlan | null>(null)

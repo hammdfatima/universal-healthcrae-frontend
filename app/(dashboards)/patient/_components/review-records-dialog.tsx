@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   Download,
   FlaskConical,
-  HeartPulse,
   History,
   ScanLine,
   Stethoscope,
@@ -20,7 +19,6 @@ import {
 } from "@/app/(dashboards)/patient/_lib/medical-records-summary"
 import { getProviderInitials } from "@/app/(dashboards)/patient/_lib/providers"
 import { getProfileDisplayName } from "@/app/(dashboards)/patient/_lib/settings"
-import { formatVitalDisplay } from "@/app/(dashboards)/patient/_lib/vitals"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -131,7 +129,8 @@ export default function ReviewRecordsDialog({
                 title={`${allergy.allergyType} allergy`}
                 badge={allergy.nature}
                 badgeVariant={
-                  allergy.nature === "Severe" || allergy.nature === "Very Severe"
+                  allergy.nature === "Severe" ||
+                  allergy.nature === "Very Severe"
                     ? "destructive"
                     : "secondary"
                 }
@@ -174,61 +173,6 @@ export default function ReviewRecordsDialog({
                 meta={`Diagnosed ${entry.diagnosisDate} · ${entry.prescribedBy}`}
               />
             ))}
-          </RecordSection>
-
-          <RecordSection icon={HeartPulse} title="Vital Signs">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <VitalChip
-                label="Blood Pressure"
-                value={`${formatVitalDisplay(summary.vitals.bloodPressureSystolic)}/${formatVitalDisplay(summary.vitals.bloodPressureDiastolic)} mmHg`}
-              />
-              <VitalChip
-                label="Heart Rate"
-                value={formatVitalDisplay(summary.vitals.heartRate, "bpm")}
-              />
-              <VitalChip
-                label="Temperature"
-                value={formatVitalDisplay(
-                  summary.vitals.temperatureCelsius,
-                  "°C"
-                )}
-              />
-              <VitalChip
-                label="BMI"
-                value={formatVitalDisplay(summary.vitals.bmi)}
-              />
-              <VitalChip
-                label="Height"
-                value={formatVitalDisplay(summary.vitals.heightCm, "cm")}
-              />
-              <VitalChip
-                label="Weight"
-                value={formatVitalDisplay(summary.vitals.weightKg, "kg")}
-              />
-              <VitalChip
-                label="Cholesterol"
-                value={formatVitalDisplay(
-                  summary.vitals.totalCholesterol,
-                  "mg/dL"
-                )}
-              />
-              <VitalChip
-                label="Respiratory Rate"
-                value={formatVitalDisplay(
-                  summary.vitals.respiratoryRate,
-                  "/min"
-                )}
-              />
-            </div>
-            {summary.vitals.customFields
-              .filter((field) => field.fieldName.trim() && field.value.trim())
-              .map((field) => (
-                <VitalChip
-                  key={field.id}
-                  label={field.fieldName}
-                  value={field.value}
-                />
-              ))}
           </RecordSection>
 
           <RecordSection
@@ -288,16 +232,15 @@ export default function ReviewRecordsDialog({
                 key={provider.id}
                 title={provider.name}
                 description={provider.clinicDetails || "—"}
-                meta={[provider.phone, provider.email].filter(Boolean).join(" · ")}
+                meta={[provider.phone, provider.email]
+                  .filter(Boolean)
+                  .join(" · ")}
               />
             ))}
           </RecordSection>
         </div>
 
-        <DialogFooter className="border-t border-border/60 px-6 py-4 sm:justify-between">
-          <Typography variant="muted" className="text-xs">
-            Last updated vitals: {summary.vitals.updatedOn}
-          </Typography>
+        <DialogFooter className="border-t border-border/60 px-6 py-4 sm:justify-end">
           <Button
             type="button"
             className="gap-1.5"
@@ -386,19 +329,6 @@ function RecordItem({
           {meta}
         </Typography>
       ) : null}
-    </div>
-  )
-}
-
-function VitalChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-background px-4 py-3">
-      <Typography variant="muted" className="text-xs">
-        {label}
-      </Typography>
-      <Typography variant="small" className="mt-1 font-semibold">
-        {value}
-      </Typography>
     </div>
   )
 }

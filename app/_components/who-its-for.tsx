@@ -75,7 +75,11 @@ export default function WhoItsFor() {
                   <Typography as="h3" variant="h4" className="mt-4">
                     {label}
                   </Typography>
-                  <Typography variant="p" color="muted" className="mt-2 text-sm">
+                  <Typography
+                    variant="p"
+                    color="muted"
+                    className="mt-2 text-sm"
+                  >
                     {description}
                   </Typography>
                 </CardContent>

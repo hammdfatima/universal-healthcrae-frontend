@@ -2,7 +2,6 @@ import { jsPDF } from "jspdf"
 
 import type { MedicalRecordsSummary } from "@/app/(dashboards)/patient/_lib/medical-records-summary"
 import { getProfileDisplayName } from "@/app/(dashboards)/patient/_lib/settings"
-import { formatVitalDisplay } from "@/app/(dashboards)/patient/_lib/vitals"
 
 const MARGIN = 16
 const LINE_HEIGHT = 6
@@ -172,31 +171,6 @@ export async function downloadMedicalRecordsPdf(
   }
   y += 4
 
-  y = writeSectionTitle(doc, "Vital Signs", y)
-  const { vitals } = summary
-  y = writeLine(
-    doc,
-    `Blood Pressure: ${formatVitalDisplay(vitals.bloodPressureSystolic)}/${formatVitalDisplay(vitals.bloodPressureDiastolic)} mmHg`,
-    y
-  )
-  y = writeLine(doc, `Heart Rate: ${formatVitalDisplay(vitals.heartRate, "bpm")}`, y)
-  y = writeLine(
-    doc,
-    `Temperature: ${formatVitalDisplay(vitals.temperatureCelsius, "°C")}`,
-    y
-  )
-  y = writeLine(
-    doc,
-    `Height / Weight: ${formatVitalDisplay(vitals.heightCm, "cm")} · ${formatVitalDisplay(vitals.weightKg, "kg")} · BMI ${formatVitalDisplay(vitals.bmi)}`,
-    y
-  )
-  y = writeLine(
-    doc,
-    `Cholesterol: ${formatVitalDisplay(vitals.totalCholesterol, "mg/dL")}`,
-    y
-  )
-  y += 4
-
   y = writeSectionTitle(doc, "Immunizations", y)
   if (summary.vaccinations.length === 0) {
     y = writeLine(doc, "No vaccinations recorded.", y)
@@ -216,7 +190,11 @@ export async function downloadMedicalRecordsPdf(
     y = writeLine(doc, "No lab results recorded.", y)
   } else {
     for (const lab of summary.labResults) {
-      y = writeLine(doc, `• ${lab.testType} — ${lab.testDate} (${lab.fileName})`, y)
+      y = writeLine(
+        doc,
+        `• ${lab.testType} — ${lab.testDate} (${lab.fileName})`,
+        y
+      )
     }
   }
   y += 4

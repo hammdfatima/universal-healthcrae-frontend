@@ -83,6 +83,8 @@ export function saveNotificationsToStorage(notifications: Notification[]) {
   localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications))
 }
 
-export function getUnreadNotificationCount(notifications: Notification[]): number {
+export function getUnreadNotificationCount(
+  notifications: Notification[]
+): number {
   return notifications.filter((notification) => !notification.read).length
 }

@@ -12,7 +12,6 @@ export const healthCounts = {
   allergies: 2,
   vaccinations: 6,
   documents: 8,
-  vitals: 12,
   labResults: 5,
   radiology: 3,
   familyMembers: 3,
@@ -25,12 +24,14 @@ export const recentMedications = initialMedications.map((medication) => ({
 
 export const allergies = initialAllergies
 
-export const recentVaccinations = initialVaccinations.slice(0, 3).map((vax) => ({
-  id: vax.id,
-  name: vax.vaccineName,
-  date: vax.date,
-  provider: vax.administeredBy,
-}))
+export const recentVaccinations = initialVaccinations
+  .slice(0, 3)
+  .map((vax) => ({
+    id: vax.id,
+    name: vax.vaccineName,
+    date: vax.date,
+    provider: vax.administeredBy,
+  }))
 
 export const healthRecordsChartData = [
   {
@@ -44,7 +45,6 @@ export const healthRecordsChartData = [
     value: healthCounts.vaccinations,
     color: "hsl(160 100% 15%)",
   },
-  { name: "Vitals", value: healthCounts.vitals, color: "hsl(197 37% 45%)" },
   {
     name: "Lab Results",
     value: healthCounts.labResults,

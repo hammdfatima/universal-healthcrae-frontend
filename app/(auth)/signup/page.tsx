@@ -1,18 +1,18 @@
 "use client"
 
 import { Eye, EyeOff } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { z } from "zod"
-
+import VerifyEmailModal from "@/app/_components/verify-email-modal"
 import {
   createProfileFromSignup,
   resetOnboardingStatus,
   saveProfileToStorage,
 } from "@/app/(dashboards)/patient/_lib/settings"
-import VerifyEmailModal from "@/app/_components/verify-email-modal"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import FormModified from "@/components/ui/form-modified"
@@ -30,6 +30,9 @@ const signupSchema = z
     agreeToTerms: z.boolean().refine((value) => value === true, {
       message: "You must agree to the Terms of Use and Privacy Policy.",
     }),
+    agreeToEmergencyAccess: z.boolean().refine((value) => value === true, {
+      message: "You must accept the Emergency Access Authorization.",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
@@ -43,6 +46,7 @@ const defaultValues = {
   password: "",
   confirmPassword: "",
   agreeToTerms: false,
+  agreeToEmergencyAccess: false,
 }
 
 export default function SignupPage() {
@@ -200,13 +204,52 @@ export default function SignupPage() {
                       className="text-sm leading-snug text-muted-foreground"
                     >
                       I agree to the{" "}
-                      <span className="font-medium text-primary">
+                      <Link
+                        href={"/terms-of-use" as Route}
+                        className="font-medium text-primary hover:underline"
+                        target="_blank"
+                      >
                         Terms of Use
-                      </span>{" "}
+                      </Link>{" "}
                       and{" "}
-                      <span className="font-medium text-primary">
+                      <Link
+                        href={"/privacy-policy" as Route}
+                        className="font-medium text-primary hover:underline"
+                        target="_blank"
+                      >
                         Privacy Policy
-                      </span>
+                      </Link>
+                      .
+                    </label>
+                  </div>
+                )}
+              </Field>
+
+              <Field name="agreeToEmergencyAccess">
+                {(field) => (
+                  <div className="flex items-start gap-3 rounded-2xl border border-primary/15 bg-brand-primary-light/30 p-4">
+                    <Checkbox
+                      id="agreeToEmergencyAccess"
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                    />
+                    <label
+                      htmlFor="agreeToEmergencyAccess"
+                      className="text-sm leading-relaxed text-muted-foreground"
+                    >
+                      I authorize Universal Health Charts to provide emergency
+                      access to designated medical information when healthcare
+                      providers reasonably determine that I am unable to
+                      communicate or provide consent. I have read the{" "}
+                      <Link
+                        href={"/emergency-access-authorization" as Route}
+                        className="font-medium text-primary hover:underline"
+                        target="_blank"
+                      >
+                        Emergency Access Authorization
+                      </Link>
                       .
                     </label>
                   </div>

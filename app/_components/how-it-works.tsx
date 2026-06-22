@@ -1,52 +1,50 @@
-import {
-  FileUp,
-  Globe,
-  QrCode,
-  Stethoscope,
-  UserPlus,
-} from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { FileUp, Globe, QrCode, Stethoscope, UserPlus } from "lucide-react"
 
 import { Typography } from "@/components/ui/typography"
 
-const steps: { step: number; icon: LucideIcon; title: string; description: string }[] =
-  [
-    {
-      step: 1,
-      icon: UserPlus,
-      title: "Create your account",
-      description:
-        "Choose the plan that fits your family and set up your secure profile in minutes.",
-    },
-    {
-      step: 2,
-      icon: Stethoscope,
-      title: "Enter medical information",
-      description:
-        "Add medications, allergies, conditions, and emergency contacts for each family member.",
-    },
-    {
-      step: 3,
-      icon: FileUp,
-      title: "Upload important documents",
-      description:
-        "Store lab reports, advance directives, and other health documents in one place.",
-    },
-    {
-      step: 4,
-      icon: QrCode,
-      title: "Receive your QR Emergency Card",
-      description:
-        "Every member gets a unique QR code so caregivers can access critical details instantly.",
-    },
-    {
-      step: 5,
-      icon: Globe,
-      title: "Access your information anywhere",
-      description:
-        "View and update your family's health information from home, on the road, or in an emergency.",
-    },
-  ]
+const steps: {
+  step: number
+  icon: LucideIcon
+  title: string
+  description: string
+}[] = [
+  {
+    step: 1,
+    icon: UserPlus,
+    title: "Create your account",
+    description:
+      "Choose the plan that fits your family and set up your secure profile in minutes.",
+  },
+  {
+    step: 2,
+    icon: Stethoscope,
+    title: "Enter medical information",
+    description:
+      "Add medications, allergies, conditions, and emergency contacts for each family member.",
+  },
+  {
+    step: 3,
+    icon: FileUp,
+    title: "Upload important documents",
+    description:
+      "Store lab reports, advance directives, and other health documents in one place.",
+  },
+  {
+    step: 4,
+    icon: QrCode,
+    title: "Receive your QR Emergency Card",
+    description:
+      "Every member gets a unique QR code so caregivers can access critical details instantly.",
+  },
+  {
+    step: 5,
+    icon: Globe,
+    title: "Access your information anywhere",
+    description:
+      "View and update your family's health information from home, on the road, or in an emergency.",
+  },
+]
 
 export default function HowItWorks() {
   return (

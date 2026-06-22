@@ -77,9 +77,14 @@ export async function downloadPaymentInvoicePdf(payment: AdminPayment) {
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
   doc.text(`Date: ${payment.date}`, 210 - MARGIN, y + 13, { align: "right" })
-  doc.text(`Status: ${formatPaymentStatus(payment.status)}`, 210 - MARGIN, y + 19, {
-    align: "right",
-  })
+  doc.text(
+    `Status: ${formatPaymentStatus(payment.status)}`,
+    210 - MARGIN,
+    y + 19,
+    {
+      align: "right",
+    }
+  )
 
   y += LOGO_HEIGHT_MM + 12
 

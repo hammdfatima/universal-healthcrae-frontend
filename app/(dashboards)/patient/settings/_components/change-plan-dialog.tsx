@@ -121,7 +121,9 @@ export default function ChangePlanDialog({
                           status: "active",
                         })
                         onOpenChange(false)
-                        toastSuccess(`Your plan has been updated to ${plan.name}.`)
+                        toastSuccess(
+                          `Your plan has been updated to ${plan.name}.`
+                        )
                       }}
                     >
                       {isCurrent ? "Current Plan" : "Select Plan"}

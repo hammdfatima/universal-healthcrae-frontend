@@ -10,9 +10,7 @@ type DashboardShellProps = {
   children: React.ReactNode
 }
 
-export default function AdminDashboardShell({
-  children,
-}: DashboardShellProps) {
+export default function AdminDashboardShell({ children }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (

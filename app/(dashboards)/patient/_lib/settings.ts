@@ -100,7 +100,9 @@ export function parseProfileDate(
   return isValid(parsed) ? parsed : undefined
 }
 
-export function profileToFormValues(profile: PatientProfile): ProfileFormValues {
+export function profileToFormValues(
+  profile: PatientProfile
+): ProfileFormValues {
   return {
     firstName: profile.firstName,
     lastName: profile.lastName,

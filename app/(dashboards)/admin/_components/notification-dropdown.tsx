@@ -12,10 +12,10 @@ import Link from "next/link"
 import { type ComponentType, useEffect, useState } from "react"
 
 import {
-  getAdminNotificationsFromStorage,
-  getUnreadAdminNotificationCount,
   type AdminNotification,
   type AdminNotificationType,
+  getAdminNotificationsFromStorage,
+  getUnreadAdminNotificationCount,
   saveAdminNotificationsToStorage,
 } from "@/app/(dashboards)/admin/_lib/notifications"
 import { Button } from "@/components/ui/button"

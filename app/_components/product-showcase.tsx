@@ -1,10 +1,4 @@
-import {
-  AlertCircle,
-  HeartPulse,
-  Pill,
-  QrCode,
-  UserRound,
-} from "lucide-react"
+import { AlertCircle, HeartPulse, Pill, QrCode, UserRound } from "lucide-react"
 import Image from "next/image"
 
 import { Typography } from "@/components/ui/typography"
@@ -48,10 +42,16 @@ export default function ProductShowcase() {
                 key={stat.label}
                 className="rounded-xl bg-brand-primary-light/50 px-2 py-2 text-center"
               >
-                <Typography variant="small" className="text-lg font-bold text-secondary">
+                <Typography
+                  variant="small"
+                  className="text-lg font-bold text-secondary"
+                >
                   {stat.value}
                 </Typography>
-                <Typography variant="muted" className="text-[10px] leading-tight">
+                <Typography
+                  variant="muted"
+                  className="text-[10px] leading-tight"
+                >
                   {stat.label}
                 </Typography>
               </div>
@@ -65,7 +65,10 @@ export default function ProductShowcase() {
                   key={med}
                   className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2"
                 >
-                  <Pill className="size-3.5 shrink-0 text-primary" aria-hidden />
+                  <Pill
+                    className="size-3.5 shrink-0 text-primary"
+                    aria-hidden
+                  />
                   <Typography variant="small" className="text-xs">
                     {med}
                   </Typography>
@@ -91,10 +94,7 @@ export default function ProductShowcase() {
               className="opacity-20"
               aria-hidden
             />
-            <QrCode
-              className="absolute size-16 text-secondary"
-              aria-hidden
-            />
+            <QrCode className="absolute size-16 text-secondary" aria-hidden />
           </div>
           <Typography variant="muted" className="mt-2 text-center text-[10px]">
             Scan for instant access
@@ -115,7 +115,10 @@ export default function ProductShowcase() {
               {profileItems.map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-1.5">
                   <Icon className="size-3 shrink-0 text-primary" aria-hidden />
-                  <Typography variant="muted" className="text-[9px] leading-tight">
+                  <Typography
+                    variant="muted"
+                    className="text-[9px] leading-tight"
+                  >
                     {label}
                   </Typography>
                 </div>

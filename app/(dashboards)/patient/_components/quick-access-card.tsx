@@ -3,7 +3,6 @@ import {
   Activity,
   AlertTriangle,
   FlaskConical,
-  HeartPulse,
   History,
   ScanLine,
   Syringe,
@@ -45,12 +44,6 @@ const vaultLinks: QuickLink[] = [
     href: "/patient/vaccinations" as Route,
     icon: Syringe,
     count: healthCounts.vaccinations,
-  },
-  {
-    label: "Vital Signs",
-    href: "/patient/vitals" as Route,
-    icon: HeartPulse,
-    count: healthCounts.vitals,
   },
   {
     label: "Laboratory",

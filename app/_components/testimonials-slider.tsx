@@ -4,10 +4,7 @@ import { Star } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
 import { testimonials } from "@/app/_lib/testimonials-data"
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Carousel,
   type CarouselApi,
@@ -22,13 +19,15 @@ const AUTOPLAY_DELAY_MS = 6000
 function StarRating() {
   return (
     <div className="flex items-center justify-center gap-1">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Star
-          key={index}
-          className="size-5 fill-amber-400 text-amber-400"
-          aria-hidden
-        />
-      ))}
+      {(["star-1", "star-2", "star-3", "star-4", "star-5"] as const).map(
+        (id) => (
+          <Star
+            key={id}
+            className="size-5 fill-amber-400 text-amber-400"
+            aria-hidden
+          />
+        )
+      )}
       <span className="sr-only">5 out of 5 stars</span>
     </div>
   )
@@ -113,11 +112,7 @@ export default function TestimonialsSlider() {
                     </AvatarFallback>
                   </Avatar>
 
-                  <Typography
-                    as="p"
-                    variant="h5"
-                    className="mt-4 font-bold"
-                  >
+                  <Typography as="p" variant="h5" className="mt-4 font-bold">
                     {testimonial.name}
                   </Typography>
 

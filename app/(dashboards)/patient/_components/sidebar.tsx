@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   ChevronDown,
   FlaskConical,
-  HeartPulse,
   History,
   LayoutDashboard,
   LogOut,
@@ -76,11 +75,6 @@ const medicalVaultItems: VaultItem[] = [
     href: "/patient/vaccinations" as Route,
     icon: Syringe,
     badge: String(healthCounts.vaccinations),
-  },
-  {
-    label: "Vital Signs",
-    href: "/patient/vitals" as Route,
-    icon: HeartPulse,
   },
   {
     label: "Laboratory",

@@ -13,7 +13,8 @@ const stats = [
     detail: "Registered accounts",
     href: "/admin/users",
     icon: Users,
-    accent: "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
+    accent:
+      "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
     iconBg: "bg-emerald-500/15 text-emerald-600",
   },
   {
@@ -22,7 +23,8 @@ const stats = [
     detail: "Paying members",
     href: "/admin/subscription-plans",
     icon: Tags,
-    accent: "from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20",
+    accent:
+      "from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20",
     iconBg: "bg-blue-500/15 text-blue-600",
   },
   {
@@ -31,7 +33,8 @@ const stats = [
     detail: "Current billing cycle",
     href: "/admin/payments",
     icon: TrendingUp,
-    accent: "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20",
+    accent:
+      "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20",
     iconBg: "bg-amber-500/15 text-amber-600",
   },
   {
@@ -40,7 +43,8 @@ const stats = [
     detail: "Processed this month",
     href: "/admin/payments",
     icon: CreditCard,
-    accent: "from-violet-50 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20",
+    accent:
+      "from-violet-50 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20",
     iconBg: "bg-violet-500/15 text-violet-600",
   },
 ] as const

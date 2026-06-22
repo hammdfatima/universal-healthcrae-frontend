@@ -98,20 +98,12 @@ export default function ErrorCard({
       {/* Show different buttons depending on the error */}
       <CardFooter className="flex items-center justify-center gap-x-3">
         {isUnauthorized(error) ? (
-          <Button
-            onClick={onLogout}
-            variant="outline"
-            disabled={isLoading}
-          >
+          <Button onClick={onLogout} variant="outline" disabled={isLoading}>
             Logout
           </Button>
         ) : isNetworkError(error) ? (
           onRetry && (
-            <Button
-              onClick={onRetry}
-              variant="outline"
-              disabled={isLoading}
-            >
+            <Button onClick={onRetry} variant="outline" disabled={isLoading}>
               <RefreshCcw
                 className={cn("mr-2 h-4 w-4", {
                   "animate-spin": isLoading,
@@ -122,11 +114,7 @@ export default function ErrorCard({
           )
         ) : (
           onRetry && (
-            <Button
-              onClick={onRetry}
-              variant="outline"
-              disabled={isLoading}
-            >
+            <Button onClick={onRetry} variant="outline" disabled={isLoading}>
               <RefreshCcw
                 className={cn("mr-2 h-4 w-4", {
                   "animate-spin": isLoading,

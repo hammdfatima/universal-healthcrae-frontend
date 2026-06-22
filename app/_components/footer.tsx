@@ -1,3 +1,4 @@
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -15,13 +16,22 @@ const authItems = [
   { label: "Sign up", href: "/signup" },
 ] as const
 
+const legalItems = [
+  { label: "Privacy Policy", href: "/privacy-policy" as Route },
+  { label: "Terms of Use", href: "/terms-of-use" as Route },
+  {
+    label: "Emergency Access Authorization",
+    href: "/emergency-access-authorization" as Route,
+  },
+] as const
+
 export default function Footer() {
   const year = new Date().getFullYear()
 
   return (
     <footer className="border-t border-primary/20 bg-secondary text-primary-foreground">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link
               href="/"
@@ -61,6 +71,28 @@ export default function Footer() {
               className="mt-4 flex flex-col gap-2"
             >
               {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm text-primary-foreground/80 transition-colors hover:text-primary"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            <Typography
+              as="h3"
+              variant="h6"
+              color="inherit"
+              className="text-primary-foreground"
+            >
+              Legal
+            </Typography>
+            <nav aria-label="Legal links" className="mt-4 flex flex-col gap-2">
+              {legalItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

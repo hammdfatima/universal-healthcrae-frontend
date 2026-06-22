@@ -1,11 +1,4 @@
-import {
-  Building2,
-  GraduationCap,
-  HeartHandshake,
-  HeartPulse,
-  Plane,
-  Shield,
-} from "lucide-react"
+import { Building2, GraduationCap, HeartHandshake, Plane } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Typography } from "@/components/ui/typography"
@@ -62,7 +55,11 @@ export default function AreYouPrepared() {
                   <Typography as="h3" variant="h4" className="mt-4">
                     {question}
                   </Typography>
-                  <Typography variant="p" color="muted" className="mt-2 text-sm">
+                  <Typography
+                    variant="p"
+                    color="muted"
+                    className="mt-2 text-sm"
+                  >
                     {detail}
                   </Typography>
                 </CardContent>

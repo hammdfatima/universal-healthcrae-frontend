@@ -1,7 +1,7 @@
-import type { AdminPayment } from "@/app/(dashboards)/admin/_lib/payments"
 import type { AdminUser } from "@/app/(dashboards)/admin/_lib/mock-data"
-import { Badge } from "@/components/ui/badge"
+import type { AdminPayment } from "@/app/(dashboards)/admin/_lib/payments"
 import type { DataTableColumn } from "@/components/data-table"
+import { Badge } from "@/components/ui/badge"
 
 export const userColumns: DataTableColumn<AdminUser>[] = [
   {

@@ -30,10 +30,6 @@ import {
   getVaccinationsFromStorage,
   type Vaccination,
 } from "@/app/(dashboards)/patient/_lib/vaccinations"
-import {
-  getVitalsFromStorage,
-  type PatientVitals,
-} from "@/app/(dashboards)/patient/_lib/vitals"
 
 export type MedicalRecordsSummary = {
   profile: PatientProfile
@@ -41,7 +37,6 @@ export type MedicalRecordsSummary = {
   allergies: Allergy[]
   healthHistory: HealthHistoryEntry[]
   vaccinations: Vaccination[]
-  vitals: PatientVitals
   labResults: LabResult[]
   imagingResults: ImagingResult[]
   careProviders: CareProvider[]
@@ -54,7 +49,6 @@ export function getMedicalRecordsSummary(): MedicalRecordsSummary {
     allergies: getAllergiesFromStorage(),
     healthHistory: getHealthHistoryFromStorage(),
     vaccinations: getVaccinationsFromStorage(),
-    vitals: getVitalsFromStorage(),
     labResults: getLabResultsFromStorage(),
     imagingResults: getImagingResultsFromStorage(),
     careProviders: getCareProvidersFromStorage(),

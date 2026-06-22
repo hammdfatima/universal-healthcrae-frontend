@@ -54,7 +54,10 @@ export default function ErrorPageShell({
               {title}
             </Typography>
 
-            <Typography variant="muted" className="mx-auto mt-3 max-w-sm text-sm">
+            <Typography
+              variant="muted"
+              className="mx-auto mt-3 max-w-sm text-sm"
+            >
               {description}
             </Typography>
 
