@@ -1,36 +1,10 @@
 import type { UseQueryResult } from "@tanstack/react-query"
-import { Loader2 } from "lucide-react"
 import type { JSX } from "react"
-// React default import is unnecessary with the new JSX transform
+
+import { Loader } from "@/components/ui/loader"
 import { cn } from "../lib/utils"
 import EmptyCard from "./empty-card"
 import ErrorCard from "./error-card"
-
-/**
- * Loader component displays a spinning loader.
- *
- * @param {object} props - Component props.
- * @param {string} [props.className] - Optional additional classes for the container.
- * @param {string} [props.loaderClassName] - Optional additional classes for the loader icon.
- * @returns {JSX.Element} Loader element.
- */
-function Loader({
-  className,
-  loaderClassName,
-}: {
-  className?: string
-  loaderClassName?: string
-}) {
-  return (
-    <div
-      className={cn("flex h-10 w-full items-center justify-center", className)}
-    >
-      <Loader2
-        className={cn("size-5 animate-spin text-primary", loaderClassName)}
-      />
-    </div>
-  )
-}
 
 /**
  * Props for the QueryStatus component.
@@ -144,7 +118,9 @@ function QueryStatus<T>(props: QueryStatusProps<T>): JSX.Element {
   }
 
   const {
-    onLoading = (c, l) => <Loader className={c} loaderClassName={l} />,
+    onLoading = (className) => (
+      <Loader variant="fetch" className={cn("h-10 py-0", className)} />
+    ),
     onError = (error, refetch, isLoading) => (
       <ErrorCard error={error} isLoading={isLoading} onRetry={refetch} />
     ),

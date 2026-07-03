@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
-
 import AdminDashboardShell from "@/app/(dashboards)/admin/_components/dashboard-shell"
+import AuthGuard from "@/components/auth/auth-guard"
+import { USER_ROLES } from "@/lib/auth/roles"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -12,5 +13,9 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return <AdminDashboardShell>{children}</AdminDashboardShell>
+  return (
+    <AuthGuard allowedRoles={[USER_ROLES.ADMIN]}>
+      <AdminDashboardShell>{children}</AdminDashboardShell>
+    </AuthGuard>
+  )
 }

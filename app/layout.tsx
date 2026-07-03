@@ -53,8 +53,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${poppins.variable} antialiased font-sans`}>
+    <html lang="en" className={poppins.variable}>
+      <body className="font-sans antialiased">
         <NuqsAdapter>
           <Provider>{children}</Provider>
         </NuqsAdapter>

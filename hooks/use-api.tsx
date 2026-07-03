@@ -4,6 +4,7 @@ import type { AxiosProgressEvent } from "axios"
 import axios from "axios"
 import { env } from "@/env"
 import useToast from "@/hooks/use-toast"
+import { getAuthToken } from "@/lib/auth/session"
 import { buildRequestUrl } from "@/lib/utils"
 
 type DataRequestType<T> = {
@@ -37,10 +38,10 @@ const useApi = <T,>({
   key,
   method = "post",
 }: IUsePostApi<T> = {}) => {
-  const API_URL = env.NEXT_PUBLIC_APP_URL
-  const auth = { token: "" } // authenticate ho kr session data ara from useauth()
+  const API_URL = env.NEXT_PUBLIC_API_URL
+  const token = getAuthToken()
   const { toastError, toastSuccess } = useToast()
-  const headers = auth?.token ? { Authorization: `Bearer ${auth?.token}` } : {}
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
   const postRequest = ({
     data,

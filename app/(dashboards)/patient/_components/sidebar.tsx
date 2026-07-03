@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { healthCounts } from "@/app/(dashboards)/patient/_lib/mock-data"
@@ -30,6 +30,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { useAuth } from "@/hooks/use-auth"
+import { getRoleLabel } from "@/lib/auth/roles"
+import { getUserDisplayName, getUserInitials } from "@/lib/auth/utils"
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -211,7 +214,14 @@ function MedicalVaultNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const router = useRouter()
+  const { user, logout } = useAuth()
+
+  if (!user) {
+    return null
+  }
+
+  const displayName = getUserDisplayName(user)
+  const initials = getUserInitials(user)
 
   return (
     <div className="flex min-h-full flex-col p-4">
@@ -219,13 +229,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex items-center gap-3">
           <Avatar className="size-11 border-2 border-border">
             <AvatarFallback className="bg-secondary/10 text-sm font-semibold text-secondary">
-              JS
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-foreground">John Smith</p>
+            <p className="truncate font-semibold text-foreground">
+              {displayName}
+            </p>
             <p className="truncate text-xs text-muted-foreground">
-              john.smith@email.com
+              {user.email}
             </p>
           </div>
         </div>
@@ -234,7 +246,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             variant="outline"
             className="rounded-full border-secondary/30 bg-secondary/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-secondary uppercase"
           >
-            Patient
+            {getRoleLabel(user.role)}
           </Badge>
           <Badge
             variant="outline"
@@ -302,7 +314,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               )}
               onClick={() => {
                 onNavigate?.()
-                router.push("/login")
+                logout()
               }}
             >
               <LogOut className="size-4 shrink-0" aria-hidden />

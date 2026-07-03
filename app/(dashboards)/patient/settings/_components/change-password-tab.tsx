@@ -10,8 +10,13 @@ import {
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
 import { Input } from "@/components/ui/input"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import useApi from "@/hooks/use-api"
+import {
+  type ChangePasswordPayload,
+  PATIENT_SETTINGS_API,
+} from "@/lib/api/patient-settings"
 
 const defaultValues: ChangePasswordFormValues = {
   currentPassword: "",
@@ -20,11 +25,32 @@ const defaultValues: ChangePasswordFormValues = {
 }
 
 export default function ChangePasswordTab() {
-  const { toastSuccess } = useToast()
   const [formKey, setFormKey] = useState(0)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const { onRequest: changePassword, isPending: isSaving } =
+    useApi<ChangePasswordPayload>({
+      key: "change-patient-password",
+      method: "post",
+    })
+
+  function handleSubmit(values: ChangePasswordFormValues) {
+    changePassword({
+      path: PATIENT_SETTINGS_API.changePassword,
+      data: {
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      },
+      onSuccess: () => {
+        setFormKey((key) => key + 1)
+        setShowCurrentPassword(false)
+        setShowNewPassword(false)
+        setShowConfirmPassword(false)
+      },
+    })
+  }
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
@@ -41,13 +67,7 @@ export default function ChangePasswordTab() {
           schema={changePasswordSchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-5" }}
-          onSubmit={() => {
-            toastSuccess("Password updated successfully.")
-            setFormKey((key) => key + 1)
-            setShowCurrentPassword(false)
-            setShowNewPassword(false)
-            setShowConfirmPassword(false)
-          }}
+          onSubmit={handleSubmit}
         >
           {({ components }) => {
             const { Field } = components
@@ -63,6 +83,7 @@ export default function ChangePasswordTab() {
                         placeholder="Enter current password"
                         autoComplete="current-password"
                         className="pr-12"
+                        disabled={isSaving}
                       />
                       <Button
                         type="button"
@@ -94,6 +115,7 @@ export default function ChangePasswordTab() {
                         placeholder="Enter new password"
                         autoComplete="new-password"
                         className="pr-12"
+                        disabled={isSaving}
                       />
                       <Button
                         type="button"
@@ -125,6 +147,7 @@ export default function ChangePasswordTab() {
                         placeholder="Confirm new password"
                         autoComplete="new-password"
                         className="pr-12"
+                        disabled={isSaving}
                       />
                       <Button
                         type="button"
@@ -148,7 +171,9 @@ export default function ChangePasswordTab() {
                 </Field>
 
                 <div className="flex justify-end pt-2">
-                  <Button type="submit">Update Password</Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? <Loader variant="button" /> : "Update Password"}
+                  </Button>
                 </div>
               </>
             )

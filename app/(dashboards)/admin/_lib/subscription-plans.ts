@@ -1,11 +1,18 @@
 import { z } from "zod"
 
-import { pricingPlans } from "@/app/_lib/pricing-plans-data"
-
 export type BillingCycle = "monthly" | "yearly"
 
 export type SubscriptionPlan = {
   id: string
+  planName: string
+  price: string
+  billingCycle: BillingCycle
+  features: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type SubscriptionPlanPayload = {
   planName: string
   price: string
   billingCycle: BillingCycle
@@ -40,18 +47,6 @@ export const subscriptionPlanDefaultValues: SubscriptionPlanFormValues = {
   features: "",
 }
 
-export const initialSubscriptionPlans: SubscriptionPlan[] = pricingPlans.map(
-  (plan, index) => ({
-    id: String(index + 1),
-    planName: plan.name,
-    price: plan.price,
-    billingCycle: "monthly",
-    features: [...plan.features],
-  })
-)
-
-export const SUBSCRIPTION_PLANS_STORAGE_KEY = "uhc-admin-subscription-plans"
-
 export function textareaToFeatures(text: string): string[] {
   return text
     .split("\n")
@@ -74,33 +69,15 @@ export function planToFormValues(
   }
 }
 
-export function formValuesToPlan(
-  values: SubscriptionPlanFormValues,
-  id?: string
-): SubscriptionPlan {
+export function formValuesToPayload(
+  values: SubscriptionPlanFormValues
+): SubscriptionPlanPayload {
   return {
-    id: id ?? crypto.randomUUID(),
     planName: values.planName.trim(),
     price: values.price.trim(),
     billingCycle: values.billingCycle,
     features: textareaToFeatures(values.features),
   }
-}
-
-export function getSubscriptionPlansFromStorage(): SubscriptionPlan[] {
-  if (typeof window === "undefined") return initialSubscriptionPlans
-
-  try {
-    const stored = localStorage.getItem(SUBSCRIPTION_PLANS_STORAGE_KEY)
-    if (!stored) return initialSubscriptionPlans
-    return JSON.parse(stored) as SubscriptionPlan[]
-  } catch {
-    return initialSubscriptionPlans
-  }
-}
-
-export function saveSubscriptionPlansToStorage(plans: SubscriptionPlan[]) {
-  localStorage.setItem(SUBSCRIPTION_PLANS_STORAGE_KEY, JSON.stringify(plans))
 }
 
 export function formatBillingCycle(cycle: BillingCycle): string {

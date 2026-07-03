@@ -10,7 +10,11 @@ import {
 } from "@/app/(dashboards)/patient/_lib/settings"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFileUpload } from "@/hooks/use-file-upload"
+import useToast from "@/hooks/use-toast"
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/api/files"
 import { cn } from "@/lib/utils"
 
 type ProfileImageFieldProps = {
@@ -27,16 +31,34 @@ export default function ProfileImageField({
   disabled,
 }: ProfileImageFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const { uploadFile, isUploading } = useFileUpload()
+  const { toastError } = useToast()
   const displayName = getProfileDisplayName(profile)
   const initials = getProviderInitials(displayName)
+  const isDisabled = disabled || isUploading
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => onChange(reader.result as string)
-    reader.readAsDataURL(file)
+    if (
+      !ACCEPTED_FILE_TYPES.includes(
+        file.type as (typeof ACCEPTED_FILE_TYPES)[number]
+      )
+    ) {
+      toastError("Please upload a JPG, PNG, or WEBP image.")
+      return
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toastError("Image must be 10MB or smaller.")
+      return
+    }
+
+    uploadFile(file, {
+      onSuccess: (uploaded) => onChange(uploaded.secureUrl),
+    })
+
     event.target.value = ""
   }
 
@@ -46,7 +68,7 @@ export default function ProfileImageField({
         ref={inputRef}
         type="file"
         accept="image/png,image/jpeg,image/jpg,image/webp"
-        disabled={disabled}
+        disabled={isDisabled}
         className="sr-only"
         onChange={handleFileChange}
       />
@@ -61,15 +83,19 @@ export default function ProfileImageField({
 
         <button
           type="button"
-          disabled={disabled}
+          disabled={isDisabled}
           onClick={() => inputRef.current?.click()}
           className={cn(
             "absolute right-0 bottom-0 flex size-9 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm transition-transform hover:scale-105",
-            disabled && "pointer-events-none opacity-50"
+            isDisabled && "pointer-events-none opacity-50"
           )}
           aria-label="Upload profile photo"
         >
-          <Camera className="size-4" aria-hidden />
+          {isUploading ? (
+            <Loader variant="button" color="white" />
+          ) : (
+            <Camera className="size-4" aria-hidden />
+          )}
         </button>
       </div>
 
@@ -86,7 +112,7 @@ export default function ProfileImageField({
               type="button"
               variant="ghost"
               className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              disabled={disabled}
+              disabled={isDisabled}
               onClick={() => onChange("")}
             >
               <X className="size-4" aria-hidden />

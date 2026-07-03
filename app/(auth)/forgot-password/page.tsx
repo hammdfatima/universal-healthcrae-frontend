@@ -1,5 +1,6 @@
 "use client"
 
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -9,8 +10,11 @@ import { z } from "zod"
 import VerifyEmailModal from "@/app/_components/verify-email-modal"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import useApi from "@/hooks/use-api"
+import { AUTH_API } from "@/lib/auth/constants"
+import { setResetToken } from "@/lib/auth/session"
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -22,10 +26,14 @@ const defaultValues = {
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
-  const { toastSuccess } = useToast()
   const [formKey, setFormKey] = useState(0)
   const [verifyOpen, setVerifyOpen] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState("")
+
+  const { onRequest: requestReset, isPending } = useApi<{ email: string }>({
+    key: "forgot-password",
+    showSuccessToast: true,
+  })
 
   return (
     <div className="w-full">
@@ -58,10 +66,15 @@ export default function ForgotPasswordPage() {
           formKey={formKey}
           fieldsetProps={{ className: "space-y-5" }}
           onSubmit={(values) => {
-            setSubmittedEmail(values.email)
-            setVerifyOpen(true)
-            toastSuccess("Verification code sent to your email.")
-            setFormKey((key) => key + 1)
+            requestReset({
+              path: AUTH_API.forgotPassword,
+              data: { email: values.email },
+              onSuccess: () => {
+                setSubmittedEmail(values.email)
+                setVerifyOpen(true)
+                setFormKey((key) => key + 1)
+              },
+            })
           }}
         >
           {({ components: { Input: FormInput } }) => (
@@ -74,8 +87,12 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
               />
 
-              <Button type="submit" className="w-full">
-                Send Verification Code
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? (
+                  <Loader variant="button" color="white" />
+                ) : (
+                  "Send Verification Code"
+                )}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
@@ -97,9 +114,12 @@ export default function ForgotPasswordPage() {
         open={verifyOpen}
         onOpenChange={setVerifyOpen}
         email={submittedEmail}
-        onVerified={() => {
-          toastSuccess("You can now set a new password.")
-          router.push("/login")
+        mode="reset"
+        onVerified={(result) => {
+          if ("resetToken" in result) {
+            setResetToken(result.resetToken)
+            router.push("/reset-password" as Route)
+          }
         }}
       />
     </div>

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 
 import {
   billingCycleOptions,
-  formValuesToPlan,
   planToFormValues,
   type SubscriptionPlan,
   type SubscriptionPlanFormValues,
@@ -21,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import {
   Select,
   SelectContent,
@@ -33,13 +33,15 @@ type SubscriptionPlanFormDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   plan?: SubscriptionPlan | null
-  onSave: (plan: SubscriptionPlan) => void
+  isSubmitting?: boolean
+  onSave: (values: SubscriptionPlanFormValues, planId?: string) => void
 }
 
 export default function SubscriptionPlanFormDialog({
   open,
   onOpenChange,
   plan,
+  isSubmitting = false,
   onSave,
 }: SubscriptionPlanFormDialogProps) {
   const isEditing = Boolean(plan)
@@ -77,8 +79,7 @@ export default function SubscriptionPlanFormDialog({
             defaultValues={defaultValues}
             fieldsetProps={{ className: "space-y-5" }}
             onSubmit={(values) => {
-              onSave(formValuesToPlan(values, plan?.id))
-              onOpenChange(false)
+              onSave(values, plan?.id)
             }}
           >
             {({ components }) => {
@@ -135,12 +136,19 @@ export default function SubscriptionPlanFormDialog({
                     <Button
                       type="button"
                       variant="outline"
+                      disabled={isSubmitting}
                       onClick={() => onOpenChange(false)}
                     >
                       Cancel
                     </Button>
-                    <Button type="submit">
-                      {isEditing ? "Save Changes" : "Add Plan"}
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <Loader variant="button" color="white" />
+                      ) : isEditing ? (
+                        "Save Changes"
+                      ) : (
+                        "Add Plan"
+                      )}
                     </Button>
                   </DialogFooter>
                 </>

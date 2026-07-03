@@ -1,3 +1,5 @@
+"use client"
+
 import axios from "axios"
 import { AlertCircle, RefreshCcw } from "lucide-react"
 /**
@@ -20,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 
 export default function ErrorCard({
@@ -31,9 +34,11 @@ export default function ErrorCard({
   isLoading?: boolean
   onRetry?: () => void
 }) {
-  async function onLogout() {
-    // Add Logout logic here
-  }
+  const { logout } = useAuth()
+
+  const onLogout = useCallback(() => {
+    logout()
+  }, [logout])
 
   /**
    * Checks if the error is an unauthorized (401) error

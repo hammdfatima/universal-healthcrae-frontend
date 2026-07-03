@@ -5,13 +5,16 @@ import { useState } from "react"
 
 import {
   type ChangePasswordFormValues,
+  type ChangePasswordPayload,
   changePasswordSchema,
 } from "@/app/(dashboards)/admin/_lib/settings"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
 import { Input } from "@/components/ui/input"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import useApi from "@/hooks/use-api"
+import { ADMIN_PROFILE_API } from "@/lib/api/admin-profile"
 
 const defaultValues: ChangePasswordFormValues = {
   currentPassword: "",
@@ -20,11 +23,32 @@ const defaultValues: ChangePasswordFormValues = {
 }
 
 export default function AdminChangePasswordTab() {
-  const { toastSuccess } = useToast()
   const [formKey, setFormKey] = useState(0)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const { onRequest: changePassword, isPending: isSaving } =
+    useApi<ChangePasswordPayload>({
+      key: "change-admin-password",
+      method: "post",
+    })
+
+  function handleSubmit(values: ChangePasswordFormValues) {
+    changePassword({
+      path: ADMIN_PROFILE_API.changePassword,
+      data: {
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      },
+      onSuccess: () => {
+        setFormKey((key) => key + 1)
+        setShowCurrentPassword(false)
+        setShowNewPassword(false)
+        setShowConfirmPassword(false)
+      },
+    })
+  }
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
@@ -41,13 +65,7 @@ export default function AdminChangePasswordTab() {
           schema={changePasswordSchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-5" }}
-          onSubmit={() => {
-            toastSuccess("Password updated successfully.")
-            setFormKey((key) => key + 1)
-            setShowCurrentPassword(false)
-            setShowNewPassword(false)
-            setShowConfirmPassword(false)
-          }}
+          onSubmit={handleSubmit}
         >
           {({ components }) => {
             const { Field } = components
@@ -63,6 +81,7 @@ export default function AdminChangePasswordTab() {
                         placeholder="Enter current password"
                         autoComplete="current-password"
                         className="pr-12"
+                        disabled={isSaving}
                       />
                       <Button
                         type="button"
@@ -94,6 +113,7 @@ export default function AdminChangePasswordTab() {
                         placeholder="Enter new password"
                         autoComplete="new-password"
                         className="pr-12"
+                        disabled={isSaving}
                       />
                       <Button
                         type="button"
@@ -125,6 +145,7 @@ export default function AdminChangePasswordTab() {
                         placeholder="Confirm new password"
                         autoComplete="new-password"
                         className="pr-12"
+                        disabled={isSaving}
                       />
                       <Button
                         type="button"
@@ -148,7 +169,9 @@ export default function AdminChangePasswordTab() {
                 </Field>
 
                 <div className="flex justify-end pt-2">
-                  <Button type="submit">Update Password</Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? <Loader variant="button" /> : "Update Password"}
+                  </Button>
                 </div>
               </>
             )

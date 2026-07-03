@@ -11,11 +11,14 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/use-auth"
+import { getRoleLabel } from "@/lib/auth/roles"
+import { getUserDisplayName, getUserInitials } from "@/lib/auth/utils"
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -78,7 +81,14 @@ function NavLink({
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const router = useRouter()
+  const { user, logout } = useAuth()
+
+  if (!user) {
+    return null
+  }
+
+  const displayName = getUserDisplayName(user)
+  const initials = getUserInitials(user)
 
   return (
     <div className="flex min-h-full flex-col p-4">
@@ -86,13 +96,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex items-center gap-3">
           <Avatar className="size-11 border-2 border-border">
             <AvatarFallback className="bg-secondary/10 text-sm font-semibold text-secondary">
-              AD
+              {initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-foreground">Admin User</p>
+            <p className="truncate font-semibold text-foreground">
+              {displayName}
+            </p>
             <p className="truncate text-xs text-muted-foreground">
-              admin@uhc.com
+              {user.email}
             </p>
           </div>
         </div>
@@ -101,7 +113,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             variant="outline"
             className="rounded-full border-secondary/30 bg-secondary/10 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-secondary uppercase"
           >
-            Administrator
+            {getRoleLabel(user.role)}
           </Badge>
         </div>
       </div>
@@ -156,7 +168,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               )}
               onClick={() => {
                 onNavigate?.()
-                router.push("/login")
+                logout()
               }}
             >
               <LogOut className="size-4 shrink-0" aria-hidden />

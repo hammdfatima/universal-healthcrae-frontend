@@ -1,23 +1,38 @@
+import type { LucideIcon } from "lucide-react"
 import { InboxIcon } from "lucide-react"
-/**
- * EmptyCard component displays a card with an inbox icon and "No data available" message.
- * Used to indicate when a data set or query result is empty.
- *
- * @component
- * @returns {JSX.Element} A card component with an inbox icon and message
- */
-import { Card, CardContent } from "@/components/ui/card"
+import type { ReactNode } from "react"
 
-export default function EmptyCard() {
+import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
+
+type EmptyCardProps = {
+  title?: string
+  description?: string
+  icon?: LucideIcon
+  action?: ReactNode
+  className?: string
+}
+
+export default function EmptyCard({
+  title = "No data available",
+  description,
+  icon: Icon = InboxIcon,
+  action,
+  className,
+}: EmptyCardProps) {
   return (
-    <Card className="w-full">
-      <CardContent className="flex flex-col items-center justify-center px-4 py-8 text-center">
-        <div className="mb-4">
-          <InboxIcon className="h-12 w-12 text-muted-foreground" />
+    <Card className={cn("w-full border-dashed shadow-none", className)}>
+      <CardContent className="flex flex-col items-center justify-center px-4 py-10 text-center">
+        <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
+          <Icon className="size-7 text-muted-foreground" aria-hidden />
         </div>
-        <p className="text-lg font-medium text-muted-foreground">
-          No data available
-        </p>
+        <p className="text-base font-medium text-foreground">{title}</p>
+        {description ? (
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+        {action ? <div className="mt-4">{action}</div> : null}
       </CardContent>
     </Card>
   )

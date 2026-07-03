@@ -1,12 +1,11 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 
 import {
   type AccountSettings,
-  getAccountSettingsFromStorage,
   initialAccountSettings,
-  saveAccountSettingsToStorage,
 } from "@/app/(dashboards)/patient/_lib/settings"
 import {
   AlertDialog,
@@ -21,23 +20,86 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
 import useToast from "@/hooks/use-toast"
+import {
+  PATIENT_SETTINGS_API,
+  PATIENT_SETTINGS_QUERY_KEYS,
+  type PatientSettings,
+  type UpdateAccountPayload,
+} from "@/lib/api/patient-settings"
 
 export default function AccountTab() {
+  const queryClient = useQueryClient()
   const { toastSuccess } = useToast()
   const [settings, setSettings] = useState<AccountSettings>(
     initialAccountSettings
   )
 
+  const { data, isLoading, isError, error, refetch } =
+    useFetch<PatientSettings>({
+      path: PATIENT_SETTINGS_API.get,
+      queryKey: PATIENT_SETTINGS_QUERY_KEYS.settings,
+    })
+
+  const { onRequest: updateAccount, isPending: isSaving } =
+    useApi<UpdateAccountPayload>({
+      key: "update-patient-account",
+      method: "patch",
+    })
+
   useEffect(() => {
-    setSettings(getAccountSettingsFromStorage())
-  }, [])
+    if (!data?.account) return
+    setSettings(data.account)
+  }, [data])
 
   function updateSettings(next: AccountSettings) {
+    const previous = settings
     setSettings(next)
-    saveAccountSettingsToStorage(next)
-    toastSuccess("Account preferences updated.")
+
+    updateAccount({
+      path: PATIENT_SETTINGS_API.updateAccount,
+      data: next,
+      onSuccess: (updatedSettings) => {
+        queryClient.setQueryData(
+          PATIENT_SETTINGS_QUERY_KEYS.settings,
+          updatedSettings
+        )
+      },
+      onError: () => {
+        setSettings(previous)
+      },
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-48 items-center justify-center rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+        <Loader />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+        <Typography variant="muted" className="text-center">
+          {error?.message ?? "Failed to load account settings."}
+        </Typography>
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            className="text-sm text-primary underline"
+            onClick={() => refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -59,6 +121,7 @@ export default function AccountTab() {
               id="email-notifications"
               checked={settings.emailNotifications}
               className="mt-0.5"
+              disabled={isSaving}
               onCheckedChange={(checked) =>
                 updateSettings({
                   ...settings,
@@ -85,6 +148,7 @@ export default function AccountTab() {
               id="marketing-emails"
               checked={settings.marketingEmails}
               className="mt-0.5"
+              disabled={isSaving}
               onCheckedChange={(checked) =>
                 updateSettings({
                   ...settings,

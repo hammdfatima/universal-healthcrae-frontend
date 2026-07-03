@@ -6,6 +6,7 @@ import type React from "react"
 import { useState } from "react"
 
 import { Toaster } from "react-hot-toast"
+import { AuthProvider } from "@/provider/auth-provider"
 
 const MAX_RETRIES = 2
 
@@ -19,22 +20,18 @@ export default function Provider({ children }: { children: React.ReactNode }) {
             retry(failureCount, error) {
               console.error("Query failed, retrying...", error)
 
-              // If we've retried more than MAX_RETRIES times, stop
               if (failureCount > MAX_RETRIES) {
                 return false
               }
 
-              // If it's an AxiosError, check the response status
               if (axios.isAxiosError(error)) {
                 const status = error.response?.status
-                // If status is one of [400, 401, 403, 404], do not retry
                 if (status && HTTP_STATUS_TO_NOT_RETRY.includes(status)) {
                   console.log("Aborting retry due to status:", status)
                   return false
                 }
               }
 
-              // Otherwise, allow React Query to retry
               return true
             },
           },
@@ -43,9 +40,11 @@ export default function Provider({ children }: { children: React.ReactNode }) {
   )
   return (
     <QueryClientProvider client={client}>
-      {children}
-      <Toaster />
-      <ReactQueryDevtools initialIsOpen={false} />
+      <AuthProvider>
+        {children}
+        <Toaster />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

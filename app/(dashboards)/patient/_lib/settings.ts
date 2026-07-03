@@ -1,5 +1,7 @@
-import { format, isValid, parse } from "date-fns"
+import { format, isValid, parse, parseISO } from "date-fns"
 import { z } from "zod"
+
+import { strongPasswordSchema } from "@/lib/auth/password"
 
 export const bloodGroupOptions = [
   { label: "A+", value: "A+" },
@@ -62,7 +64,7 @@ export type ProfileFormValues = z.infer<typeof profileSchema>
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required."),
-    newPassword: z.string().min(8, "Password must be at least 8 characters."),
+    newPassword: strongPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm your new password."),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -96,6 +98,10 @@ export function parseProfileDate(
   value: string | null | undefined
 ): Date | undefined {
   if (!value) return undefined
+
+  const isoParsed = parseISO(value)
+  if (isValid(isoParsed)) return isoParsed
+
   const parsed = parse(value, "MM/dd/yyyy", new Date())
   return isValid(parsed) ? parsed : undefined
 }

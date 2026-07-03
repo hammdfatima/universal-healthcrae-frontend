@@ -1,15 +1,16 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Pencil, Plus, Tags, Trash2 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
   formatBillingCycle,
+  formValuesToPayload,
   getBillingCycleFilterOptions,
-  getSubscriptionPlansFromStorage,
-  initialSubscriptionPlans,
   type SubscriptionPlan,
-  saveSubscriptionPlansToStorage,
+  type SubscriptionPlanFormValues,
+  type SubscriptionPlanPayload,
 } from "@/app/(dashboards)/admin/_lib/subscription-plans"
 import SubscriptionPlanFormDialog from "@/app/(dashboards)/admin/subscription-plans/_components/subscription-plan-form-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
@@ -25,48 +26,105 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  SUBSCRIPTION_PLANS_API,
+  SUBSCRIPTION_PLANS_QUERY_KEYS,
+} from "@/lib/api/subscription-plans"
 
 export default function SubscriptionPlansTable() {
-  const { toastSuccess } = useToast()
-  const [plans, setPlans] = useState<SubscriptionPlan[]>(
-    initialSubscriptionPlans
-  )
+  const queryClient = useQueryClient()
   const [formOpen, setFormOpen] = useState(false)
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null)
   const [deletePlan, setDeletePlan] = useState<SubscriptionPlan | null>(null)
 
-  useEffect(() => {
-    setPlans(getSubscriptionPlansFromStorage())
-  }, [])
+  const {
+    data: plans = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useFetch<SubscriptionPlan[]>({
+    path: SUBSCRIPTION_PLANS_API.admin.list,
+    queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.admin,
+  })
+
+  const { onRequest: createPlan, isPending: isCreating } =
+    useApi<SubscriptionPlanPayload>({
+      key: "create-subscription-plan",
+      method: "post",
+    })
+
+  const { onRequest: updatePlan, isPending: isUpdating } =
+    useApi<SubscriptionPlanPayload>({
+      key: "update-subscription-plan",
+      method: "put",
+    })
+
+  const { onRequest: deletePlanRequest, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-subscription-plan",
+    method: "delete",
+  })
 
   const billingCycleOptions = useMemo(
     () => getBillingCycleFilterOptions(plans),
     [plans]
   )
 
-  function updatePlans(next: SubscriptionPlan[]) {
-    setPlans(next)
-    saveSubscriptionPlansToStorage(next)
+  const isSaving = isCreating || isUpdating
+  const isMutating = isSaving || isDeleting
+
+  function invalidatePlans() {
+    queryClient.invalidateQueries({
+      queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.admin,
+    })
+    queryClient.invalidateQueries({
+      queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.public,
+    })
   }
 
-  function handleSave(plan: SubscriptionPlan) {
-    const exists = plans.some((item) => item.id === plan.id)
-    const next = exists
-      ? plans.map((item) => (item.id === plan.id ? plan : item))
-      : [...plans, plan]
+  function handleSave(values: SubscriptionPlanFormValues, planId?: string) {
+    const payload = formValuesToPayload(values)
 
-    updatePlans(next)
-    toastSuccess(
-      exists ? "Subscription plan updated." : "Subscription plan added."
-    )
+    if (planId) {
+      updatePlan({
+        path: SUBSCRIPTION_PLANS_API.admin.update(planId),
+        data: payload,
+        onSuccess: () => {
+          invalidatePlans()
+          setFormOpen(false)
+          setEditingPlan(null)
+        },
+      })
+      return
+    }
+
+    createPlan({
+      path: SUBSCRIPTION_PLANS_API.admin.create,
+      data: payload,
+      onSuccess: () => {
+        invalidatePlans()
+        setFormOpen(false)
+        setEditingPlan(null)
+      },
+    })
   }
 
   function handleDelete(plan: SubscriptionPlan) {
-    updatePlans(plans.filter((item) => item.id !== plan.id))
-    setDeletePlan(null)
-    toastSuccess("Subscription plan deleted.")
+    deletePlanRequest({
+      path: SUBSCRIPTION_PLANS_API.admin.delete(plan.id),
+      data: {},
+      onSuccess: () => {
+        invalidatePlans()
+        setDeletePlan(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<SubscriptionPlan>[] = [
@@ -121,6 +179,7 @@ export default function SubscriptionPlansTable() {
             variant="ghost"
             className="size-8 rounded-full"
             aria-label={`Edit ${row.planName}`}
+            disabled={isMutating}
             onClick={() => {
               setEditingPlan(row)
               setFormOpen(true)
@@ -133,6 +192,7 @@ export default function SubscriptionPlansTable() {
             variant="ghost"
             className="size-8 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive"
             aria-label={`Delete ${row.planName}`}
+            disabled={isMutating}
             onClick={() => setDeletePlan(row)}
           >
             <Trash2 className="size-4" aria-hidden />
@@ -152,6 +212,12 @@ export default function SubscriptionPlansTable() {
         data={plans}
         getRowId={(row) => row.id}
         searchPlaceholder="Search plans..."
+        isLoading={isLoading}
+        loadingLabel="Loading subscription plans..."
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={
           billingCycleOptions.length > 0
             ? [
@@ -166,6 +232,7 @@ export default function SubscriptionPlansTable() {
         }
         actions={
           <Button
+            disabled={isMutating}
             onClick={() => {
               setEditingPlan(null)
               setFormOpen(true)
@@ -175,13 +242,26 @@ export default function SubscriptionPlansTable() {
             Add Subscription Plan
           </Button>
         }
-        emptyMessage="No subscription plans found. Add your first plan to get started."
+        emptyMessage="No subscription plans found"
+        emptyDescription="Add your first plan to make it available to patients."
+        emptyAction={
+          <Button
+            onClick={() => {
+              setEditingPlan(null)
+              setFormOpen(true)
+            }}
+          >
+            <Plus className="size-4" aria-hidden />
+            Add Subscription Plan
+          </Button>
+        }
       />
 
       <SubscriptionPlanFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
         plan={editingPlan}
+        isSubmitting={isSaving}
         onSave={handleSave}
       />
 
@@ -198,19 +278,25 @@ export default function SubscriptionPlansTable() {
               This will permanently remove{" "}
               <span className="font-medium text-foreground">
                 {deletePlan?.planName}
-              </span>
-              . This action cannot be undone.
+              </span>{" "}
+              from the platform and deactivate it in Stripe. This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 if (deletePlan) handleDelete(deletePlan)
               }}
             >
-              Delete Plan
+              {isDeleting ? (
+                <Loader variant="button" color="white" />
+              ) : (
+                "Delete Plan"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

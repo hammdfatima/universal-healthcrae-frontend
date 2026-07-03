@@ -3,7 +3,6 @@
 import { LogOut } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { getProviderInitials } from "@/app/(dashboards)/patient/_lib/providers"
@@ -22,9 +21,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Typography } from "@/components/ui/typography"
+import { useAuth } from "@/hooks/use-auth"
+import { getUserDisplayName, getUserInitials } from "@/lib/auth/utils"
 
 export default function OnboardingHeader() {
-  const router = useRouter()
+  const { user, logout } = useAuth()
   const [displayName, setDisplayName] = useState("User")
   const [email, setEmail] = useState("")
   const [profileImage, setProfileImage] = useState("")
@@ -32,12 +33,18 @@ export default function OnboardingHeader() {
 
   useEffect(() => {
     const profile = getProfileFromStorage()
-    const name = getProfileDisplayName(profile)
-    setDisplayName(name || "User")
-    setEmail(profile.email)
+    const profileName = getProfileDisplayName(profile)
+    const authName = user ? getUserDisplayName(user) : ""
+
+    setDisplayName(profileName || authName || "User")
+    setEmail(user?.email || profile.email)
     setProfileImage(profile.profileImage)
-    setInitials(getProviderInitials(name || "User"))
-  }, [])
+    setInitials(
+      user
+        ? getUserInitials(user)
+        : getProviderInitials(profileName || authName || "User")
+    )
+  }, [user])
 
   return (
     <header className="shrink-0 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm sm:px-5">
@@ -87,7 +94,7 @@ export default function OnboardingHeader() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="gap-2 text-destructive focus:text-destructive"
-              onClick={() => router.push("/login")}
+              onClick={() => logout()}
             >
               <LogOut className="size-4" aria-hidden />
               Logout

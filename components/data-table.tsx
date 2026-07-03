@@ -2,7 +2,11 @@
 
 import { ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { type ReactNode, useMemo, useState } from "react"
-
+import {
+  DataTableEmptyState,
+  DataTableErrorState,
+  DataTableLoadingState,
+} from "@/components/data-table/fetch-states"
 import { Button } from "@/components/ui/button"
 import {
   CardContent,
@@ -57,6 +61,15 @@ type DataTableProps<T extends Record<string, unknown>> = {
   searchPlaceholder?: string
   pageSize?: number
   emptyMessage?: string
+  emptyDescription?: string
+  filteredEmptyDescription?: string
+  emptyAction?: ReactNode
+  isLoading?: boolean
+  loadingLabel?: string
+  isError?: boolean
+  error?: unknown
+  onRetry?: () => void
+  isRetrying?: boolean
   actions?: ReactNode
   icon?: ReactNode
   className?: string
@@ -77,6 +90,15 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder = "Search records...",
   pageSize = 10,
   emptyMessage = "No records found.",
+  emptyDescription,
+  filteredEmptyDescription = "Try adjusting your search or filters.",
+  emptyAction,
+  isLoading = false,
+  loadingLabel,
+  isError = false,
+  error,
+  onRetry,
+  isRetrying = false,
   actions,
   icon,
   className,
@@ -228,15 +250,31 @@ export function DataTable<T extends Record<string, unknown>>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.length === 0 ? (
-                <TableRow className="hover:bg-transparent">
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-32 text-center text-muted-foreground"
-                  >
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
+              {isLoading ? (
+                <DataTableLoadingState
+                  colSpan={columns.length}
+                  label={loadingLabel}
+                />
+              ) : isError && error ? (
+                <DataTableErrorState
+                  colSpan={columns.length}
+                  error={error}
+                  onRetry={onRetry}
+                  isRetrying={isRetrying}
+                />
+              ) : data.length === 0 ? (
+                <DataTableEmptyState
+                  colSpan={columns.length}
+                  title={emptyMessage}
+                  description={emptyDescription}
+                  action={emptyAction}
+                />
+              ) : paginatedData.length === 0 ? (
+                <DataTableEmptyState
+                  colSpan={columns.length}
+                  title={emptyMessage}
+                  description={filteredEmptyDescription}
+                />
               ) : (
                 paginatedData.map((row) => (
                   <TableRow key={getRowId(row)} className="group">
@@ -266,7 +304,7 @@ export function DataTable<T extends Record<string, unknown>>({
               variant="outline"
               className="size-9 rounded-full"
               aria-label="Previous page"
-              disabled={safePage <= 1}
+              disabled={safePage <= 1 || isLoading || isError}
               onClick={() => goToPage(safePage - 1)}
             >
               <ChevronLeft className="size-4" aria-hidden />
@@ -276,7 +314,7 @@ export function DataTable<T extends Record<string, unknown>>({
               variant="outline"
               className="size-9 rounded-full"
               aria-label="Next page"
-              disabled={safePage >= totalPages}
+              disabled={safePage >= totalPages || isLoading || isError}
               onClick={() => goToPage(safePage + 1)}
             >
               <ChevronRight className="size-4" aria-hidden />

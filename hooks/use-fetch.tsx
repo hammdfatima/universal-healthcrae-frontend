@@ -4,6 +4,8 @@ import type { UseQueryOptions } from "@tanstack/react-query"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { env } from "@/env"
+import { getAuthToken } from "@/lib/auth/session"
+import { handleUnauthorized } from "@/lib/auth/unauthorized"
 import { buildRequestUrl } from "@/lib/utils"
 
 export type FetchApiType = {
@@ -13,26 +15,25 @@ export type FetchApiType = {
 
 type IUseFetch<T> = {
   path: string
-  queryKey: readonly unknown[] // Accept any readonly array for compatibility
-  config?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">
-}
+  queryKey: readonly unknown[]
+} & Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">
 
 export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
-  const auth = { token: "" }
+  const token = getAuthToken()
   if (!queryKey) {
     throw new Error("queryKey is required")
   }
   if (!path) {
     throw new Error("path is required")
   }
-  const REQUEST_URL = buildRequestUrl(env.NEXT_PUBLIC_APP_URL, path)
+  const REQUEST_URL = buildRequestUrl(env.NEXT_PUBLIC_API_URL, path)
 
   const fetchData = async (): Promise<T> => {
     try {
       const response = await axios.get(REQUEST_URL, {
-        headers: auth?.token
+        headers: token
           ? {
-              Authorization: `Bearer ${auth?.token}`,
+              Authorization: `Bearer ${token}`,
             }
           : {},
       })
@@ -45,8 +46,7 @@ export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
         throw new Error("Network error, please check your internet connection.")
       }
       if (error.response.status === 401) {
-        console.log("Unauthorized access, logging out...")
-        // Add your function here
+        handleUnauthorized()
       }
       throw error
     }

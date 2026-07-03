@@ -1,5 +1,6 @@
 "use client"
 
+import axios from "axios"
 import { Eye, EyeOff } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -11,8 +12,14 @@ import VerifyEmailModal from "@/app/_components/verify-email-modal"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
 import { Input } from "@/components/ui/input"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useAuth } from "@/hooks/use-auth"
 import useToast from "@/hooks/use-toast"
+import { AUTH_API } from "@/lib/auth/constants"
+import { getPostAuthRedirect } from "@/lib/auth/session"
+import type { AuthTokenResponse } from "@/lib/auth/types"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -31,6 +38,22 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [verifyOpen, setVerifyOpen] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState("")
+
+  const { login: saveSession } = useAuth()
+  const { onRequest: login, isPending } = useApi<{
+    email: string
+    password: string
+  }>({
+    key: "login",
+    showSuccessToast: false,
+  })
+
+  const completeLogin = (result: AuthTokenResponse) => {
+    saveSession(result)
+    toastSuccess("Welcome back!")
+    setFormKey((key) => key + 1)
+    router.push(getPostAuthRedirect(result.user))
+  }
 
   return (
     <div className="w-full">
@@ -62,9 +85,25 @@ export default function LoginPage() {
           formKey={formKey}
           fieldsetProps={{ className: "space-y-5" }}
           onSubmit={(values) => {
-            setSubmittedEmail(values.email)
-            setVerifyOpen(true)
-            setShowPassword(false)
+            login({
+              path: AUTH_API.login,
+              data: {
+                email: values.email,
+                password: values.password,
+              },
+              onSuccess: (data: AuthTokenResponse) => {
+                completeLogin(data)
+              },
+              onError: (error) => {
+                if (
+                  axios.isAxiosError(error) &&
+                  error.response?.status === 403
+                ) {
+                  setSubmittedEmail(values.email)
+                  setVerifyOpen(true)
+                }
+              },
+            })
           }}
         >
           {({ components: { Input: FormInput, Field } }) => (
@@ -115,8 +154,12 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              <Button type="submit" className="w-full">
-                Log in
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? (
+                  <Loader variant="button" color="white" />
+                ) : (
+                  "Log in"
+                )}
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
@@ -138,10 +181,11 @@ export default function LoginPage() {
         open={verifyOpen}
         onOpenChange={setVerifyOpen}
         email={submittedEmail}
-        onVerified={() => {
-          toastSuccess("Welcome back!")
-          setFormKey((key) => key + 1)
-          router.push("/")
+        mode="signup"
+        onVerified={(result) => {
+          if ("token" in result) {
+            completeLogin(result)
+          }
         }}
       />
     </div>

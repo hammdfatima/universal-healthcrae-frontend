@@ -3,58 +3,109 @@
 import { Check } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-import { pricingPlans } from "@/app/_lib/pricing-plans-data"
+import type { SubscriptionPlan } from "@/app/(dashboards)/admin/_lib/subscription-plans"
+import EmptyCard from "@/components/empty-card"
+import ErrorCard from "@/components/error-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  SUBSCRIPTION_PLANS_API,
+  SUBSCRIPTION_PLANS_QUERY_KEYS,
+} from "@/lib/api/subscription-plans"
 import { cn } from "@/lib/utils"
+
+function formatBillingLabel(cycle: SubscriptionPlan["billingCycle"]) {
+  return cycle === "yearly" ? "/year" : "/month"
+}
 
 export default function PricingPlans() {
   const router = useRouter()
 
+  const {
+    data: plans = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useFetch<SubscriptionPlan[]>({
+    path: SUBSCRIPTION_PLANS_API.public.list,
+    queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.public,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <Loader
+          variant="fetch"
+          label="Loading pricing plans..."
+          className="py-20"
+        />
+      </div>
+    )
+  }
+
+  if (isError && error) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <ErrorCard
+          error={error}
+          onRetry={() => refetch()}
+          isLoading={isFetching}
+        />
+      </div>
+    )
+  }
+
+  if (plans.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <EmptyCard
+          title="No pricing plans available"
+          description="Subscription plans will appear here once they are published."
+        />
+      </div>
+    )
+  }
+
   return (
     <ul className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3 lg:gap-8">
-      {pricingPlans.map((plan) => {
-        const Icon = plan.icon
+      {plans.map((plan, index) => {
+        const highlighted = index === 1 && plans.length > 1
 
         return (
-          <li key={plan.name} className="flex">
+          <li key={plan.id} className="flex">
             <Card
               className={cn(
                 "flex w-full flex-col border-border/80",
-                plan.highlighted
+                highlighted
                   ? "border-primary shadow-lg ring-2 ring-primary/20"
                   : "shadow-sm"
               )}
             >
               <CardHeader className="space-y-4 p-6 pb-0">
-                {"badge" in plan && plan.badge ? (
-                  <span
-                    className={cn(
-                      "w-fit rounded-full px-3 py-1 text-xs font-semibold",
-                      plan.highlighted
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-brand-primary-light text-secondary"
-                    )}
-                  >
-                    {plan.badge}
+                {highlighted ? (
+                  <span className="w-fit rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                    Most Popular
                   </span>
                 ) : (
                   <span className="h-6" aria-hidden />
                 )}
 
-                <div className="flex items-center gap-3">
-                  <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="size-5" aria-hidden />
-                  </span>
-                  <div>
-                    <Typography as="h3" variant="h4">
-                      {plan.name}
-                    </Typography>
-                    <Typography variant="small" color="muted">
-                      {plan.members}
-                    </Typography>
-                  </div>
+                <div>
+                  <Typography as="h3" variant="h4">
+                    {plan.planName}
+                  </Typography>
+                  <Typography
+                    variant="small"
+                    color="muted"
+                    className="capitalize"
+                  >
+                    {plan.billingCycle} billing
+                  </Typography>
                 </div>
 
                 <div className="flex items-baseline gap-1">
@@ -62,13 +113,9 @@ export default function PricingPlans() {
                     {plan.price}
                   </Typography>
                   <Typography variant="muted" className="text-base">
-                    /month
+                    {formatBillingLabel(plan.billingCycle)}
                   </Typography>
                 </div>
-
-                <Typography variant="p" color="muted" className="text-sm">
-                  {plan.description}
-                </Typography>
               </CardHeader>
 
               <CardContent className="flex-1 p-6">
@@ -78,10 +125,7 @@ export default function PricingPlans() {
                       <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Check className="size-3" strokeWidth={3} aria-hidden />
                       </span>
-                      <Typography
-                        variant="small"
-                        className="text-sm leading-snug"
-                      >
+                      <Typography variant="small" className="leading-snug">
                         {feature}
                       </Typography>
                     </li>
@@ -92,7 +136,7 @@ export default function PricingPlans() {
               <CardFooter className="p-6 pt-0">
                 <Button
                   className="w-full"
-                  variant={plan.highlighted ? "default" : "outline"}
+                  variant={highlighted ? "default" : "outline"}
                   onClick={() => router.push("/signup")}
                 >
                   Get Started

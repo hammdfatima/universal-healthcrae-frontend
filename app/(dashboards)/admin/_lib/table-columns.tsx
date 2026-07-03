@@ -1,56 +1,6 @@
-import type { AdminUser } from "@/app/(dashboards)/admin/_lib/mock-data"
 import type { AdminPayment } from "@/app/(dashboards)/admin/_lib/payments"
 import type { DataTableColumn } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
-
-export const userColumns: DataTableColumn<AdminUser>[] = [
-  {
-    id: "name",
-    header: "Name",
-    accessorKey: "name",
-    searchable: true,
-  },
-  {
-    id: "email",
-    header: "Email",
-    accessorKey: "email",
-    searchable: true,
-    headerClassName: "hidden sm:table-cell",
-    className: "hidden sm:table-cell",
-  },
-  {
-    id: "plan",
-    header: "Plan",
-    accessorKey: "plan",
-    headerClassName: "hidden md:table-cell",
-    className: "hidden md:table-cell",
-  },
-  {
-    id: "status",
-    header: "Status",
-    cell: (row) => (
-      <Badge
-        variant="outline"
-        className={
-          row.status === "active"
-            ? "rounded-full border-primary/30 bg-primary/10 text-primary"
-            : row.status === "cancelled"
-              ? "rounded-full border-destructive/30 bg-destructive/10 text-destructive"
-              : "rounded-full"
-        }
-      >
-        {row.status}
-      </Badge>
-    ),
-  },
-  {
-    id: "joined",
-    header: "Joined",
-    accessorKey: "joined",
-    headerClassName: "hidden lg:table-cell",
-    className: "hidden lg:table-cell",
-  },
-]
 
 export const paymentColumns: DataTableColumn<AdminPayment>[] = [
   {

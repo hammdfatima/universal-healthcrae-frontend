@@ -1,12 +1,14 @@
 "use client"
 
-import { Menu, X } from "lucide-react"
+import { LogOut, Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/use-auth"
+import { getPostAuthRedirect } from "@/lib/auth/session"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -18,7 +20,10 @@ const navItems = [
 
 export default function Header() {
   const router = useRouter()
+  const { isAuthenticated, isReady, user, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const dashboardHref = user ? getPostAuthRedirect(user) : "/patient"
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
@@ -56,10 +61,27 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" onClick={() => router.push("/login")}>
-            Log in
-          </Button>
-          <Button onClick={() => router.push("/signup")}>Sign up</Button>
+          {isReady && isAuthenticated ? (
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => router.push(dashboardHref)}
+              >
+                Dashboard
+              </Button>
+              <Button variant="outline" onClick={() => logout()}>
+                <LogOut className="size-4" />
+                Log out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => router.push("/login")}>
+                Log in
+              </Button>
+              <Button onClick={() => router.push("/signup")}>Sign up</Button>
+            </>
+          )}
         </div>
 
         <button
@@ -96,23 +118,47 @@ export default function Header() {
             </Link>
           ))}
           <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setMobileOpen(false)
-                router.push("/login")
-              }}
-            >
-              Log in
-            </Button>
-            <Button
-              onClick={() => {
-                setMobileOpen(false)
-                router.push("/signup")
-              }}
-            >
-              Sign up
-            </Button>
+            {isReady && isAuthenticated ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setMobileOpen(false)
+                    router.push(dashboardHref)
+                  }}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  onClick={() => {
+                    setMobileOpen(false)
+                    logout()
+                  }}
+                >
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setMobileOpen(false)
+                    router.push("/login")
+                  }}
+                >
+                  Log in
+                </Button>
+                <Button
+                  onClick={() => {
+                    setMobileOpen(false)
+                    router.push("/signup")
+                  }}
+                >
+                  Sign up
+                </Button>
+              </>
+            )}
           </div>
         </nav>
       </div>

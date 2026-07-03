@@ -1,41 +1,130 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { UserRound } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import PatientProfileForm from "@/app/(dashboards)/patient/_components/patient-profile-form"
-import {
-  formValuesToProfile,
-  getProfileFromStorage,
-  initialProfile,
-  isOnboardingComplete,
-  markOnboardingComplete,
-  type ProfileFormValues,
-  profileToFormValues,
-  saveProfileToStorage,
-} from "@/app/(dashboards)/patient/_lib/settings"
+import type { ProfileFormValues } from "@/app/(dashboards)/patient/_lib/settings"
+import { saveProfileToStorage } from "@/app/(dashboards)/patient/_lib/settings"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import useApi from "@/hooks/use-api"
+import { useAuth } from "@/hooks/use-auth"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  apiProfileToPatientProfile,
+  type CompleteOnboardingPayload,
+  formValuesToOnboardingPayload,
+  PATIENT_PROFILE_API,
+  PATIENT_PROFILE_QUERY_KEYS,
+  type PatientProfileResponse,
+  profileResponseToFormValues,
+} from "@/lib/api/patient-profile"
+import { getAuthToken, getAuthUser, setAuthSession } from "@/lib/auth/session"
+
+function getInitialFormValues(
+  user: ReturnType<typeof useAuth>["user"]
+): ProfileFormValues {
+  return {
+    firstName: user?.firstName ?? "",
+    lastName: user?.lastName ?? "",
+    email: user?.email ?? "",
+    phone: "",
+    profileImage: "",
+    dateOfBirth: undefined as unknown as Date,
+    bloodGroup: "",
+    gender: "",
+    address: "",
+  }
+}
 
 export default function OnboardingPatientContent() {
   const router = useRouter()
-  const { toastSuccess } = useToast()
-  const [defaultValues, setDefaultValues] = useState<ProfileFormValues>(
-    profileToFormValues(initialProfile)
+  const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const [defaultValues, setDefaultValues] = useState<ProfileFormValues>(() =>
+    getInitialFormValues(user)
   )
   const [formKey, setFormKey] = useState(0)
 
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useFetch<PatientProfileResponse>({
+    path: PATIENT_PROFILE_API.get,
+    queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
+    enabled: Boolean(user),
+  })
+
+  const { onRequest: completeOnboarding, isPending } =
+    useApi<CompleteOnboardingPayload>({
+      key: "complete-onboarding",
+      method: "patch",
+    })
+
   useEffect(() => {
-    if (isOnboardingComplete()) {
+    if (profile?.onboardingCompleted) {
       router.replace("/patient")
-      return
+    }
+  }, [profile, router])
+
+  useEffect(() => {
+    if (!profile) return
+
+    if (
+      profile.firstName ||
+      profile.lastName ||
+      profile.phone ||
+      profile.profileImage ||
+      profile.dateOfBirth
+    ) {
+      setDefaultValues(profileResponseToFormValues(profile))
+    } else if (user) {
+      setDefaultValues(getInitialFormValues(user))
     }
 
-    const profile = getProfileFromStorage()
-    setDefaultValues(profileToFormValues(profile))
     setFormKey((key) => key + 1)
-  }, [router])
+  }, [profile, user])
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
+          <Loader
+            variant="fetch"
+            label="Loading your profile..."
+            className="py-24"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card px-6 py-12 text-center shadow-sm">
+          <Typography variant="muted">
+            {error?.message ?? "Failed to load your profile."}
+          </Typography>
+          <button
+            type="button"
+            className="mt-4 text-sm font-medium text-primary hover:underline"
+            disabled={isFetching}
+            onClick={() => refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -72,13 +161,38 @@ export default function OnboardingPatientContent() {
             <PatientProfileForm
               formKey={formKey}
               defaultValues={defaultValues}
+              emailReadOnly
+              isSubmitting={isPending}
               submitLabel="Complete Profile & Continue"
               onSubmit={(values) => {
-                const profile = formValuesToProfile(values)
-                saveProfileToStorage(profile)
-                markOnboardingComplete()
-                toastSuccess("Profile saved. Welcome to your dashboard!")
-                router.push("/patient")
+                completeOnboarding({
+                  path: PATIENT_PROFILE_API.completeOnboarding,
+                  data: formValuesToOnboardingPayload(values),
+                  onSuccess: (updatedProfile) => {
+                    queryClient.setQueryData(
+                      PATIENT_PROFILE_QUERY_KEYS.profile,
+                      updatedProfile
+                    )
+
+                    const savedProfile =
+                      apiProfileToPatientProfile(updatedProfile)
+                    saveProfileToStorage(savedProfile)
+
+                    const token = getAuthToken()
+                    const currentUser = getAuthUser()
+
+                    if (token && currentUser) {
+                      setAuthSession(token, {
+                        ...currentUser,
+                        firstName: updatedProfile.firstName,
+                        lastName: updatedProfile.lastName,
+                        name: `${updatedProfile.firstName ?? ""} ${updatedProfile.lastName ?? ""}`.trim(),
+                      })
+                    }
+
+                    router.push("/onboarding/subscription")
+                  },
+                })
               }}
             />
           </div>

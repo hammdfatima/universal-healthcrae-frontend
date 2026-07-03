@@ -10,6 +10,7 @@ import ProfileImageField from "@/app/(dashboards)/patient/settings/_components/p
 import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ type PatientProfileFormProps = {
   defaultValues: ProfileFormValues
   formKey?: number
   submitLabel?: string
+  emailReadOnly?: boolean
+  isSubmitting?: boolean
   onSubmit: (values: ProfileFormValues) => void
 }
 
@@ -29,6 +32,8 @@ export default function PatientProfileForm({
   defaultValues,
   formKey = 0,
   submitLabel = "Save Profile",
+  emailReadOnly = false,
+  isSubmitting = false,
   onSubmit,
 }: PatientProfileFormProps) {
   return (
@@ -50,6 +55,7 @@ export default function PatientProfileForm({
                 firstName: methods.watch("firstName"),
                 lastName: methods.watch("lastName"),
               }}
+              disabled={isSubmitting}
               onChange={(image) =>
                 methods.setValue("profileImage", image, {
                   shouldDirty: true,
@@ -76,6 +82,9 @@ export default function PatientProfileForm({
                 label="Email"
                 placeholder="Email address"
                 type="email"
+                readOnly={emailReadOnly}
+                disabled={emailReadOnly}
+                className={emailReadOnly ? "bg-muted/50" : undefined}
               />
               <FormInput
                 name="phone"
@@ -143,7 +152,9 @@ export default function PatientProfileForm({
             />
 
             <div className="flex justify-end pt-2">
-              <Button type="submit">{submitLabel}</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader variant="button" /> : submitLabel}
+              </Button>
             </div>
           </>
         )

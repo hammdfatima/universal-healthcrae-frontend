@@ -1,9 +1,24 @@
 import { z } from "zod"
 
 export type AdminProfile = {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  emailVerified: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type AdminProfilePayload = {
   name: string
   email: string
   phone: string
+}
+
+export type ChangePasswordPayload = {
+  currentPassword: string
+  newPassword: string
 }
 
 export const adminProfileSchema = z.object({
@@ -31,26 +46,12 @@ export const changePasswordSchema = z
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
 
-export const initialAdminProfile: AdminProfile = {
-  name: "Admin User",
-  email: "admin@uhc.com",
-  phone: "(555) 000-1000",
-}
-
-export const ADMIN_PROFILE_STORAGE_KEY = "uhc-admin-profile"
-
-export function getAdminProfileFromStorage(): AdminProfile {
-  if (typeof window === "undefined") return initialAdminProfile
-
-  try {
-    const stored = localStorage.getItem(ADMIN_PROFILE_STORAGE_KEY)
-    if (!stored) return initialAdminProfile
-    return { ...initialAdminProfile, ...(JSON.parse(stored) as AdminProfile) }
-  } catch {
-    return initialAdminProfile
+export function toProfileFormValues(
+  profile: AdminProfile
+): AdminProfileFormValues {
+  return {
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone ?? "",
   }
-}
-
-export function saveAdminProfileToStorage(profile: AdminProfile) {
-  localStorage.setItem(ADMIN_PROFILE_STORAGE_KEY, JSON.stringify(profile))
 }

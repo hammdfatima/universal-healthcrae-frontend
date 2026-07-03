@@ -1,11 +1,20 @@
+"use client"
+
 import { Users } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-
-import { adminUsers } from "@/app/(dashboards)/admin/_lib/mock-data"
-import { Badge } from "@/components/ui/badge"
+import { useMemo } from "react"
+import { UserAvatar } from "@/app/(dashboards)/admin/_lib/user-avatar"
+import { UserStatusBadge } from "@/app/(dashboards)/admin/_lib/user-status-badge"
+import {
+  type AdminUser,
+  formatJoinedDate,
+  formatPlan,
+} from "@/app/(dashboards)/admin/_lib/users"
+import EmptyCard from "@/components/empty-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
   Table,
@@ -16,9 +25,25 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import { USERS_API, USERS_QUERY_KEYS } from "@/lib/api/users"
+
+const RECENT_USERS_LIMIT = 5
 
 export default function RecentUsersCard() {
-  const recentUsers = adminUsers.slice(0, 5)
+  const {
+    data: users = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useFetch<AdminUser[]>({
+    path: USERS_API.admin.list,
+    queryKey: USERS_QUERY_KEYS.admin,
+  })
+
+  const recentUsers = useMemo(() => users.slice(0, RECENT_USERS_LIMIT), [users])
 
   return (
     <Card className="border-border/60 shadow-sm">
@@ -39,52 +64,77 @@ export default function RecentUsersCard() {
         </Button>
       </CardHeader>
       <CardContent className="px-0 pb-2 sm:px-6">
-        <ScrollArea className="w-full">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="min-w-[140px]">Name</TableHead>
-                <TableHead className="min-w-[180px]">Email</TableHead>
-                <TableHead className="min-w-[130px]">Plan</TableHead>
-                <TableHead className="min-w-[100px]">Status</TableHead>
-                <TableHead className="min-w-[110px]">Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <Typography variant="small" className="font-medium">
-                      {user.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {user.email}
-                  </TableCell>
-                  <TableCell>{user.plan}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        user.status === "active"
-                          ? "rounded-full border-primary/30 bg-primary/10 text-primary"
-                          : user.status === "cancelled"
-                            ? "rounded-full border-destructive/30 bg-destructive/10 text-destructive"
-                            : "rounded-full"
-                      }
-                    >
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">
-                    {user.joined}
-                  </TableCell>
+        {isLoading ? (
+          <Loader
+            variant="fetch"
+            label="Loading recent users..."
+            className="py-12"
+          />
+        ) : isError ? (
+          <div className="px-4 pb-4 sm:px-0">
+            <Typography variant="muted" className="text-center text-sm">
+              {error?.message ?? "Failed to load recent users."}
+            </Typography>
+            <div className="mt-4 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isFetching}
+                onClick={() => refetch()}
+              >
+                {isFetching ? <Loader variant="button" /> : "Try again"}
+              </Button>
+            </div>
+          </div>
+        ) : recentUsers.length === 0 ? (
+          <div className="px-4 pb-4 sm:px-0">
+            <EmptyCard
+              title="No users yet"
+              description="Registered patient accounts will appear here."
+              icon={Users}
+            />
+          </div>
+        ) : (
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="min-w-[140px]">Name</TableHead>
+                  <TableHead className="min-w-[180px]">Email</TableHead>
+                  <TableHead className="min-w-[130px]">Plan</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="min-w-[110px]">Joined</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+              </TableHeader>
+              <TableBody>
+                {recentUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <UserAvatar user={user} />
+                        <Typography variant="small" className="font-medium">
+                          {user.name}
+                        </Typography>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {user.email}
+                    </TableCell>
+                    <TableCell>{formatPlan(user.plan)}</TableCell>
+                    <TableCell>
+                      <UserStatusBadge status={user.status} />
+                    </TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">
+                      {formatJoinedDate(user.createdAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        )}
       </CardContent>
     </Card>
   )
