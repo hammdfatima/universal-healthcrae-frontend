@@ -1,44 +1,99 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useMemo } from "react"
 
 import {
-  type FamilyMember,
   type FamilyMemberFormValues,
-  formValuesToFamilyMember,
-  getFamilyMemberById,
-  getFamilyMembersFromStorage,
+  formatFamilyMemberDate,
   memberToFormValues,
-  saveFamilyMembersToStorage,
 } from "@/app/(dashboards)/patient/_lib/family-members"
 import FamilyMemberForm from "@/app/(dashboards)/patient/family-members/_components/family-member-form"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import { useSubscriptionPlan } from "@/hooks/use-subscription-plan"
+import {
+  FAMILY_MEMBERS_API,
+  FAMILY_MEMBERS_QUERY_KEYS,
+  type FamilyMembersListResponse,
+  type UpdateFamilyMemberPayload,
+} from "@/lib/api/family-members"
 
 export default function EditFamilyMemberPage() {
   const params = useParams<{ id: string }>()
-  const [member, setMember] = useState<FamilyMember | null>(null)
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const {
+    tier,
+    isLoading: isPlanLoading,
+    supportsFamilyMembers,
+  } = useSubscriptionPlan()
+  const isCouplePlan = tier === "couple"
+
+  const { data, isLoading: isMembersLoading } =
+    useFetch<FamilyMembersListResponse>({
+      path: FAMILY_MEMBERS_API.list,
+      queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
+    })
+
+  const member = useMemo(
+    () => data?.members.find((item) => item.id === params.id) ?? null,
+    [data?.members, params.id]
+  )
+
+  const { onRequest: updateFamilyMember, isPending } =
+    useApi<UpdateFamilyMemberPayload>({
+      key: "update-family-member",
+      method: "patch",
+    })
 
   useEffect(() => {
-    const found = getFamilyMemberById(params.id)
-    setMember(found ?? null)
-  }, [params.id])
+    if (isPlanLoading) return
+
+    if (!supportsFamilyMembers) {
+      router.replace("/patient")
+    }
+  }, [isPlanLoading, router, supportsFamilyMembers])
 
   function handleSubmit(values: FamilyMemberFormValues) {
     if (!member) return
 
-    const members = getFamilyMembersFromStorage()
-    const updated = formValuesToFamilyMember(values, member.id)
-    const next = members.map((item) => (item.id === member.id ? updated : item))
-    saveFamilyMembersToStorage(next)
+    updateFamilyMember({
+      path: FAMILY_MEMBERS_API.update(member.id),
+      data: {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        phone: values.phone,
+        relationship: isCouplePlan ? "Spouse" : values.relationship,
+        dateOfBirth: formatFamilyMemberDate(values.dateOfBirth),
+        isEmergencyContact: values.isEmergencyContact,
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
+        })
+        router.push("/patient/family-members")
+      },
+    })
+  }
+
+  if (isPlanLoading || isMembersLoading || !supportsFamilyMembers) {
+    return <Loader variant="full-page" label="Loading family member..." />
   }
 
   if (!member) {
     return (
       <div className="mx-auto max-w-2xl py-12 text-center">
-        <Typography variant="h4">Family member not found</Typography>
+        <Typography variant="h4">
+          {isCouplePlan ? "Spouse not found" : "Family member not found"}
+        </Typography>
         <Typography variant="muted" className="mt-2">
-          This family member may have been removed or the link is invalid.
+          {isCouplePlan
+            ? "This spouse profile may have been removed or the link is invalid."
+            : "This family member may have been removed or the link is invalid."}
         </Typography>
       </div>
     )
@@ -47,10 +102,12 @@ export default function EditFamilyMemberPage() {
   return (
     <FamilyMemberForm
       key={member.id}
-      title="Edit Family Member"
+      title={isCouplePlan ? "Edit Spouse" : "Edit Family Member"}
       description={`Update details for ${member.firstName} ${member.lastName}.`}
       defaultValues={memberToFormValues(member)}
       submitLabel="Save Changes"
+      isCouplePlan={isCouplePlan}
+      isSubmitting={isPending}
       onSubmit={handleSubmit}
     />
   )

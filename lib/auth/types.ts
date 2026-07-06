@@ -9,6 +9,8 @@ export type AuthUser = {
   profileImage?: string | null
   role: UserRole
   emailVerified: boolean
+  mustChangePassword?: boolean
+  isFamilyMemberAccount?: boolean
 }
 
 export type AuthTokenResponse = {

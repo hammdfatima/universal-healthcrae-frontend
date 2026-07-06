@@ -60,6 +60,17 @@ export function setAuthSession(token: string, user: AuthUser) {
   dispatchAuthSessionChange()
 }
 
+export function updateAuthUser(patch: Partial<AuthUser>) {
+  const currentUser = getAuthUser()
+  const token = getAuthToken()
+
+  if (!currentUser || !token) {
+    return
+  }
+
+  setAuthSession(token, { ...currentUser, ...patch })
+}
+
 export function clearAuthSession() {
   if (!canUseStorage()) {
     return
@@ -95,5 +106,9 @@ export function clearResetToken() {
 }
 
 export function getPostAuthRedirect(user: AuthUser): Route {
+  if (user.mustChangePassword) {
+    return "/patient/change-password" as Route
+  }
+
   return user.role === "ADMIN" ? "/admin" : "/patient"
 }

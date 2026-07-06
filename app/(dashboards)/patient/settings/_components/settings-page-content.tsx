@@ -1,6 +1,8 @@
 "use client"
 
 import { CreditCard, KeyRound, Settings, UserRound } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 import AccountTab from "@/app/(dashboards)/patient/settings/_components/account-tab"
 import ChangePasswordTab from "@/app/(dashboards)/patient/settings/_components/change-password-tab"
@@ -15,7 +17,37 @@ const tabTriggerClass = cn(
   "text-foreground/75 hover:bg-secondary/60 hover:text-secondary-foreground"
 )
 
+const validTabs = ["profile", "subscription", "account", "password"] as const
+
+type SettingsTab = (typeof validTabs)[number]
+
+function isSettingsTab(value: string | null): value is SettingsTab {
+  return validTabs.includes(value as SettingsTab)
+}
+
 export default function SettingsPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    isSettingsTab(tabParam) ? tabParam : "profile"
+  )
+
+  useEffect(() => {
+    if (isSettingsTab(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
+
+  function handleTabChange(value: string) {
+    if (!isSettingsTab(value)) return
+
+    setActiveTab(value)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", value)
+    router.replace(`/patient/settings?${params.toString()}`)
+  }
+
   return (
     <div className="mx-auto max-w-7xl p-4">
       <div className="flex items-start gap-4">
@@ -32,7 +64,11 @@ export default function SettingsPageContent() {
         </div>
       </div>
 
-      <Tabs defaultValue="profile" className="mt-8 gap-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="mt-8 gap-6"
+      >
         <TabsList className="thin-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-muted/40 p-1.5 sm:w-fit">
           <TabsTrigger value="profile" className={tabTriggerClass}>
             <UserRound className="size-4" aria-hidden />

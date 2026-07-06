@@ -1,6 +1,7 @@
 "use client"
 
 import { Eye, EyeOff } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import {
@@ -13,10 +14,12 @@ import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
+import { useAuth } from "@/hooks/use-auth"
 import {
   type ChangePasswordPayload,
   PATIENT_SETTINGS_API,
 } from "@/lib/api/patient-settings"
+import { updateAuthUser } from "@/lib/auth/session"
 
 const defaultValues: ChangePasswordFormValues = {
   currentPassword: "",
@@ -24,7 +27,15 @@ const defaultValues: ChangePasswordFormValues = {
   confirmPassword: "",
 }
 
-export default function ChangePasswordTab() {
+type ChangePasswordTabProps = {
+  required?: boolean
+}
+
+export default function ChangePasswordTab({
+  required = false,
+}: ChangePasswordTabProps) {
+  const router = useRouter()
+  const { refreshSession } = useAuth()
   const [formKey, setFormKey] = useState(0)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -44,24 +55,40 @@ export default function ChangePasswordTab() {
         newPassword: values.newPassword,
       },
       onSuccess: () => {
+        updateAuthUser({ mustChangePassword: false })
+        refreshSession()
         setFormKey((key) => key + 1)
         setShowCurrentPassword(false)
         setShowNewPassword(false)
         setShowConfirmPassword(false)
+
+        if (required) {
+          router.replace("/patient")
+        }
       },
     })
   }
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-      <Typography as="h2" variant="h4">
-        Change Password
-      </Typography>
-      <Typography variant="muted" className="mt-1">
-        Use a strong password with at least 8 characters.
-      </Typography>
+    <div
+      className={
+        required
+          ? ""
+          : "rounded-2xl border border-border/60 bg-card p-6 shadow-sm"
+      }
+    >
+      {required ? null : (
+        <>
+          <Typography as="h2" variant="h4">
+            Change Password
+          </Typography>
+          <Typography variant="muted" className="mt-1">
+            Use a strong password with at least 8 characters.
+          </Typography>
+        </>
+      )}
 
-      <div className="mt-6">
+      <div className={required ? "" : "mt-6"}>
         <FormModified
           key={formKey}
           schema={changePasswordSchema}
@@ -74,13 +101,20 @@ export default function ChangePasswordTab() {
 
             return (
               <>
-                <Field name="currentPassword" label="Current Password">
+                <Field
+                  name="currentPassword"
+                  label={required ? "Temporary Password" : "Current Password"}
+                >
                   {(field) => (
                     <div className="relative">
                       <Input
                         {...field}
                         type={showCurrentPassword ? "text" : "password"}
-                        placeholder="Enter current password"
+                        placeholder={
+                          required
+                            ? "Enter the password from your email"
+                            : "Enter current password"
+                        }
                         autoComplete="current-password"
                         className="pr-12"
                         disabled={isSaving}
@@ -172,7 +206,13 @@ export default function ChangePasswordTab() {
 
                 <div className="flex justify-end pt-2">
                   <Button type="submit" disabled={isSaving}>
-                    {isSaving ? <Loader variant="button" /> : "Update Password"}
+                    {isSaving ? (
+                      <Loader variant="button" />
+                    ) : required ? (
+                      "Save New Password"
+                    ) : (
+                      "Update Password"
+                    )}
                   </Button>
                 </div>
               </>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import DashboardShell from "@/app/(dashboards)/patient/_components/dashboard-shell"
+import MustChangePasswordGuard from "@/app/(dashboards)/patient/_components/must-change-password-guard"
 import OnboardingGuard from "@/app/(dashboards)/patient/_components/onboarding-guard"
 import SubscriptionGuard from "@/app/(dashboards)/patient/_components/subscription-guard"
 import AuthGuard from "@/components/auth/auth-guard"
@@ -17,11 +18,13 @@ export default function PatientLayout({
 }>) {
   return (
     <AuthGuard allowedRoles={[USER_ROLES.USER]}>
-      <OnboardingGuard>
-        <SubscriptionGuard>
-          <DashboardShell>{children}</DashboardShell>
-        </SubscriptionGuard>
-      </OnboardingGuard>
+      <MustChangePasswordGuard>
+        <OnboardingGuard>
+          <SubscriptionGuard>
+            <DashboardShell>{children}</DashboardShell>
+          </SubscriptionGuard>
+        </OnboardingGuard>
+      </MustChangePasswordGuard>
     </AuthGuard>
   )
 }

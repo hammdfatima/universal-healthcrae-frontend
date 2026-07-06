@@ -32,9 +32,23 @@ export type CheckoutSessionResponse = {
   sessionId: string
 }
 
+export type ChangePlanResponse =
+  | {
+      mode: "updated"
+      subscription: UserSubscription
+      isActive: boolean
+    }
+  | {
+      mode: "checkout"
+      checkoutUrl: string
+      sessionId: string
+    }
+
 export const SUBSCRIPTIONS_API = {
   me: "/subscriptions/me",
   checkout: "/subscriptions/checkout",
+  cancel: "/subscriptions/cancel",
+  changePlan: "/subscriptions/change-plan",
   verifyCheckout: (sessionId: string) =>
     `/subscriptions/checkout/verify?session_id=${encodeURIComponent(sessionId)}`,
 } as const

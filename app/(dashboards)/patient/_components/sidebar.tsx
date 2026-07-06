@@ -32,6 +32,12 @@ import {
 } from "@/components/ui/collapsible"
 import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
+import { useSubscriptionPlan } from "@/hooks/use-subscription-plan"
+import {
+  FAMILY_MEMBERS_API,
+  FAMILY_MEMBERS_QUERY_KEYS,
+  type FamilyMembersListResponse,
+} from "@/lib/api/family-members"
 import {
   PATIENT_PROFILE_API,
   PATIENT_PROFILE_QUERY_KEYS,
@@ -97,17 +103,9 @@ const medicalVaultItems: VaultItem[] = [
   },
 ]
 
-const overviewNav: NavGroup = {
+const overviewNavBase: NavGroup = {
   label: "Main",
-  items: [
-    { label: "Overview", href: "/patient", icon: LayoutDashboard },
-    {
-      label: "My Family",
-      href: "/patient/family-members" as Route,
-      icon: Users,
-      badge: String(healthCounts.familyMembers),
-    },
-  ],
+  items: [{ label: "Overview", href: "/patient", icon: LayoutDashboard }],
 }
 
 const careTeamNav: NavGroup = {
@@ -225,6 +223,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     path: PATIENT_PROFILE_API.get,
     queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
   })
+  const { planName, supportsFamilyMembers, navLabel } = useSubscriptionPlan()
+  const isAccountOwner = !user?.isFamilyMemberAccount
+  const { data: familyMembersData } = useFetch<FamilyMembersListResponse>({
+    path: FAMILY_MEMBERS_API.list,
+    queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
+    enabled: supportsFamilyMembers && isAccountOwner,
+  })
 
   if (!user) {
     return null
@@ -233,6 +238,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const displayName = getUserDisplayName(user)
   const initials = getUserInitials(user)
   const profileImage = profile?.profileImage ?? user.profileImage ?? null
+  const overviewItems: NavItem[] = [...overviewNavBase.items]
+  const familyMemberCount = familyMembersData?.members.length ?? 0
+
+  if (supportsFamilyMembers && isAccountOwner) {
+    overviewItems.push({
+      label: navLabel,
+      href: "/patient/family-members" as Route,
+      icon: Users,
+      badge: familyMemberCount > 0 ? String(familyMemberCount) : undefined,
+    })
+  }
 
   return (
     <div className="flex min-h-full flex-col p-4">
@@ -262,22 +278,24 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           >
             {getRoleLabel(user.role)}
           </Badge>
-          <Badge
-            variant="outline"
-            className="rounded-full border-border bg-muted px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase"
-          >
-            Individual Plan
-          </Badge>
+          {planName ? (
+            <Badge
+              variant="outline"
+              className="rounded-full border-border bg-muted px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-muted-foreground uppercase"
+            >
+              {planName}
+            </Badge>
+          ) : null}
         </div>
       </div>
 
       <nav className="flex-1 space-y-5">
         <div>
           <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-            {overviewNav.label}
+            {overviewNavBase.label}
           </p>
           <ul className="space-y-0.5">
-            {overviewNav.items.map((item) => (
+            {overviewItems.map((item) => (
               <li key={item.href}>
                 <NavLink item={item} onNavigate={onNavigate} />
               </li>

@@ -10,8 +10,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-
-import type { FamilyMember } from "@/app/(dashboards)/patient/_lib/family-members"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +32,7 @@ import {
 } from "@/components/ui/dialog"
 import { Typography } from "@/components/ui/typography"
 import useToast from "@/hooks/use-toast"
+import type { FamilyMember } from "@/lib/api/family-members"
 
 type FamilyMemberDetailsDialogProps = {
   member: FamilyMember | null
@@ -41,6 +40,8 @@ type FamilyMemberDetailsDialogProps = {
   onOpenChange: (open: boolean) => void
   onMarkEmergencyContact: (member: FamilyMember) => void
   onDelete: (member: FamilyMember) => void
+  isCouplePlan?: boolean
+  isDeleting?: boolean
 }
 
 function getInitials(member: FamilyMember) {
@@ -53,6 +54,8 @@ export default function FamilyMemberDetailsDialog({
   onOpenChange,
   onMarkEmergencyContact,
   onDelete,
+  isCouplePlan = false,
+  isDeleting = false,
 }: FamilyMemberDetailsDialogProps) {
   const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -90,9 +93,9 @@ export default function FamilyMemberDetailsDialog({
             <DetailRow
               icon={UserRound}
               label="Date of Birth"
-              value={member.dateOfBirth}
+              value={member.dateOfBirth ?? "—"}
             />
-            <DetailRow icon={Phone} label="Phone" value={member.phone} />
+            <DetailRow icon={Phone} label="Phone" value={member.phone ?? "—"} />
             <DetailRow icon={Mail} label="Email" value={member.email} />
           </div>
 
@@ -149,21 +152,24 @@ export default function FamilyMemberDetailsDialog({
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete family member?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {isCouplePlan ? "spouse" : "family member"}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove {member.firstName} {member.lastName}{" "}
-              from your family list. This action cannot be undone.
+              from your {isCouplePlan ? "spouse profile" : "family list"}. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(member)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Family member deleted.")
               }}
             >
               Delete

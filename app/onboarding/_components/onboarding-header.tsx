@@ -3,13 +3,7 @@
 import { LogOut } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
 
-import { getProviderInitials } from "@/app/(dashboards)/patient/_lib/providers"
-import {
-  getProfileDisplayName,
-  getProfileFromStorage,
-} from "@/app/(dashboards)/patient/_lib/settings"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,29 +16,29 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Typography } from "@/components/ui/typography"
 import { useAuth } from "@/hooks/use-auth"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  PATIENT_PROFILE_API,
+  PATIENT_PROFILE_QUERY_KEYS,
+  type PatientProfileResponse,
+} from "@/lib/api/patient-profile"
 import { getUserDisplayName, getUserInitials } from "@/lib/auth/utils"
 
 export default function OnboardingHeader() {
   const { user, logout } = useAuth()
-  const [displayName, setDisplayName] = useState("User")
-  const [email, setEmail] = useState("")
-  const [profileImage, setProfileImage] = useState("")
-  const [initials, setInitials] = useState("U")
+  const { data: profile } = useFetch<PatientProfileResponse>({
+    path: PATIENT_PROFILE_API.get,
+    queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
+    enabled: Boolean(user),
+  })
 
-  useEffect(() => {
-    const profile = getProfileFromStorage()
-    const profileName = getProfileDisplayName(profile)
-    const authName = user ? getUserDisplayName(user) : ""
+  if (!user) {
+    return null
+  }
 
-    setDisplayName(profileName || authName || "User")
-    setEmail(user?.email || profile.email)
-    setProfileImage(profile.profileImage)
-    setInitials(
-      user
-        ? getUserInitials(user)
-        : getProviderInitials(profileName || authName || "User")
-    )
-  }, [user])
+  const displayName = getUserDisplayName(user)
+  const initials = getUserInitials(user)
+  const profileImage = profile?.profileImage ?? user.profileImage ?? null
 
   return (
     <header className="shrink-0 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm sm:px-5">
@@ -85,11 +79,9 @@ export default function OnboardingHeader() {
               <Typography variant="small" className="font-semibold">
                 {displayName}
               </Typography>
-              {email ? (
-                <Typography variant="muted" className="truncate text-xs">
-                  {email}
-                </Typography>
-              ) : null}
+              <Typography variant="muted" className="truncate text-xs">
+                {user.email}
+              </Typography>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
