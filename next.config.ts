@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   devIndicators: {
     position: "bottom-right",
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
   typedRoutes: true,
 };
 

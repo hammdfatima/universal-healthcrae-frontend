@@ -22,7 +22,7 @@ import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { healthCounts } from "@/app/(dashboards)/patient/_lib/mock-data"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,6 +31,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { useAuth } from "@/hooks/use-auth"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  PATIENT_PROFILE_API,
+  PATIENT_PROFILE_QUERY_KEYS,
+  type PatientProfileResponse,
+} from "@/lib/api/patient-profile"
 import { getRoleLabel } from "@/lib/auth/roles"
 import { getUserDisplayName, getUserInitials } from "@/lib/auth/utils"
 import { cn } from "@/lib/utils"
@@ -215,6 +221,10 @@ function MedicalVaultNav({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
+  const { data: profile } = useFetch<PatientProfileResponse>({
+    path: PATIENT_PROFILE_API.get,
+    queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
+  })
 
   if (!user) {
     return null
@@ -222,12 +232,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   const displayName = getUserDisplayName(user)
   const initials = getUserInitials(user)
+  const profileImage = profile?.profileImage ?? user.profileImage ?? null
 
   return (
     <div className="flex min-h-full flex-col p-4">
       <div className="mb-6 rounded-4xl border border-border bg-background p-4">
         <div className="flex items-center gap-3">
           <Avatar className="size-11 border-2 border-border">
+            {profileImage ? (
+              <AvatarImage src={profileImage} alt={displayName} />
+            ) : null}
             <AvatarFallback className="bg-secondary/10 text-sm font-semibold text-secondary">
               {initials}
             </AvatarFallback>
