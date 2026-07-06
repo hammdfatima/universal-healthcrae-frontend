@@ -1,6 +1,7 @@
 "use client"
 
 import axios from "axios"
+import type { Route } from "next"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
 import { Loader } from "@/components/ui/loader"
@@ -12,7 +13,7 @@ import {
   SUBSCRIPTIONS_QUERY_KEYS,
   type SubscriptionMeResponse,
 } from "@/lib/api/subscriptions"
-import { getAuthToken } from "@/lib/auth/session"
+import { readAuthSession } from "@/lib/auth/session"
 import { buildRequestUrl } from "@/lib/utils"
 
 function SubscriptionSuccessContent() {
@@ -33,15 +34,25 @@ function SubscriptionSuccessContent() {
         return
       }
 
+      const session = readAuthSession()
+
+      if (!session) {
+        const returnPath =
+          `/onboarding/subscription/success?session_id=${encodeURIComponent(sessionId)}` as Route
+        router.replace(`/login?next=${encodeURIComponent(returnPath)}`)
+        return
+      }
+
       try {
-        const token = getAuthToken()
         await axios.get(
           buildRequestUrl(
             env.NEXT_PUBLIC_API_URL,
             SUBSCRIPTIONS_API.verifyCheckout(sessionId)
           ),
           {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            headers: {
+              Authorization: `Bearer ${session.token}`,
+            },
           }
         )
 

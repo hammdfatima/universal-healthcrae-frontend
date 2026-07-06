@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import OnboardingPatientContent from "@/app/onboarding/patient/_components/onboarding-patient-content"
+import OnboardingPatientContent from "@/app/onboarding/(protected)/patient/_components/onboarding-patient-content"
 
 export const metadata: Metadata = {
   title: "Complete Your Profile",

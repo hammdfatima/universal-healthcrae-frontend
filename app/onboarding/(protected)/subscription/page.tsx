@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 
-import OnboardingSubscriptionContent from "@/app/onboarding/subscription/_components/onboarding-subscription-content"
+import OnboardingSubscriptionContent from "@/app/onboarding/(protected)/subscription/_components/onboarding-subscription-content"
 import { Loader } from "@/components/ui/loader"
 
 export default function OnboardingSubscriptionPage() {

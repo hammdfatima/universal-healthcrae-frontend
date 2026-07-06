@@ -2,10 +2,11 @@
 
 import axios from "axios"
 import { Eye, EyeOff } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useState } from "react"
 import { z } from "zod"
 
 import VerifyEmailModal from "@/app/_components/verify-email-modal"
@@ -31,8 +32,10 @@ const defaultValues = {
   password: "",
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath = searchParams.get("next")
   const { toastSuccess } = useToast()
   const [formKey, setFormKey] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
@@ -52,7 +55,12 @@ export default function LoginPage() {
     saveSession(result)
     toastSuccess("Welcome back!")
     setFormKey((key) => key + 1)
-    router.push(getPostAuthRedirect(result.user))
+
+    const redirectPath = nextPath?.startsWith("/")
+      ? (nextPath as Route)
+      : getPostAuthRedirect(result.user)
+
+    router.push(redirectPath)
   }
 
   return (
@@ -189,5 +197,15 @@ export default function LoginPage() {
         }}
       />
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={<Loader variant="fetch" label="Loading..." className="py-24" />}
+    >
+      <LoginPageContent />
+    </Suspense>
   )
 }
