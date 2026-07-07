@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 import {
   type CareProviderFormValues,
@@ -10,8 +9,8 @@ import {
 } from "@/app/(dashboards)/patient/_lib/providers"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
 
 type CareProviderFormProps = {
   title: string
@@ -19,6 +18,7 @@ type CareProviderFormProps = {
   defaultValues?: CareProviderFormValues
   onSubmit: (values: CareProviderFormValues) => void
   submitLabel: string
+  isSubmitting?: boolean
 }
 
 export default function CareProviderForm({
@@ -27,10 +27,8 @@ export default function CareProviderForm({
   defaultValues = careProviderDefaultValues,
   onSubmit,
   submitLabel,
+  isSubmitting = false,
 }: CareProviderFormProps) {
-  const router = useRouter()
-  const { toastSuccess } = useToast()
-
   return (
     <div className="mx-auto max-w-7xl p-4">
       <Typography as="h1" variant="h3">
@@ -45,15 +43,7 @@ export default function CareProviderForm({
           schema={careProviderSchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-5" }}
-          onSubmit={(values) => {
-            onSubmit(values)
-            toastSuccess(
-              submitLabel === "Save"
-                ? "Care provider added successfully."
-                : "Care provider updated successfully."
-            )
-            router.push("/patient/provider")
-          }}
+          onSubmit={onSubmit}
         >
           {({ components }) => {
             const { Input: FormInput, Textarea } = components
@@ -92,7 +82,13 @@ export default function CareProviderForm({
                   <Button type="button" variant="outline" asChild>
                     <Link href="/patient/provider">Close</Link>
                   </Button>
-                  <Button type="submit">{submitLabel}</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader variant="button" color="white" />
+                    ) : (
+                      submitLabel
+                    )}
+                  </Button>
                 </div>
               </>
             )

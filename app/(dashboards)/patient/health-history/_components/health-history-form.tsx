@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 import {
   type HealthHistoryFormValues,
@@ -11,8 +10,8 @@ import {
 import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
 
 type HealthHistoryFormProps = {
   title: string
@@ -20,6 +19,7 @@ type HealthHistoryFormProps = {
   defaultValues?: HealthHistoryFormValues
   onSubmit: (values: HealthHistoryFormValues) => void
   submitLabel: string
+  isSubmitting?: boolean
 }
 
 export default function HealthHistoryForm({
@@ -28,10 +28,8 @@ export default function HealthHistoryForm({
   defaultValues = healthHistoryDefaultValues,
   onSubmit,
   submitLabel,
+  isSubmitting = false,
 }: HealthHistoryFormProps) {
-  const router = useRouter()
-  const { toastSuccess } = useToast()
-
   return (
     <div className="mx-auto max-w-7xl p-4">
       <Typography as="h1" variant="h3">
@@ -46,15 +44,7 @@ export default function HealthHistoryForm({
           schema={healthHistorySchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-5" }}
-          onSubmit={(values) => {
-            onSubmit(values)
-            toastSuccess(
-              submitLabel === "Save"
-                ? "Diagnosis added successfully."
-                : "Diagnosis updated successfully."
-            )
-            router.push("/patient/health-history")
-          }}
+          onSubmit={onSubmit}
         >
           {({ components }) => {
             const { Input: FormInput, Textarea, Field } = components
@@ -96,7 +86,13 @@ export default function HealthHistoryForm({
                   <Button type="button" variant="outline" asChild>
                     <Link href="/patient/health-history">Close</Link>
                   </Button>
-                  <Button type="submit">{submitLabel}</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader variant="button" color="white" />
+                    ) : (
+                      submitLabel
+                    )}
+                  </Button>
                 </div>
               </>
             )

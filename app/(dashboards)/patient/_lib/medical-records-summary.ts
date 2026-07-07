@@ -1,35 +1,9 @@
-import {
-  type Allergy,
-  getAllergiesFromStorage,
-} from "@/app/(dashboards)/patient/_lib/allergies"
-import {
-  getHealthHistoryFromStorage,
-  type HealthHistoryEntry,
-} from "@/app/(dashboards)/patient/_lib/health-history"
-import {
-  getImagingResultsFromStorage,
-  type ImagingResult,
-} from "@/app/(dashboards)/patient/_lib/imaging"
-import {
-  getLabResultsFromStorage,
-  type LabResult,
-} from "@/app/(dashboards)/patient/_lib/lab"
-import {
-  getMedicationsFromStorage,
-  type Medication,
-} from "@/app/(dashboards)/patient/_lib/medications"
-import {
-  type CareProvider,
-  getCareProvidersFromStorage,
-} from "@/app/(dashboards)/patient/_lib/providers"
-import {
-  getProfileFromStorage,
-  type PatientProfile,
-} from "@/app/(dashboards)/patient/_lib/settings"
-import {
-  getVaccinationsFromStorage,
-  type Vaccination,
-} from "@/app/(dashboards)/patient/_lib/vaccinations"
+import type { PatientProfile } from "@/app/(dashboards)/patient/_lib/settings"
+import type { Allergy } from "@/lib/api/allergies"
+import type { CareProvider } from "@/lib/api/care-providers"
+import type { HealthHistoryEntry } from "@/lib/api/health-history"
+import type { Medication } from "@/lib/api/medications"
+import type { Vaccination } from "@/lib/api/vaccinations"
 
 export type MedicalRecordsSummary = {
   profile: PatientProfile
@@ -37,20 +11,23 @@ export type MedicalRecordsSummary = {
   allergies: Allergy[]
   healthHistory: HealthHistoryEntry[]
   vaccinations: Vaccination[]
-  labResults: LabResult[]
-  imagingResults: ImagingResult[]
   careProviders: CareProvider[]
 }
 
-export function getMedicalRecordsSummary(): MedicalRecordsSummary {
+export function getMedicalRecordsSummary(
+  profile: PatientProfile,
+  careProviders: CareProvider[] = [],
+  medications: Medication[] = [],
+  allergies: Allergy[] = [],
+  healthHistory: HealthHistoryEntry[] = [],
+  vaccinations: Vaccination[] = []
+): MedicalRecordsSummary {
   return {
-    profile: getProfileFromStorage(),
-    medications: getMedicationsFromStorage(),
-    allergies: getAllergiesFromStorage(),
-    healthHistory: getHealthHistoryFromStorage(),
-    vaccinations: getVaccinationsFromStorage(),
-    labResults: getLabResultsFromStorage(),
-    imagingResults: getImagingResultsFromStorage(),
-    careProviders: getCareProvidersFromStorage(),
+    profile,
+    medications,
+    allergies,
+    healthHistory,
+    vaccinations,
+    careProviders,
   }
 }

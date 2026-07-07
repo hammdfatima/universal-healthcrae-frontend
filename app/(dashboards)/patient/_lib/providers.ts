@@ -1,12 +1,8 @@
 import { z } from "zod"
 
-export type CareProvider = {
-  id: string
-  name: string
-  phone: string
-  email: string
-  clinicDetails: string
-}
+import type { CareProvider } from "@/lib/api/care-providers"
+
+export type { CareProvider }
 
 export const careProviderSchema = z.object({
   name: z.string().min(1, "Provider name is required."),
@@ -27,32 +23,6 @@ export const careProviderDefaultValues: CareProviderFormValues = {
   clinicDetails: "",
 }
 
-export const initialCareProviders: CareProvider[] = [
-  {
-    id: "1",
-    name: "Dr. Brooklyn Belle",
-    phone: "(555) 214-8890",
-    email: "brooklyn.belle@uhcclinic.com",
-    clinicDetails: "UHC Internal Medicine · 1200 Wellness Ave, Suite 300",
-  },
-  {
-    id: "2",
-    name: "Dr. John Richards",
-    phone: "(555) 903-4412",
-    email: "john.richards@heartcare.com",
-    clinicDetails: "HeartCare Associates · 88 Riverside Blvd",
-  },
-  {
-    id: "3",
-    name: "Dr. Jane Mitchell",
-    phone: "(555) 778-1204",
-    email: "",
-    clinicDetails: "Family Health Center · 45 Oak Street",
-  },
-]
-
-export const CARE_PROVIDERS_STORAGE_KEY = "uhc-care-providers"
-
 export function getProviderInitials(name: string): string {
   const parts = name
     .replace(/^dr\.?\s+/i, "")
@@ -65,43 +35,19 @@ export function getProviderInitials(name: string): string {
   return `${parts[0][0] ?? ""}${parts.at(-1)?.[0] ?? ""}`.toUpperCase()
 }
 
-export function getCareProvidersFromStorage(): CareProvider[] {
-  if (typeof window === "undefined") return initialCareProviders
-
-  try {
-    const stored = localStorage.getItem(CARE_PROVIDERS_STORAGE_KEY)
-    if (!stored) return initialCareProviders
-    return JSON.parse(stored) as CareProvider[]
-  } catch {
-    return initialCareProviders
-  }
-}
-
-export function saveCareProvidersToStorage(providers: CareProvider[]) {
-  localStorage.setItem(CARE_PROVIDERS_STORAGE_KEY, JSON.stringify(providers))
-}
-
-export function getCareProviderById(id: string): CareProvider | undefined {
-  return getCareProvidersFromStorage().find((provider) => provider.id === id)
-}
-
 export function careProviderToFormValues(
   provider: CareProvider
 ): CareProviderFormValues {
   return {
     name: provider.name,
     phone: provider.phone,
-    email: provider.email,
-    clinicDetails: provider.clinicDetails,
+    email: provider.email ?? "",
+    clinicDetails: provider.clinicDetails ?? "",
   }
 }
 
-export function formValuesToCareProvider(
-  values: CareProviderFormValues,
-  id: string
-): CareProvider {
+export function formValuesToPayload(values: CareProviderFormValues) {
   return {
-    id,
     name: values.name.trim(),
     phone: values.phone.trim(),
     email: values.email.trim(),
@@ -109,18 +55,21 @@ export function formValuesToCareProvider(
   }
 }
 
-export function formatOptionalEmail(email: string): string {
-  return email.trim() || "—"
+export function formatOptionalEmail(email: string | null): string {
+  return email?.trim() || "—"
 }
 
-export function truncateClinicDetails(details: string, max = 48): string {
-  if (!details.trim()) return "—"
+export function truncateClinicDetails(
+  details: string | null,
+  max = 48
+): string {
+  if (!details?.trim()) return "—"
   if (details.length <= max) return details
   return `${details.slice(0, max).trim()}…`
 }
 
 export function getProviderSubtitle(provider: CareProvider): string {
-  if (provider.clinicDetails.trim()) {
+  if (provider.clinicDetails?.trim()) {
     return (
       provider.clinicDetails.split("·")[0]?.trim() || provider.clinicDetails
     )

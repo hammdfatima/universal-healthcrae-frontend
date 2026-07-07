@@ -6,7 +6,7 @@ import { useState } from "react"
 
 import {
   formatMedicationEndDate,
-  type Medication,
+  isMedicationActive,
 } from "@/app/(dashboards)/patient/_lib/medications"
 import {
   AlertDialog,
@@ -28,13 +28,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { Medication } from "@/lib/api/medications"
 
 type MedicationDetailsDialogProps = {
   medication: Medication | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (medication: Medication) => void
+  isDeleting?: boolean
 }
 
 export default function MedicationDetailsDialog({
@@ -42,13 +43,13 @@ export default function MedicationDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: MedicationDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!medication) return null
 
-  const isActive = !medication.endDate
+  const isActive = isMedicationActive(medication.endDate)
 
   return (
     <>
@@ -140,11 +141,11 @@ export default function MedicationDetailsDialog({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(medication)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Medication deleted.")
               }}
             >
               Delete

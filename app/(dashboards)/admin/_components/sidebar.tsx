@@ -5,6 +5,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   Settings,
   Tags,
   Users,
@@ -45,6 +46,11 @@ const managementNav: NavItem[] = [
     icon: Tags,
   },
   { label: "Payments", href: "/admin/payments" as Route, icon: CreditCard },
+  {
+    label: "User Queries",
+    href: "/admin/user-queries" as Route,
+    icon: MessageSquare,
+  },
 ]
 
 const accountNav: NavItem[] = [

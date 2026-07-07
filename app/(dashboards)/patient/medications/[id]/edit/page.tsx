@@ -1,36 +1,64 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useParams, useRouter } from "next/navigation"
+import { useMemo } from "react"
 
 import {
-  formValuesToMedication,
-  getMedicationById,
-  getMedicationsFromStorage,
-  type Medication,
+  formValuesToPayload,
   type MedicationFormValues,
   medicationToFormValues,
-  saveMedicationsToStorage,
 } from "@/app/(dashboards)/patient/_lib/medications"
 import MedicationForm from "@/app/(dashboards)/patient/medications/_components/medication-form"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  MEDICATIONS_API,
+  MEDICATIONS_QUERY_KEYS,
+  type MedicationsListResponse,
+  type UpdateMedicationPayload,
+} from "@/lib/api/medications"
 
 export default function EditMedicationPage() {
   const params = useParams<{ id: string }>()
-  const [medication, setMedication] = useState<Medication | null>(null)
+  const router = useRouter()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    setMedication(getMedicationById(params.id) ?? null)
-  }, [params.id])
+  const { data, isLoading } = useFetch<MedicationsListResponse>({
+    path: MEDICATIONS_API.list,
+    queryKey: MEDICATIONS_QUERY_KEYS.list,
+  })
+
+  const medication = useMemo(
+    () => data?.medications.find((item) => item.id === params.id) ?? null,
+    [data?.medications, params.id]
+  )
+
+  const { onRequest: updateMedication, isPending } =
+    useApi<UpdateMedicationPayload>({
+      key: "update-medication",
+      method: "patch",
+    })
 
   function handleSubmit(values: MedicationFormValues) {
     if (!medication) return
 
-    const medications = getMedicationsFromStorage()
-    const updated = formValuesToMedication(values, medication.id)
-    saveMedicationsToStorage(
-      medications.map((item) => (item.id === medication.id ? updated : item))
-    )
+    updateMedication({
+      path: MEDICATIONS_API.update(medication.id),
+      data: formValuesToPayload(values),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: MEDICATIONS_QUERY_KEYS.list,
+        })
+        router.push("/patient/medications")
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <Loader variant="full-page" label="Loading medication..." />
   }
 
   if (!medication) {
@@ -51,6 +79,7 @@ export default function EditMedicationPage() {
       description={`Update details for ${medication.medicineName}.`}
       defaultValues={medicationToFormValues(medication)}
       submitLabel="Save Changes"
+      isSubmitting={isPending}
       onSubmit={handleSubmit}
     />
   )

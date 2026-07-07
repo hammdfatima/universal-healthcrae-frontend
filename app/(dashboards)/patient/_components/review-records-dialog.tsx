@@ -4,13 +4,11 @@ import {
   Activity,
   AlertTriangle,
   Download,
-  FlaskConical,
   History,
-  ScanLine,
   Stethoscope,
   Syringe,
 } from "lucide-react"
-import { type ComponentType, type ReactNode, useEffect, useState } from "react"
+import { type ComponentType, type ReactNode, useMemo } from "react"
 
 import { downloadMedicalRecordsPdf } from "@/app/(dashboards)/patient/_lib/download-medical-records-pdf"
 import {
@@ -30,7 +28,40 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  ALLERGIES_API,
+  ALLERGIES_QUERY_KEYS,
+  type AllergiesListResponse,
+} from "@/lib/api/allergies"
+import {
+  CARE_PROVIDERS_API,
+  CARE_PROVIDERS_QUERY_KEYS,
+  type CareProvidersListResponse,
+} from "@/lib/api/care-providers"
+import {
+  HEALTH_HISTORY_API,
+  HEALTH_HISTORY_QUERY_KEYS,
+  type HealthHistoryListResponse,
+} from "@/lib/api/health-history"
+import {
+  MEDICATIONS_API,
+  MEDICATIONS_QUERY_KEYS,
+  type MedicationsListResponse,
+} from "@/lib/api/medications"
+import {
+  apiProfileToPatientProfile,
+  PATIENT_PROFILE_API,
+  PATIENT_PROFILE_QUERY_KEYS,
+  type PatientProfileResponse,
+} from "@/lib/api/patient-profile"
+import {
+  VACCINATIONS_API,
+  VACCINATIONS_QUERY_KEYS,
+  type VaccinationsListResponse,
+} from "@/lib/api/vaccinations"
 import { cn } from "@/lib/utils"
 
 type ReviewRecordsDialogProps = {
@@ -42,29 +73,72 @@ export default function ReviewRecordsDialog({
   open,
   onOpenChange,
 }: ReviewRecordsDialogProps) {
-  const [summary, setSummary] = useState<MedicalRecordsSummary | null>(null)
+  const profileQuery = useFetch<PatientProfileResponse>({
+    path: PATIENT_PROFILE_API.get,
+    queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
+    enabled: open,
+  })
+  const careProvidersQuery = useFetch<CareProvidersListResponse>({
+    path: CARE_PROVIDERS_API.list,
+    queryKey: CARE_PROVIDERS_QUERY_KEYS.list,
+    enabled: open,
+  })
+  const medicationsQuery = useFetch<MedicationsListResponse>({
+    path: MEDICATIONS_API.list,
+    queryKey: MEDICATIONS_QUERY_KEYS.list,
+    enabled: open,
+  })
+  const allergiesQuery = useFetch<AllergiesListResponse>({
+    path: ALLERGIES_API.list,
+    queryKey: ALLERGIES_QUERY_KEYS.list,
+    enabled: open,
+  })
+  const healthHistoryQuery = useFetch<HealthHistoryListResponse>({
+    path: HEALTH_HISTORY_API.list,
+    queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+    enabled: open,
+  })
+  const vaccinationsQuery = useFetch<VaccinationsListResponse>({
+    path: VACCINATIONS_API.list,
+    queryKey: VACCINATIONS_QUERY_KEYS.list,
+    enabled: open,
+  })
 
-  useEffect(() => {
-    if (open) {
-      setSummary(getMedicalRecordsSummary())
+  const isLoading =
+    profileQuery.isLoading ||
+    careProvidersQuery.isLoading ||
+    medicationsQuery.isLoading ||
+    allergiesQuery.isLoading ||
+    healthHistoryQuery.isLoading ||
+    vaccinationsQuery.isLoading
+
+  const summary = useMemo<MedicalRecordsSummary | null>(() => {
+    if (!open || isLoading || !profileQuery.data) {
+      return null
     }
-  }, [open])
 
-  if (!summary) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Medical Records Summary</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+    return getMedicalRecordsSummary(
+      apiProfileToPatientProfile(profileQuery.data),
+      careProvidersQuery.data?.providers ?? [],
+      medicationsQuery.data?.medications ?? [],
+      allergiesQuery.data?.allergies ?? [],
+      healthHistoryQuery.data?.entries ?? [],
+      vaccinationsQuery.data?.vaccinations ?? []
     )
-  }
+  }, [
+    allergiesQuery.data?.allergies,
+    careProvidersQuery.data?.providers,
+    healthHistoryQuery.data?.entries,
+    isLoading,
+    medicationsQuery.data?.medications,
+    open,
+    profileQuery.data,
+    vaccinationsQuery.data?.vaccinations,
+  ])
 
-  const { profile } = summary
-  const displayName = getProfileDisplayName(profile)
-  const initials = getProviderInitials(displayName)
+  const { profile } = summary ?? { profile: null }
+  const displayName = profile ? getProfileDisplayName(profile) : ""
+  const initials = displayName ? getProviderInitials(displayName) : ""
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,179 +151,160 @@ export default function ReviewRecordsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="thin-scrollbar space-y-6 overflow-y-auto px-6 py-5">
-          <section className="flex items-center gap-4 rounded-2xl border border-border/60 bg-muted/30 p-4">
-            <Avatar className="size-16 border-2 border-background shadow-sm">
-              {profile.profileImage ? (
-                <AvatarImage src={profile.profileImage} alt={displayName} />
-              ) : null}
-              <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <Typography variant="h4">{displayName}</Typography>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {profile.bloodGroup ? (
-                  <Badge variant="outline" className="rounded-full">
-                    Blood: {profile.bloodGroup}
-                  </Badge>
-                ) : null}
-                {profile.dateOfBirth ? (
-                  <Badge variant="outline" className="rounded-full">
-                    DOB: {profile.dateOfBirth}
-                  </Badge>
-                ) : null}
-                {profile.gender ? (
-                  <Badge variant="outline" className="rounded-full">
-                    {profile.gender}
-                  </Badge>
-                ) : null}
-              </div>
-              <Typography variant="muted" className="mt-2 text-sm">
-                {profile.phone} · {profile.email}
-              </Typography>
-              {profile.address ? (
-                <Typography variant="muted" className="mt-1 text-sm">
-                  {profile.address}
-                </Typography>
-              ) : null}
+        {isLoading ? (
+          <Loader label="Loading medical records..." className="py-16" />
+        ) : summary && profile ? (
+          <>
+            <div className="thin-scrollbar space-y-6 overflow-y-auto px-6 py-5">
+              <section className="flex items-center gap-4 rounded-2xl border border-border/60 bg-muted/30 p-4">
+                <Avatar className="size-16 border-2 border-background shadow-sm">
+                  {profile.profileImage ? (
+                    <AvatarImage src={profile.profileImage} alt={displayName} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <Typography variant="h4">{displayName}</Typography>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {profile.bloodGroup ? (
+                      <Badge variant="outline" className="rounded-full">
+                        Blood: {profile.bloodGroup}
+                      </Badge>
+                    ) : null}
+                    {profile.dateOfBirth ? (
+                      <Badge variant="outline" className="rounded-full">
+                        DOB: {profile.dateOfBirth}
+                      </Badge>
+                    ) : null}
+                    {profile.gender ? (
+                      <Badge variant="outline" className="rounded-full">
+                        {profile.gender}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <Typography variant="muted" className="mt-2 text-sm">
+                    {profile.phone} · {profile.email}
+                  </Typography>
+                  {profile.address ? (
+                    <Typography variant="muted" className="mt-1 text-sm">
+                      {profile.address}
+                    </Typography>
+                  ) : null}
+                </div>
+              </section>
+
+              <RecordSection
+                icon={AlertTriangle}
+                title="Known Allergies"
+                accent="text-destructive"
+                emptyText="No allergies recorded."
+              >
+                {summary.allergies.map((allergy) => (
+                  <RecordItem
+                    key={allergy.id}
+                    title={`${allergy.allergyType} allergy`}
+                    badge={allergy.nature}
+                    badgeVariant={
+                      allergy.nature === "Severe" ||
+                      allergy.nature === "Very Severe"
+                        ? "destructive"
+                        : "secondary"
+                    }
+                    description={allergy.symptoms.join(", ")}
+                    meta={
+                      allergy.triggers.length > 0
+                        ? `Triggers: ${allergy.triggers.join(", ")}`
+                        : undefined
+                    }
+                  />
+                ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={Activity}
+                title="Medications"
+                emptyText="No medications recorded."
+              >
+                {summary.medications.map((med) => (
+                  <RecordItem
+                    key={med.id}
+                    title={med.medicineName}
+                    badge={med.dosage}
+                    description={`${med.condition} · Prescribed by ${med.prescribedBy}`}
+                    meta={`Started ${med.startDate}${med.endDate ? ` · Ends ${med.endDate}` : ""}`}
+                  />
+                ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={History}
+                title="Health History"
+                emptyText="No health history recorded."
+              >
+                {summary.healthHistory.map((entry) => (
+                  <RecordItem
+                    key={entry.id}
+                    title={entry.illnessName}
+                    description={entry.details}
+                    meta={`Diagnosed ${entry.diagnosisDate} · ${entry.prescribedBy}`}
+                  />
+                ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={Syringe}
+                title="Immunizations"
+                emptyText="No vaccinations recorded."
+              >
+                {summary.vaccinations.map((vax) => (
+                  <RecordItem
+                    key={vax.id}
+                    title={vax.vaccineName}
+                    badge={vax.dosage}
+                    description={`Administered by ${vax.administeredBy}`}
+                    meta={`${vax.date} at ${vax.time}`}
+                  />
+                ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={Stethoscope}
+                title="Care Providers"
+                emptyText="No care providers recorded."
+              >
+                {summary.careProviders.map((provider) => (
+                  <RecordItem
+                    key={provider.id}
+                    title={provider.name}
+                    description={provider.clinicDetails || "—"}
+                    meta={[provider.phone, provider.email]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  />
+                ))}
+              </RecordSection>
             </div>
-          </section>
 
-          <RecordSection
-            icon={AlertTriangle}
-            title="Known Allergies"
-            accent="text-destructive"
-            emptyText="No allergies recorded."
-          >
-            {summary.allergies.map((allergy) => (
-              <RecordItem
-                key={allergy.id}
-                title={`${allergy.allergyType} allergy`}
-                badge={allergy.nature}
-                badgeVariant={
-                  allergy.nature === "Severe" ||
-                  allergy.nature === "Very Severe"
-                    ? "destructive"
-                    : "secondary"
-                }
-                description={allergy.symptoms.join(", ")}
-                meta={
-                  allergy.triggers.length > 0
-                    ? `Triggers: ${allergy.triggers.join(", ")}`
-                    : undefined
-                }
-              />
-            ))}
-          </RecordSection>
-
-          <RecordSection
-            icon={Activity}
-            title="Medications"
-            emptyText="No medications recorded."
-          >
-            {summary.medications.map((med) => (
-              <RecordItem
-                key={med.id}
-                title={med.medicineName}
-                badge={med.dosage}
-                description={`${med.condition} · Prescribed by ${med.prescribedBy}`}
-                meta={`Started ${med.startDate}${med.endDate ? ` · Ends ${med.endDate}` : ""}`}
-              />
-            ))}
-          </RecordSection>
-
-          <RecordSection
-            icon={History}
-            title="Health History"
-            emptyText="No health history recorded."
-          >
-            {summary.healthHistory.map((entry) => (
-              <RecordItem
-                key={entry.id}
-                title={entry.illnessName}
-                description={entry.details}
-                meta={`Diagnosed ${entry.diagnosisDate} · ${entry.prescribedBy}`}
-              />
-            ))}
-          </RecordSection>
-
-          <RecordSection
-            icon={Syringe}
-            title="Immunizations"
-            emptyText="No vaccinations recorded."
-          >
-            {summary.vaccinations.map((vax) => (
-              <RecordItem
-                key={vax.id}
-                title={vax.vaccineName}
-                badge={vax.dosage}
-                description={`Administered by ${vax.administeredBy}`}
-                meta={`${vax.date} at ${vax.time}`}
-              />
-            ))}
-          </RecordSection>
-
-          <RecordSection
-            icon={FlaskConical}
-            title="Laboratory"
-            emptyText="No lab results recorded."
-          >
-            {summary.labResults.map((lab) => (
-              <RecordItem
-                key={lab.id}
-                title={lab.testType}
-                description={lab.fileName}
-                meta={lab.testDate}
-              />
-            ))}
-          </RecordSection>
-
-          <RecordSection
-            icon={ScanLine}
-            title="Imaging"
-            emptyText="No imaging records."
-          >
-            {summary.imagingResults.map((scan) => (
-              <RecordItem
-                key={scan.id}
-                title={scan.scanType}
-                badge={scan.testType}
-                description={scan.fileName}
-                meta={scan.scanDate}
-              />
-            ))}
-          </RecordSection>
-
-          <RecordSection
-            icon={Stethoscope}
-            title="Care Providers"
-            emptyText="No care providers recorded."
-          >
-            {summary.careProviders.map((provider) => (
-              <RecordItem
-                key={provider.id}
-                title={provider.name}
-                description={provider.clinicDetails || "—"}
-                meta={[provider.phone, provider.email]
-                  .filter(Boolean)
-                  .join(" · ")}
-              />
-            ))}
-          </RecordSection>
-        </div>
-
-        <DialogFooter className="border-t border-border/60 px-6 py-4 sm:justify-end">
-          <Button
-            type="button"
-            className="gap-1.5"
-            onClick={() => void downloadMedicalRecordsPdf(summary)}
-          >
-            <Download className="size-4" aria-hidden />
-            Download PDF
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="border-t border-border/60 px-6 py-4 sm:justify-end">
+              <Button
+                type="button"
+                className="gap-1.5"
+                onClick={() => void downloadMedicalRecordsPdf(summary)}
+              >
+                <Download className="size-4" aria-hidden />
+                Download PDF
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <div className="px-6 py-12 text-center">
+            <Typography variant="muted">
+              Unable to load medical records. Please try again.
+            </Typography>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

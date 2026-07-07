@@ -1,15 +1,17 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
+import type { Route } from "next"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import { downloadPatientDataExport } from "@/app/(dashboards)/patient/_lib/download-patient-data"
 import {
   type AccountSettings,
   initialAccountSettings,
 } from "@/app/(dashboards)/patient/_lib/settings"
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -20,24 +22,34 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
+import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import useToast from "@/hooks/use-toast"
 import {
+  type DeleteAccountPayload,
   PATIENT_SETTINGS_API,
   PATIENT_SETTINGS_QUERY_KEYS,
   type PatientSettings,
   type UpdateAccountPayload,
 } from "@/lib/api/patient-settings"
 
+const DELETE_CONFIRMATION_TEXT = "DELETE"
+
 export default function AccountTab() {
+  const router = useRouter()
   const queryClient = useQueryClient()
-  const { toastSuccess } = useToast()
+  const { logout } = useAuth()
+  const { toastSuccess, toastError } = useToast()
   const [settings, setSettings] = useState<AccountSettings>(
     initialAccountSettings
   )
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState("")
+  const [isExporting, setIsExporting] = useState(false)
 
   const { data, isLoading, isError, error, refetch } =
     useFetch<PatientSettings>({
@@ -51,10 +63,23 @@ export default function AccountTab() {
       method: "patch",
     })
 
+  const { onRequest: deleteAccount, isPending: isDeleting } =
+    useApi<DeleteAccountPayload>({
+      key: "delete-patient-account",
+      method: "post",
+      showSuccessToast: false,
+    })
+
   useEffect(() => {
     if (!data?.account) return
     setSettings(data.account)
   }, [data])
+
+  useEffect(() => {
+    if (!deleteOpen) {
+      setDeleteConfirmation("")
+    }
+  }, [deleteOpen])
 
   function updateSettings(next: AccountSettings) {
     const previous = settings
@@ -74,6 +99,38 @@ export default function AccountTab() {
       },
     })
   }
+
+  async function handleExportData() {
+    setIsExporting(true)
+
+    try {
+      await downloadPatientDataExport()
+      toastSuccess("Your health data has been downloaded.")
+    } catch {
+      toastError("Failed to export your data. Please try again.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  function handleDeleteAccount() {
+    if (deleteConfirmation !== DELETE_CONFIRMATION_TEXT) {
+      return
+    }
+
+    deleteAccount({
+      path: PATIENT_SETTINGS_API.deleteAccount,
+      data: { confirmation: DELETE_CONFIRMATION_TEXT },
+      onSuccess: () => {
+        setDeleteOpen(false)
+        toastSuccess("Your account has been permanently deleted.")
+        logout("/" as Route)
+        router.replace("/" as Route)
+      },
+    })
+  }
+
+  const canDeleteAccount = deleteConfirmation === DELETE_CONFIRMATION_TEXT
 
   if (isLoading) {
     return (
@@ -134,34 +191,36 @@ export default function AccountTab() {
                 Email notifications
               </Typography>
               <Typography variant="muted" className="mt-0.5 text-sm">
-                Receive updates about appointments, records, and account
-                activity.
+                Receive email updates about sign-ins, billing, support replies,
+                and account activity. Verification and password reset codes are
+                always sent.
               </Typography>
             </span>
           </label>
 
           <label
-            htmlFor="marketing-emails"
+            htmlFor="in-app-notifications"
             className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-muted/20 px-4 py-3"
           >
             <Checkbox
-              id="marketing-emails"
-              checked={settings.marketingEmails}
+              id="in-app-notifications"
+              checked={settings.inAppNotifications}
               className="mt-0.5"
               disabled={isSaving}
               onCheckedChange={(checked) =>
                 updateSettings({
                   ...settings,
-                  marketingEmails: checked === true,
+                  inAppNotifications: checked === true,
                 })
               }
             />
             <span>
               <Typography variant="small" className="font-medium">
-                Product updates and tips
+                In-app notifications
               </Typography>
               <Typography variant="muted" className="mt-0.5 text-sm">
-                Get occasional emails about new features and health record tips.
+                Receive alerts in your dashboard about sign-ins, medications,
+                vaccinations, lab results, imaging, and care providers.
               </Typography>
             </span>
           </label>
@@ -180,14 +239,13 @@ export default function AccountTab() {
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              toastSuccess("Your data export will be emailed shortly.")
-            }
+            disabled={isExporting}
+            onClick={() => void handleExportData()}
           >
-            Export My Data
+            {isExporting ? <Loader variant="button" /> : "Export My Data"}
           </Button>
 
-          <AlertDialog>
+          <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <AlertDialogTrigger asChild>
               <Button type="button" variant="destructive">
                 Delete Account
@@ -197,22 +255,45 @@ export default function AccountTab() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete your account?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action permanently removes your profile and health
-                  records. This cannot be undone.
+                  This permanently removes your profile, health records, and any
+                  family member accounts linked to your plan. This cannot be
+                  undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() =>
-                    toastSuccess(
-                      "Account deletion request received. Our team will contact you."
-                    )
+
+              <div className="space-y-2 px-1">
+                <Typography variant="small" className="font-medium">
+                  Type{" "}
+                  <span className="font-mono">{DELETE_CONFIRMATION_TEXT}</span>{" "}
+                  to confirm
+                </Typography>
+                <Input
+                  value={deleteConfirmation}
+                  onChange={(event) =>
+                    setDeleteConfirmation(event.target.value)
                   }
+                  placeholder={DELETE_CONFIRMATION_TEXT}
+                  autoComplete="off"
+                  disabled={isDeleting}
+                />
+              </div>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>
+                  Cancel
+                </AlertDialogCancel>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={!canDeleteAccount || isDeleting}
+                  onClick={handleDeleteAccount}
                 >
-                  Delete Account
-                </AlertDialogAction>
+                  {isDeleting ? (
+                    <Loader variant="button" color="white" />
+                  ) : (
+                    "Delete Account"
+                  )}
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

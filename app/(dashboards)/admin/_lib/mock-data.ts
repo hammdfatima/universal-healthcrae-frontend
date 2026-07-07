@@ -71,8 +71,3 @@ export const adminUsers: AdminUser[] = [
     joined: "Dec 22, 2024",
   },
 ]
-
-export {
-  type AdminPayment,
-  initialAdminPayments as adminPayments,
-} from "@/app/(dashboards)/admin/_lib/payments"

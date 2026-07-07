@@ -213,7 +213,7 @@ export function DataTable<T extends Record<string, unknown>>({
               onValueChange={(value) => handleFilterChange(filter.id, value)}
             >
               <SelectTrigger
-                className="h-10 w-full min-w-[160px] sm:w-[200px]"
+                className="h-10 w-full min-w-[160px] sm:w-[250px]"
                 aria-label={filter.label}
               >
                 <SelectValue placeholder={filter.placeholder ?? filter.label} />

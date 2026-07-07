@@ -6,8 +6,8 @@ import { useState } from "react"
 
 import {
   ALLERGY_TYPE_FOOD,
-  type Allergy,
   formatTriggersList,
+  getNatureBadgeOutlineClass,
 } from "@/app/(dashboards)/patient/_lib/allergies"
 import {
   AlertDialog,
@@ -29,7 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { Allergy } from "@/lib/api/allergies"
 import { cn } from "@/lib/utils"
 
 type AllergyDetailsDialogProps = {
@@ -37,16 +37,7 @@ type AllergyDetailsDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (allergy: Allergy) => void
-}
-
-function getNatureBadgeClass(nature: string) {
-  if (nature === "Very Severe" || nature === "Severe") {
-    return "bg-destructive/10 text-destructive border-destructive/20"
-  }
-  if (nature === "Moderate") {
-    return "bg-amber-100 text-amber-800 border-amber-200"
-  }
-  return "bg-muted text-muted-foreground border-border"
+  isDeleting?: boolean
 }
 
 export default function AllergyDetailsDialog({
@@ -54,8 +45,8 @@ export default function AllergyDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: AllergyDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!allergy) return null
@@ -80,7 +71,7 @@ export default function AllergyDetailsDialog({
                   variant="outline"
                   className={cn(
                     "mt-2 rounded-full",
-                    getNatureBadgeClass(allergy.nature)
+                    getNatureBadgeOutlineClass(allergy.nature)
                   )}
                 >
                   {allergy.nature}
@@ -142,11 +133,11 @@ export default function AllergyDetailsDialog({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(allergy)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Allergy deleted.")
               }}
             >
               Delete

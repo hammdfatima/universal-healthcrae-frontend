@@ -18,6 +18,7 @@ type DatePickerFieldProps = {
   placeholder?: string
   disabled?: boolean
   id?: string
+  maxDate?: Date
 }
 
 export default function DatePickerField({
@@ -26,6 +27,7 @@ export default function DatePickerField({
   placeholder = "MM/DD/YYYY",
   disabled,
   id,
+  maxDate,
 }: DatePickerFieldProps) {
   return (
     <Popover>
@@ -50,6 +52,7 @@ export default function DatePickerField({
           selected={value}
           onSelect={onChange}
           defaultMonth={value}
+          disabled={maxDate ? { after: maxDate } : undefined}
         />
       </PopoverContent>
     </Popover>

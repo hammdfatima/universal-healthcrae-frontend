@@ -1,5 +1,5 @@
 import type { Route } from "next"
-
+import { touchActivity } from "@/lib/auth/activity"
 import { AUTH_STORAGE_KEYS } from "@/lib/auth/constants"
 import { dispatchAuthSessionChange } from "@/lib/auth/events"
 import { isAccessTokenExpired } from "@/lib/auth/token"
@@ -57,6 +57,7 @@ export function setAuthSession(token: string, user: AuthUser) {
 
   localStorage.setItem(AUTH_STORAGE_KEYS.token, token)
   localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user))
+  touchActivity()
   dispatchAuthSessionChange()
 }
 

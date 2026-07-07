@@ -10,8 +10,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-
-import type { CareProvider } from "@/app/(dashboards)/patient/_lib/providers"
 import {
   formatOptionalEmail,
   getProviderInitials,
@@ -36,13 +34,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { CareProvider } from "@/lib/api/care-providers"
 
 type CareProviderDetailsDialogProps = {
   provider: CareProvider | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (provider: CareProvider) => void
+  isDeleting?: boolean
 }
 
 export default function CareProviderDetailsDialog({
@@ -50,8 +49,8 @@ export default function CareProviderDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: CareProviderDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!provider) return null
@@ -86,7 +85,7 @@ export default function CareProviderDetailsDialog({
             <DetailRow
               icon={Building2}
               label="Clinic Details"
-              value={provider.clinicDetails.trim() || "—"}
+              value={provider.clinicDetails?.trim() || "—"}
             />
           </div>
 
@@ -132,11 +131,11 @@ export default function CareProviderDetailsDialog({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(provider)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Care provider deleted.")
               }}
             >
               Delete

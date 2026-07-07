@@ -1,40 +1,49 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Eye, FlaskConical, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
-import {
-  getLabResultsFromStorage,
-  getTestTypeFilterOptions,
-  initialLabResults,
-  type LabResult,
-  saveLabResultsToStorage,
-} from "@/app/(dashboards)/patient/_lib/lab"
+import { getTestTypeFilterOptions } from "@/app/(dashboards)/patient/_lib/lab"
 import LabResultDetailsDialog from "@/app/(dashboards)/patient/lab/_components/lab-result-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { LabResult } from "@/lib/api/lab-results"
+import {
+  LAB_RESULTS_API,
+  LAB_RESULTS_QUERY_KEYS,
+  type LabResultsListResponse,
+} from "@/lib/api/lab-results"
 
 export default function LabResultsTable() {
   const router = useRouter()
-  const [results, setResults] = useState<LabResult[]>(initialLabResults)
+  const queryClient = useQueryClient()
   const [selectedResult, setSelectedResult] = useState<LabResult | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setResults(getLabResultsFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<LabResultsListResponse>({
+      path: LAB_RESULTS_API.list,
+      queryKey: LAB_RESULTS_QUERY_KEYS.list,
+    })
+
+  const results = data?.labResults ?? []
 
   const testTypeOptions = useMemo(
     () => getTestTypeFilterOptions(results),
     [results]
   )
 
-  function updateResults(next: LabResult[]) {
-    setResults(next)
-    saveLabResultsToStorage(next)
-  }
+  const { onRequest: deleteLabResult, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-lab-result",
+    method: "delete",
+  })
 
   function openDetails(result: LabResult) {
     setSelectedResult(result)
@@ -42,8 +51,17 @@ export default function LabResultsTable() {
   }
 
   function handleDelete(result: LabResult) {
-    updateResults(results.filter((item) => item.id !== result.id))
-    setSelectedResult(null)
+    deleteLabResult({
+      path: LAB_RESULTS_API.delete(result.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: LAB_RESULTS_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedResult(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<LabResult>[] = [
@@ -101,6 +119,11 @@ export default function LabResultsTable() {
         data={results}
         getRowId={(row) => row.id}
         searchPlaceholder="Search lab results..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={
           testTypeOptions.length > 0
             ? [
@@ -127,6 +150,7 @@ export default function LabResultsTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

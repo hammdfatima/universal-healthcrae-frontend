@@ -1,10 +1,14 @@
 "use client"
 
-import { FileImage, FileText, FileUp, Replace, Upload, X } from "lucide-react"
-import { useRef, useState } from "react"
+import { FileUp, Replace, Upload, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
+import FilePreviewCard from "@/components/file-preview-card"
+import FilePreviewDialog from "@/components/file-preview-dialog"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import { formatFileSize, MAX_FILE_SIZE_BYTES } from "@/lib/api/files"
+import { resolvePreviewSource } from "@/lib/file-preview"
 import { cn } from "@/lib/utils"
 
 export type UploadedFileValue = {
@@ -16,6 +20,7 @@ export type UploadedFileValue = {
 type FileUploadFieldProps = {
   value?: UploadedFileValue | null
   onChange: (file: UploadedFileValue | null) => void
+  onFileSelect?: (file: File | null) => void
   accept?: string
   disabled?: boolean
   id?: string
@@ -23,19 +28,32 @@ type FileUploadFieldProps = {
   description?: string
   hint?: string
   uploadedHint?: string
+  maxSizeBytes?: number
 }
 
-function getFileExtension(fileName: string): string {
-  const parts = fileName.split(".")
-  if (parts.length < 2) return "FILE"
-  return parts.at(-1)?.toUpperCase() ?? "FILE"
+function isPdfFile(file: File): boolean {
+  return (
+    file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
+  )
 }
 
-function isImageFile(mimeType: string): boolean {
-  return mimeType.startsWith("image/")
-}
+function readFile(
+  file: File,
+  onChange: (value: UploadedFileValue) => void,
+  localFileSentinel: string,
+  onObjectUrl: (url: string | null) => void
+) {
+  if (isPdfFile(file)) {
+    onObjectUrl(URL.createObjectURL(file))
+    onChange({
+      fileData: localFileSentinel,
+      fileName: file.name,
+      fileMimeType: file.type || "application/pdf",
+    })
+    return
+  }
 
-function readFile(file: File, onChange: (value: UploadedFileValue) => void) {
+  onObjectUrl(null)
   const reader = new FileReader()
   reader.onload = () => {
     onChange({
@@ -50,6 +68,7 @@ function readFile(file: File, onChange: (value: UploadedFileValue) => void) {
 export default function FileUploadField({
   value,
   onChange,
+  onFileSelect,
   accept = ".pdf,.png,.jpg,.jpeg,.webp",
   disabled,
   id,
@@ -57,13 +76,44 @@ export default function FileUploadField({
   description = "Drag and drop your file here, or browse from your device",
   hint = "Supports PDF, PNG, JPG, and WEBP",
   uploadedHint = "Ready to save with this record",
-}: FileUploadFieldProps) {
+  maxSizeBytes = MAX_FILE_SIZE_BYTES,
+  localFileSentinel = "local-file-selected",
+}: FileUploadFieldProps & { localFileSentinel?: string }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [objectUrl, setObjectUrl] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [sizeError, setSizeError] = useState<string | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  function revokeObjectUrl(url: string | null) {
+    if (url?.startsWith("blob:")) {
+      URL.revokeObjectURL(url)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (objectUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [objectUrl])
 
   function handleSelectedFile(file: File | undefined) {
     if (!file || disabled) return
-    readFile(file, onChange)
+
+    if (file.size > maxSizeBytes) {
+      setSizeError(
+        `File is too large (${formatFileSize(file.size)}). Maximum size is ${formatFileSize(maxSizeBytes)}.`
+      )
+      onFileSelect?.(null)
+      return
+    }
+
+    setSizeError(null)
+    revokeObjectUrl(objectUrl)
+    onFileSelect?.(file)
+    readFile(file, onChange, localFileSentinel, setObjectUrl)
   }
 
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -92,6 +142,19 @@ export default function FileUploadField({
     if (!disabled) inputRef.current?.click()
   }
 
+  function clearFile() {
+    revokeObjectUrl(objectUrl)
+    setObjectUrl(null)
+    onChange(null)
+    onFileSelect?.(null)
+    setSizeError(null)
+    setPreviewOpen(false)
+  }
+
+  const previewSource = value
+    ? resolvePreviewSource(value.fileData, localFileSentinel, objectUrl)
+    : null
+
   return (
     <div className="space-y-3 lg:w-[40%] mt-2">
       <input
@@ -105,64 +168,44 @@ export default function FileUploadField({
       />
 
       {value?.fileData ? (
-        <div className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background shadow-sm">
-          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-            {isImageFile(value.fileMimeType) ? (
-              <div className="relative mx-auto size-24 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted sm:mx-0">
-                {/* biome-ignore lint/performance/noImgElement: local data URL preview */}
-                <img
-                  src={value.fileData}
-                  alt={value.fileName}
-                  className="size-full object-cover"
-                />
-              </div>
-            ) : (
-              <span className="mx-auto flex size-16 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary sm:mx-0">
-                {value.fileMimeType === "application/pdf" ? (
-                  <FileText className="size-7" aria-hidden />
-                ) : (
-                  <FileImage className="size-7" aria-hidden />
-                )}
-              </span>
-            )}
+        <div className="space-y-3">
+          <FilePreviewCard
+            fileName={value.fileName}
+            fileMimeType={value.fileMimeType}
+            hint={previewSource ? "Click to preview" : uploadedHint}
+            onClick={previewSource ? () => setPreviewOpen(true) : undefined}
+          />
 
-            <div className="min-w-0 flex-1 text-center sm:text-left">
-              <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                <Typography variant="small" className="truncate font-semibold">
-                  {value.fileName}
-                </Typography>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold tracking-wide text-primary uppercase">
-                  {getFileExtension(value.fileName)}
-                </span>
-              </div>
-              <Typography variant="muted" className="mt-1 text-xs">
-                {uploadedHint}
-              </Typography>
-            </div>
-
-            <div className="flex items-center justify-center gap-2 sm:shrink-0">
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-1.5"
-                disabled={disabled}
-                onClick={openFilePicker}
-              >
-                <Replace className="size-4" aria-hidden />
-                Replace
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="size-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="Remove file"
-                disabled={disabled}
-                onClick={() => onChange(null)}
-              >
-                <X className="size-4" aria-hidden />
-              </Button>
-            </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-1.5"
+              disabled={disabled}
+              onClick={openFilePicker}
+            >
+              <Replace className="size-4" aria-hidden />
+              Replace
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="size-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Remove file"
+              disabled={disabled}
+              onClick={clearFile}
+            >
+              <X className="size-4" aria-hidden />
+            </Button>
           </div>
+
+          <FilePreviewDialog
+            open={previewOpen}
+            onOpenChange={setPreviewOpen}
+            fileName={value.fileName}
+            fileMimeType={value.fileMimeType}
+            fileSource={previewSource}
+          />
         </div>
       ) : (
         <button
@@ -206,10 +249,16 @@ export default function FileUploadField({
           </div>
 
           <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground shadow-xs">
-            {hint}
+            {hint} · Max {formatFileSize(maxSizeBytes)}
           </span>
         </button>
       )}
+
+      {sizeError ? (
+        <Typography variant="muted" className="text-sm text-destructive">
+          {sizeError}
+        </Typography>
+      ) : null}
     </div>
   )
 }

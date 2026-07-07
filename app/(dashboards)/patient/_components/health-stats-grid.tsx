@@ -1,16 +1,25 @@
+"use client"
+
 import type { LucideIcon } from "lucide-react"
 import { Activity, AlertTriangle, FolderOpen, Syringe } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-
-import { healthCounts } from "@/app/(dashboards)/patient/_lib/mock-data"
+import EmptyCard from "@/components/empty-card"
+import ErrorCard from "@/components/error-card"
 import { Card, CardContent } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  type DashboardStatsResponse,
+  PATIENT_DASHBOARD_API,
+  PATIENT_DASHBOARD_QUERY_KEYS,
+} from "@/lib/api/patient-dashboard"
 import { cn } from "@/lib/utils"
 
 type StatCard = {
   label: string
-  value: number
+  countKey: keyof DashboardStatsResponse["counts"]
   detail: string
   href: Route
   icon: LucideIcon
@@ -18,10 +27,10 @@ type StatCard = {
   iconBg: string
 }
 
-const stats: StatCard[] = [
+const statCards: StatCard[] = [
   {
     label: "Medications",
-    value: healthCounts.medications,
+    countKey: "medications",
     detail: "Active prescriptions",
     href: "/patient/medications" as Route,
     icon: Activity,
@@ -30,7 +39,7 @@ const stats: StatCard[] = [
   },
   {
     label: "Allergies",
-    value: healthCounts.allergies,
+    countKey: "allergies",
     detail: "Known sensitivities",
     href: "/patient/allergies" as Route,
     icon: AlertTriangle,
@@ -39,7 +48,7 @@ const stats: StatCard[] = [
   },
   {
     label: "Vaccinations",
-    value: healthCounts.vaccinations,
+    countKey: "vaccinations",
     detail: "Immunization records",
     href: "/patient/vaccinations" as Route,
     icon: Syringe,
@@ -48,9 +57,9 @@ const stats: StatCard[] = [
   },
   {
     label: "Documents",
-    value: healthCounts.documents,
-    detail: "Files in your vault",
-    href: "/patient/documents" as Route,
+    countKey: "documents",
+    detail: "Lab & imaging files",
+    href: "/patient/lab" as Route,
     icon: FolderOpen,
     accent: "from-blue-500/15 to-blue-500/5",
     iconBg: "bg-blue-100 text-blue-700",
@@ -58,10 +67,47 @@ const stats: StatCard[] = [
 ]
 
 export default function HealthStatsGrid() {
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useFetch<DashboardStatsResponse>({
+      path: PATIENT_DASHBOARD_API.stats,
+      queryKey: PATIENT_DASHBOARD_QUERY_KEYS.stats,
+    })
+
+  if (isLoading) {
+    return (
+      <Card className="border-border/60 shadow-sm">
+        <CardContent className="py-10">
+          <Loader label="Loading dashboard stats..." />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isError) {
+    return (
+      <ErrorCard
+        error={error}
+        onRetry={() => refetch()}
+        isLoading={isFetching}
+      />
+    )
+  }
+
+  const counts = data?.counts
+
+  if (!counts) {
+    return (
+      <EmptyCard
+        title="No dashboard stats"
+        description="We could not load your health record counts."
+      />
+    )
+  }
+
   return (
     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {stats.map(
-        ({ label, value, detail, href, icon: Icon, accent, iconBg }) => (
+      {statCards.map(
+        ({ label, countKey, detail, href, icon: Icon, accent, iconBg }) => (
           <li key={label}>
             <Link href={href} className="group block h-full">
               <Card className="h-full overflow-hidden border-border/60 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
@@ -88,7 +134,7 @@ export default function HealthStatsGrid() {
                       variant="h3"
                       className="mt-0.5 leading-tight"
                     >
-                      {value}
+                      {counts[countKey]}
                     </Typography>
                     <Typography variant="muted" className="text-xs">
                       {detail}

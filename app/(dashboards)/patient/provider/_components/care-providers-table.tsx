@@ -1,39 +1,49 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Eye, Plus, UserRound } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import {
-  type CareProvider,
   formatOptionalEmail,
-  getCareProvidersFromStorage,
-  initialCareProviders,
-  saveCareProvidersToStorage,
   truncateClinicDetails,
 } from "@/app/(dashboards)/patient/_lib/providers"
 import CareProviderDetailsDialog from "@/app/(dashboards)/patient/provider/_components/care-provider-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { CareProvider } from "@/lib/api/care-providers"
+import {
+  CARE_PROVIDERS_API,
+  CARE_PROVIDERS_QUERY_KEYS,
+  type CareProvidersListResponse,
+} from "@/lib/api/care-providers"
 
 export default function CareProvidersTable() {
   const router = useRouter()
-  const [providers, setProviders] =
-    useState<CareProvider[]>(initialCareProviders)
+  const queryClient = useQueryClient()
   const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(
     null
   )
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setProviders(getCareProvidersFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<CareProvidersListResponse>({
+      path: CARE_PROVIDERS_API.list,
+      queryKey: CARE_PROVIDERS_QUERY_KEYS.list,
+    })
 
-  function updateProviders(next: CareProvider[]) {
-    setProviders(next)
-    saveCareProvidersToStorage(next)
-  }
+  const providers = data?.providers ?? []
+
+  const { onRequest: deleteCareProvider, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-care-provider",
+    method: "delete",
+  })
 
   function openDetails(provider: CareProvider) {
     setSelectedProvider(provider)
@@ -41,8 +51,17 @@ export default function CareProvidersTable() {
   }
 
   function handleDelete(provider: CareProvider) {
-    updateProviders(providers.filter((item) => item.id !== provider.id))
-    setSelectedProvider(null)
+    deleteCareProvider({
+      path: CARE_PROVIDERS_API.delete(provider.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: CARE_PROVIDERS_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedProvider(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<CareProvider>[] = [
@@ -115,6 +134,11 @@ export default function CareProvidersTable() {
         data={providers}
         getRowId={(row) => row.id}
         searchPlaceholder="Search care providers..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         actions={
           <Button onClick={() => router.push("/patient/provider/new")}>
             <Plus className="size-4" aria-hidden />
@@ -129,6 +153,7 @@ export default function CareProvidersTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

@@ -1,33 +1,42 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Eye, Plus, ScanLine } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
-  getImagingResultsFromStorage,
   getImagingScanTypeFilterOptions,
   getImagingTestTypeFilterOptions,
-  type ImagingResult,
-  initialImagingResults,
-  saveImagingResultsToStorage,
 } from "@/app/(dashboards)/patient/_lib/imaging"
 import ImagingResultDetailsDialog from "@/app/(dashboards)/patient/imaging/_components/imaging-result-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { ImagingResult } from "@/lib/api/imaging-results"
+import {
+  IMAGING_RESULTS_API,
+  IMAGING_RESULTS_QUERY_KEYS,
+  type ImagingResultsListResponse,
+} from "@/lib/api/imaging-results"
 
 export default function ImagingResultsTable() {
   const router = useRouter()
-  const [results, setResults] = useState<ImagingResult[]>(initialImagingResults)
+  const queryClient = useQueryClient()
   const [selectedResult, setSelectedResult] = useState<ImagingResult | null>(
     null
   )
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setResults(getImagingResultsFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<ImagingResultsListResponse>({
+      path: IMAGING_RESULTS_API.list,
+      queryKey: IMAGING_RESULTS_QUERY_KEYS.list,
+    })
+
+  const results = data?.imagingResults ?? []
 
   const testTypeOptions = useMemo(
     () => getImagingTestTypeFilterOptions(results),
@@ -39,10 +48,12 @@ export default function ImagingResultsTable() {
     [results]
   )
 
-  function updateResults(next: ImagingResult[]) {
-    setResults(next)
-    saveImagingResultsToStorage(next)
-  }
+  const { onRequest: deleteImagingResult, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-imaging-result",
+    method: "delete",
+  })
 
   function openDetails(result: ImagingResult) {
     setSelectedResult(result)
@@ -50,8 +61,17 @@ export default function ImagingResultsTable() {
   }
 
   function handleDelete(result: ImagingResult) {
-    updateResults(results.filter((item) => item.id !== result.id))
-    setSelectedResult(null)
+    deleteImagingResult({
+      path: IMAGING_RESULTS_API.delete(result.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: IMAGING_RESULTS_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedResult(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<ImagingResult>[] = [
@@ -139,6 +159,11 @@ export default function ImagingResultsTable() {
         data={results}
         getRowId={(row) => row.id}
         searchPlaceholder="Search imaging records..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={filters}
         actions={
           <Button onClick={() => router.push("/patient/imaging/new")}>
@@ -154,6 +179,7 @@ export default function ImagingResultsTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

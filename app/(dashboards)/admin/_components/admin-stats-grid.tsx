@@ -1,17 +1,37 @@
-import { CreditCard, Tags, TrendingUp, Users } from "lucide-react"
-import Link from "next/link"
+"use client"
 
-import { adminStats } from "@/app/(dashboards)/admin/_lib/mock-data"
+import { CreditCard, Tags, TrendingUp, Users } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
+import EmptyCard from "@/components/empty-card"
+import ErrorCard from "@/components/error-card"
 import { Card, CardContent } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  ADMIN_DASHBOARD_API,
+  ADMIN_DASHBOARD_QUERY_KEYS,
+  type AdminDashboardStatsResponse,
+} from "@/lib/api/admin-dashboard"
 import { cn } from "@/lib/utils"
 
-const stats = [
+type StatCardConfig = {
+  label: string
+  getValue: (counts: AdminDashboardStatsResponse["counts"]) => string
+  detail: string
+  href: Route
+  icon: typeof Users
+  accent: string
+  iconBg: string
+}
+
+const statCards: StatCardConfig[] = [
   {
     label: "Total Users",
-    value: adminStats.totalUsers.toLocaleString(),
+    getValue: (counts) => counts.totalUsers.toLocaleString(),
     detail: "Registered accounts",
-    href: "/admin/users",
+    href: "/admin/users" as Route,
     icon: Users,
     accent:
       "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
@@ -19,9 +39,9 @@ const stats = [
   },
   {
     label: "Active Subscriptions",
-    value: adminStats.activeSubscriptions.toLocaleString(),
+    getValue: (counts) => counts.activeSubscriptions.toLocaleString(),
     detail: "Paying members",
-    href: "/admin/subscription-plans",
+    href: "/admin/subscription-plans" as Route,
     icon: Tags,
     accent:
       "from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20",
@@ -29,9 +49,9 @@ const stats = [
   },
   {
     label: "Monthly Revenue",
-    value: adminStats.monthlyRevenue,
+    getValue: (counts) => counts.monthlyRevenue,
     detail: "Current billing cycle",
-    href: "/admin/payments",
+    href: "/admin/payments" as Route,
     icon: TrendingUp,
     accent:
       "from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20",
@@ -39,21 +59,58 @@ const stats = [
   },
   {
     label: "Payments",
-    value: String(adminStats.paymentsThisMonth),
+    getValue: (counts) => String(counts.paymentsThisMonth),
     detail: "Processed this month",
-    href: "/admin/payments",
+    href: "/admin/payments" as Route,
     icon: CreditCard,
     accent:
       "from-violet-50 to-violet-100/50 dark:from-violet-950/30 dark:to-violet-900/20",
     iconBg: "bg-violet-500/15 text-violet-600",
   },
-] as const
+]
 
 export default function AdminStatsGrid() {
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useFetch<AdminDashboardStatsResponse>({
+      path: ADMIN_DASHBOARD_API.stats,
+      queryKey: ADMIN_DASHBOARD_QUERY_KEYS.stats,
+    })
+
+  if (isLoading) {
+    return (
+      <Card className="border-border/60 shadow-sm">
+        <CardContent className="py-10">
+          <Loader label="Loading dashboard stats..." />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isError) {
+    return (
+      <ErrorCard
+        error={error}
+        onRetry={() => refetch()}
+        isLoading={isFetching}
+      />
+    )
+  }
+
+  const counts = data?.counts
+
+  if (!counts) {
+    return (
+      <EmptyCard
+        title="No dashboard stats"
+        description="We could not load admin dashboard metrics."
+      />
+    )
+  }
+
   return (
     <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {stats.map(
-        ({ label, value, detail, href, icon: Icon, accent, iconBg }) => (
+      {statCards.map(
+        ({ label, getValue, detail, href, icon: Icon, accent, iconBg }) => (
           <li key={label}>
             <Link href={href} className="group block h-full">
               <Card className="h-full overflow-hidden border-border/60 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
@@ -80,7 +137,7 @@ export default function AdminStatsGrid() {
                       variant="h3"
                       className="mt-0.5 leading-tight"
                     >
-                      {value}
+                      {getValue(counts)}
                     </Typography>
                     <Typography variant="muted" className="text-xs">
                       {detail}

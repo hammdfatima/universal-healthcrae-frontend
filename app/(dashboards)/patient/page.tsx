@@ -12,11 +12,13 @@ export default function PatientDashboardPage() {
       <DashboardWelcome />
       <HealthStatsGrid />
 
-      <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+      <div className="grid items-stretch gap-6 xl:grid-cols-3">
+        <div className="h-full xl:col-span-2">
           <HealthRecordsChart />
         </div>
-        <CareTeamCard />
+        <div className="h-full">
+          <CareTeamCard />
+        </div>
       </div>
 
       <RecentMedicationsCard />

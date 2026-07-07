@@ -1,5 +1,12 @@
-import { format, isValid, parse } from "date-fns"
+import { format, isAfter, isValid, parse, startOfDay } from "date-fns"
 import { z } from "zod"
+import { MAX_IMAGING_FILE_SIZE_BYTES, uploadFile } from "@/lib/api/files"
+import type {
+  CreateImagingResultPayload,
+  ImagingResult,
+} from "@/lib/api/imaging-results"
+
+export type { ImagingResult } from "@/lib/api/imaging-results"
 
 export const imagingTestTypeOptions = [
   { label: "Diagnostic", value: "Diagnostic" },
@@ -22,23 +29,25 @@ export const imagingScanTypeOptions = [
   { label: "Nuclear Medicine", value: "Nuclear Medicine" },
 ] as const
 
-export type ImagingResult = {
-  id: string
-  fileName: string
-  testType: string
-  scanType: string
-  scanDate: string
-  fileData: string
-  fileMimeType: string
+export const LOCAL_FILE_SENTINEL = "local-file-selected"
+
+function isFutureDate(date: Date): boolean {
+  return isAfter(startOfDay(date), startOfDay(new Date()))
 }
 
 export const imagingResultSchema = z.object({
   fileName: z.string().min(1, "File name is required."),
   testType: z.string().min(1, "Test type is required."),
   scanType: z.string().min(1, "Scan type is required."),
-  scanDate: z.date({ message: "Scan date is required." }),
+  scanDate: z
+    .date({ message: "Scan date is required." })
+    .refine((date) => !isFutureDate(date), {
+      message: "Scan date cannot be in the future.",
+    }),
   fileData: z.string().min(1, "Please upload an imaging file."),
   fileMimeType: z.string().min(1, "Please upload an imaging file."),
+  filePublicId: z.string().optional(),
+  fileResourceType: z.string().optional(),
 })
 
 export type ImagingResultFormValues = z.infer<typeof imagingResultSchema>
@@ -50,39 +59,9 @@ export const imagingResultDefaultValues: ImagingResultFormValues = {
   scanDate: undefined as unknown as Date,
   fileData: "",
   fileMimeType: "",
+  filePublicId: "",
+  fileResourceType: "",
 }
-
-export const initialImagingResults: ImagingResult[] = [
-  {
-    id: "1",
-    fileName: "chest-xray-march-2025.pdf",
-    testType: "Diagnostic",
-    scanType: "X-Ray",
-    scanDate: "03/18/2025",
-    fileData: "",
-    fileMimeType: "application/pdf",
-  },
-  {
-    id: "2",
-    fileName: "brain-mri-report.pdf",
-    testType: "Follow-up",
-    scanType: "MRI",
-    scanDate: "01/22/2025",
-    fileData: "",
-    fileMimeType: "application/pdf",
-  },
-  {
-    id: "3",
-    fileName: "abdominal-ct-scan.pdf",
-    testType: "Emergency",
-    scanType: "CT Scan",
-    scanDate: "11/05/2024",
-    fileData: "",
-    fileMimeType: "application/pdf",
-  },
-]
-
-export const IMAGING_RESULTS_STORAGE_KEY = "uhc-imaging-results"
 
 export function formatImagingDate(date: Date): string {
   return format(date, "MM/dd/yyyy")
@@ -96,26 +75,6 @@ export function parseImagingDate(
   return isValid(parsed) ? parsed : undefined
 }
 
-export function getImagingResultsFromStorage(): ImagingResult[] {
-  if (typeof window === "undefined") return initialImagingResults
-
-  try {
-    const stored = localStorage.getItem(IMAGING_RESULTS_STORAGE_KEY)
-    if (!stored) return initialImagingResults
-    return JSON.parse(stored) as ImagingResult[]
-  } catch {
-    return initialImagingResults
-  }
-}
-
-export function saveImagingResultsToStorage(results: ImagingResult[]) {
-  localStorage.setItem(IMAGING_RESULTS_STORAGE_KEY, JSON.stringify(results))
-}
-
-export function getImagingResultById(id: string): ImagingResult | undefined {
-  return getImagingResultsFromStorage().find((result) => result.id === id)
-}
-
 export function imagingResultToFormValues(
   result: ImagingResult
 ): ImagingResultFormValues {
@@ -124,23 +83,31 @@ export function imagingResultToFormValues(
     testType: result.testType,
     scanType: result.scanType,
     scanDate: parseImagingDate(result.scanDate) as Date,
-    fileData: result.fileData,
+    fileData: result.fileUrl,
     fileMimeType: result.fileMimeType,
+    filePublicId: result.filePublicId,
+    fileResourceType: result.fileResourceType ?? "",
   }
 }
 
-export function formValuesToImagingResult(
+export function formValuesToPayload(
   values: ImagingResultFormValues,
-  id: string
-): ImagingResult {
+  file: {
+    fileUrl: string
+    filePublicId: string
+    fileMimeType: string
+    fileResourceType?: string
+  }
+): CreateImagingResultPayload {
   return {
-    id,
     fileName: values.fileName.trim(),
     testType: values.testType.trim(),
     scanType: values.scanType.trim(),
     scanDate: formatImagingDate(values.scanDate),
-    fileData: values.fileData,
-    fileMimeType: values.fileMimeType,
+    fileUrl: file.fileUrl,
+    filePublicId: file.filePublicId,
+    fileMimeType: file.fileMimeType,
+    fileResourceType: file.fileResourceType,
   }
 }
 
@@ -154,10 +121,88 @@ export function getImagingScanTypeFilterOptions(results: ImagingResult[]) {
   return types.map((type) => ({ label: type, value: type }))
 }
 
-export function isImageMimeType(mimeType: string): boolean {
-  return mimeType.startsWith("image/")
+export function getImagingResultFileSource(result: ImagingResult): string {
+  return result.fileUrl
 }
 
-export function isPdfMimeType(mimeType: string): boolean {
-  return mimeType === "application/pdf"
+export function isNewFileUpload(fileData: string): boolean {
+  return fileData.startsWith("data:") || fileData === LOCAL_FILE_SENTINEL
+}
+
+export function getUploadErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return "Failed to upload imaging file."
+}
+
+export function dataUrlToFile(
+  dataUrl: string,
+  fileName: string,
+  mimeType: string
+): File {
+  const [header, base64] = dataUrl.split(",")
+  const mime =
+    mimeType || header.match(/data:(.*?);/)?.[1] || "application/octet-stream"
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+
+  return new File([bytes], fileName, { type: mime })
+}
+
+export async function resolveImagingResultFile(
+  values: ImagingResultFormValues,
+  selectedFile?: File | null
+) {
+  if (selectedFile) {
+    if (selectedFile.size > MAX_IMAGING_FILE_SIZE_BYTES) {
+      throw new Error("File size exceeds the 5MB limit.")
+    }
+
+    const uploaded = await uploadFile(selectedFile)
+
+    return {
+      fileUrl: uploaded.secureUrl,
+      filePublicId: uploaded.publicId,
+      fileMimeType: selectedFile.type || values.fileMimeType,
+      fileResourceType: uploaded.resourceType,
+    }
+  }
+
+  if (isNewFileUpload(values.fileData) && values.fileData.startsWith("data:")) {
+    const file = dataUrlToFile(
+      values.fileData,
+      values.fileName,
+      values.fileMimeType
+    )
+
+    if (file.size > MAX_IMAGING_FILE_SIZE_BYTES) {
+      throw new Error("File size exceeds the 5MB limit.")
+    }
+
+    const uploaded = await uploadFile(file)
+
+    return {
+      fileUrl: uploaded.secureUrl,
+      filePublicId: uploaded.publicId,
+      fileMimeType: values.fileMimeType,
+      fileResourceType: uploaded.resourceType,
+    }
+  }
+
+  if (!values.filePublicId) {
+    throw new Error("Missing file reference.")
+  }
+
+  return {
+    fileUrl: values.fileData,
+    filePublicId: values.filePublicId,
+    fileMimeType: values.fileMimeType,
+    fileResourceType: values.fileResourceType || undefined,
+  }
 }

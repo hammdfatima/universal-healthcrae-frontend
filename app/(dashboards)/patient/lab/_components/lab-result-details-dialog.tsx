@@ -4,8 +4,9 @@ import { Calendar, FileText, FlaskConical, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
-import type { LabResult } from "@/app/(dashboards)/patient/_lib/lab"
-import LabResultFilePreview from "@/app/(dashboards)/patient/lab/_components/lab-result-file-preview"
+import { getLabResultFileSource } from "@/app/(dashboards)/patient/_lib/lab"
+import FilePreviewCard from "@/components/file-preview-card"
+import FilePreviewDialog from "@/components/file-preview-dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,14 +25,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { LabResult } from "@/lib/api/lab-results"
 
 type LabResultDetailsDialogProps = {
   result: LabResult | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (result: LabResult) => void
+  isDeleting?: boolean
 }
 
 export default function LabResultDetailsDialog({
@@ -39,11 +42,14 @@ export default function LabResultDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: LabResultDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   if (!result) return null
+
+  const fileSource = getLabResultFileSource(result)
 
   return (
     <>
@@ -86,7 +92,17 @@ export default function LabResultDetailsDialog({
               <Typography variant="small" className="font-semibold">
                 Lab Report
               </Typography>
-              <LabResultFilePreview result={result} />
+              {fileSource ? (
+                <FilePreviewCard
+                  fileName={result.fileName}
+                  fileMimeType={result.fileMimeType}
+                  onClick={() => setPreviewOpen(true)}
+                />
+              ) : (
+                <Typography variant="muted" className="text-sm">
+                  No file attached to this lab result.
+                </Typography>
+              )}
             </div>
           </div>
 
@@ -119,6 +135,14 @@ export default function LabResultDetailsDialog({
         </DialogContent>
       </Dialog>
 
+      <FilePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        fileName={result.fileName}
+        fileMimeType={result.fileMimeType}
+        fileSource={fileSource}
+      />
+
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -129,17 +153,21 @@ export default function LabResultDetailsDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(result)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Lab result deleted.")
               }}
             >
-              Delete
+              {isDeleting ? (
+                <Loader variant="button" color="white" />
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

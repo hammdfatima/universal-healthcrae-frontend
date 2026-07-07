@@ -1,16 +1,26 @@
 "use client"
 
 import { FileText } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import ReviewRecordsDialog from "@/app/(dashboards)/patient/_components/review-records-dialog"
-import { getProfileFromStorage } from "@/app/(dashboards)/patient/_lib/settings"
 import { Button } from "@/components/ui/button"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  PATIENT_PROFILE_API,
+  PATIENT_PROFILE_QUERY_KEYS,
+  type PatientProfileResponse,
+} from "@/lib/api/patient-profile"
 
 export default function DashboardWelcome() {
-  const [firstName, setFirstName] = useState("John")
   const [recordsOpen, setRecordsOpen] = useState(false)
+
+  const { data: profile, isLoading } = useFetch<PatientProfileResponse>({
+    path: PATIENT_PROFILE_API.get,
+    queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
+  })
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -19,9 +29,7 @@ export default function DashboardWelcome() {
     year: "numeric",
   })
 
-  useEffect(() => {
-    setFirstName(getProfileFromStorage().firstName)
-  }, [])
+  const firstName = profile?.firstName?.trim() || "there"
 
   return (
     <>
@@ -31,14 +39,23 @@ export default function DashboardWelcome() {
 
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Typography
-              as="h1"
-              variant="h3"
-              color="inherit"
-              className="text-secondary-foreground"
-            >
-              Welcome back, {firstName}
-            </Typography>
+            {isLoading ? (
+              <Loader
+                variant="fetch"
+                color="white"
+                label="Loading profile..."
+                className="justify-start py-2"
+              />
+            ) : (
+              <Typography
+                as="h1"
+                variant="h3"
+                color="inherit"
+                className="text-secondary-foreground"
+              >
+                Welcome back, {firstName}
+              </Typography>
+            )}
             <Typography
               variant="muted"
               color="inherit"

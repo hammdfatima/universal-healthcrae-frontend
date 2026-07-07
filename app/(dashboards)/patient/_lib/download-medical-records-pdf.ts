@@ -185,34 +185,6 @@ export async function downloadMedicalRecordsPdf(
   }
   y += 4
 
-  y = writeSectionTitle(doc, "Laboratory Results", y)
-  if (summary.labResults.length === 0) {
-    y = writeLine(doc, "No lab results recorded.", y)
-  } else {
-    for (const lab of summary.labResults) {
-      y = writeLine(
-        doc,
-        `• ${lab.testType} — ${lab.testDate} (${lab.fileName})`,
-        y
-      )
-    }
-  }
-  y += 4
-
-  y = writeSectionTitle(doc, "Imaging", y)
-  if (summary.imagingResults.length === 0) {
-    y = writeLine(doc, "No imaging records.", y)
-  } else {
-    for (const scan of summary.imagingResults) {
-      y = writeLine(
-        doc,
-        `• ${scan.scanType} (${scan.testType}) — ${scan.scanDate}`,
-        y
-      )
-    }
-  }
-  y += 4
-
   y = writeSectionTitle(doc, "Care Providers", y)
   if (summary.careProviders.length === 0) {
     y = writeLine(doc, "No care providers recorded.", y)

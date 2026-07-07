@@ -3,26 +3,28 @@
 import { Syringe } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { useEffect, useState } from "react"
 
-import {
-  getVaccinationsFromStorage,
-  initialVaccinations,
-  type Vaccination,
-} from "@/app/(dashboards)/patient/_lib/vaccinations"
+import EmptyCard from "@/components/empty-card"
+import ErrorCard from "@/components/error-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  VACCINATIONS_API,
+  VACCINATIONS_QUERY_KEYS,
+  type VaccinationsListResponse,
+} from "@/lib/api/vaccinations"
 
 export default function VaccinationsCard() {
-  const [vaccinations, setVaccinations] =
-    useState<Vaccination[]>(initialVaccinations)
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useFetch<VaccinationsListResponse>({
+      path: VACCINATIONS_API.list,
+      queryKey: VACCINATIONS_QUERY_KEYS.list,
+    })
 
-  useEffect(() => {
-    setVaccinations(getVaccinationsFromStorage())
-  }, [])
-
-  const recent = vaccinations.slice(0, 3)
+  const recent = (data?.vaccinations ?? []).slice(0, 3)
 
   return (
     <Card className="border-border/60 shadow-sm">
@@ -43,32 +45,56 @@ export default function VaccinationsCard() {
         </Button>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-4">
-          {recent.map((vax, index) => (
-            <li key={vax.id} className="relative flex gap-4">
-              {index < recent.length - 1 ? (
-                <span
-                  className="absolute top-8 left-[11px] h-[calc(100%-4px)] w-px bg-border"
-                  aria-hidden
-                />
-              ) : null}
-              <span className="relative z-10 mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-secondary bg-card">
-                <span className="size-2 rounded-full bg-secondary" />
-              </span>
-              <div className="min-w-0 flex-1 pb-1">
-                <Typography variant="small" className="font-semibold">
-                  {vax.vaccineName}
-                </Typography>
-                <Typography variant="muted" className="mt-0.5 text-sm">
-                  {vax.date} · {vax.time}
-                </Typography>
-                <Typography variant="muted" className="mt-1 text-xs">
-                  {vax.administeredBy}
-                </Typography>
-              </div>
-            </li>
-          ))}
-        </ul>
+        {isLoading ? (
+          <Loader label="Loading vaccinations..." className="py-8" />
+        ) : isError ? (
+          <ErrorCard
+            error={error}
+            onRetry={() => refetch()}
+            isLoading={isFetching}
+          />
+        ) : recent.length === 0 ? (
+          <EmptyCard
+            icon={Syringe}
+            title="No vaccinations recorded"
+            description="Keep your immunization history up to date for travel and care visits."
+            action={
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Link href={"/patient/vaccinations/new" as Route}>
+                  Add vaccination
+                </Link>
+              </Button>
+            }
+            className="border-none shadow-none"
+          />
+        ) : (
+          <ul className="space-y-4">
+            {recent.map((vax, index) => (
+              <li key={vax.id} className="relative flex gap-4">
+                {index < recent.length - 1 ? (
+                  <span
+                    className="absolute top-8 left-[11px] h-[calc(100%-4px)] w-px bg-border"
+                    aria-hidden
+                  />
+                ) : null}
+                <span className="relative z-10 mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-secondary bg-card">
+                  <span className="size-2 rounded-full bg-secondary" />
+                </span>
+                <div className="min-w-0 flex-1 pb-1">
+                  <Typography variant="small" className="font-semibold">
+                    {vax.vaccineName}
+                  </Typography>
+                  <Typography variant="muted" className="mt-0.5 text-sm">
+                    {vax.date} · {vax.time}
+                  </Typography>
+                  <Typography variant="muted" className="mt-1 text-xs">
+                    {vax.administeredBy}
+                  </Typography>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   )

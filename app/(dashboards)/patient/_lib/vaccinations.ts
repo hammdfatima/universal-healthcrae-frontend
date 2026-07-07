@@ -1,15 +1,9 @@
 import { format, isValid, parse } from "date-fns"
 import { z } from "zod"
 
-export type Vaccination = {
-  id: string
-  vaccineName: string
-  prescribedBy: string
-  administeredBy: string
-  dosage: string
-  date: string
-  time: string
-}
+import type { Vaccination } from "@/lib/api/vaccinations"
+
+export type { Vaccination }
 
 export const vaccinationSchema = z.object({
   vaccineName: z.string().min(1, "Vaccine name is required."),
@@ -30,65 +24,6 @@ export const vaccinationDefaultValues: VaccinationFormValues = {
   date: undefined as unknown as Date,
   time: "",
 }
-
-export const initialVaccinations: Vaccination[] = [
-  {
-    id: "1",
-    vaccineName: "Influenza (Flu)",
-    prescribedBy: "Dr. Brooklyn Belle",
-    administeredBy: "CVS Pharmacy",
-    dosage: "0.5 mL",
-    date: "10/15/2025",
-    time: "10:30 AM",
-  },
-  {
-    id: "2",
-    vaccineName: "COVID-19 Booster",
-    prescribedBy: "Dr. John Richards",
-    administeredBy: "UHC Clinic",
-    dosage: "0.3 mL",
-    date: "09/03/2025",
-    time: "02:15 PM",
-  },
-  {
-    id: "3",
-    vaccineName: "Tdap",
-    prescribedBy: "Dr. Brooklyn Belle",
-    administeredBy: "Dr. Brooklyn Belle",
-    dosage: "0.5 mL",
-    date: "01/20/2024",
-    time: "11:00 AM",
-  },
-  {
-    id: "4",
-    vaccineName: "MMR",
-    prescribedBy: "Dr. Jane Mitchell",
-    administeredBy: "UHC Clinic",
-    dosage: "0.5 mL",
-    date: "06/12/2023",
-    time: "09:45 AM",
-  },
-  {
-    id: "5",
-    vaccineName: "Hepatitis B",
-    prescribedBy: "Dr. John Richards",
-    administeredBy: "UHC Clinic",
-    dosage: "1.0 mL",
-    date: "03/08/2022",
-    time: "03:30 PM",
-  },
-  {
-    id: "6",
-    vaccineName: "Shingles (Shingrix)",
-    prescribedBy: "Dr. Brooklyn Belle",
-    administeredBy: "CVS Pharmacy",
-    dosage: "0.5 mL",
-    date: "11/22/2025",
-    time: "04:00 PM",
-  },
-]
-
-export const VACCINATIONS_STORAGE_KEY = "uhc-vaccinations"
 
 export function formatVaccinationDate(date: Date): string {
   return format(date, "MM/dd/yyyy")
@@ -120,28 +55,6 @@ export function parseVaccinationTime(value: string | null | undefined): string {
   return ""
 }
 
-export function getVaccinationsFromStorage(): Vaccination[] {
-  if (typeof window === "undefined") return initialVaccinations
-
-  try {
-    const stored = localStorage.getItem(VACCINATIONS_STORAGE_KEY)
-    if (!stored) return initialVaccinations
-    return JSON.parse(stored) as Vaccination[]
-  } catch {
-    return initialVaccinations
-  }
-}
-
-export function saveVaccinationsToStorage(vaccinations: Vaccination[]) {
-  localStorage.setItem(VACCINATIONS_STORAGE_KEY, JSON.stringify(vaccinations))
-}
-
-export function getVaccinationById(id: string): Vaccination | undefined {
-  return getVaccinationsFromStorage().find(
-    (vaccination) => vaccination.id === id
-  )
-}
-
 export function vaccinationToFormValues(
   vaccination: Vaccination
 ): VaccinationFormValues {
@@ -155,18 +68,14 @@ export function vaccinationToFormValues(
   }
 }
 
-export function formValuesToVaccination(
-  values: VaccinationFormValues,
-  id: string
-): Vaccination {
+export function formValuesToPayload(values: VaccinationFormValues) {
   return {
-    id,
-    vaccineName: values.vaccineName,
-    prescribedBy: values.prescribedBy,
-    administeredBy: values.administeredBy,
-    dosage: values.dosage,
+    vaccineName: values.vaccineName.trim(),
+    prescribedBy: values.prescribedBy.trim(),
+    administeredBy: values.administeredBy.trim(),
+    dosage: values.dosage.trim(),
     date: formatVaccinationDate(values.date),
-    time: formatVaccinationTime(values.time),
+    time: values.time.trim(),
   }
 }
 

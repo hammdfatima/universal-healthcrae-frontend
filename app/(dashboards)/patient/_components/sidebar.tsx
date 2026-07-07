@@ -19,9 +19,12 @@ import {
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
-import { healthCounts } from "@/app/(dashboards)/patient/_lib/mock-data"
+import {
+  type MedicalVaultCounts,
+  useMedicalVaultCounts,
+} from "@/app/(dashboards)/patient/_lib/use-medical-vault-counts"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -67,41 +70,60 @@ const navItemActive = "bg-secondary text-secondary-foreground shadow-sm"
 const navItemIdle =
   "text-foreground/75 hover:bg-secondary hover:text-secondary-foreground"
 
-const medicalVaultItems: VaultItem[] = [
+type VaultItemConfig = {
+  countKey: keyof MedicalVaultCounts
+  label: string
+  href: Route
+  icon: LucideIcon
+}
+
+const medicalVaultItemConfig: VaultItemConfig[] = [
   {
+    countKey: "medications",
     label: "Medications",
     href: "/patient/medications" as Route,
     icon: Activity,
-    badge: String(healthCounts.medications),
   },
   {
+    countKey: "allergies",
     label: "Known Allergies",
     href: "/patient/allergies" as Route,
     icon: AlertTriangle,
-    badge: String(healthCounts.allergies),
   },
   {
+    countKey: "healthHistory",
     label: "Health History",
     href: "/patient/health-history" as Route,
     icon: History,
   },
   {
+    countKey: "vaccinations",
     label: "Immunizations",
     href: "/patient/vaccinations" as Route,
     icon: Syringe,
-    badge: String(healthCounts.vaccinations),
   },
   {
+    countKey: "labResults",
     label: "Laboratory",
     href: "/patient/lab" as Route,
     icon: FlaskConical,
   },
   {
+    countKey: "imagingResults",
     label: "Imaging",
     href: "/patient/imaging" as Route,
     icon: ScanLine,
   },
 ]
+
+function buildMedicalVaultItems(counts: MedicalVaultCounts): VaultItem[] {
+  return medicalVaultItemConfig.map((item) => ({
+    label: item.label,
+    href: item.href,
+    icon: item.icon,
+    badge: String(counts[item.countKey]),
+  }))
+}
 
 const overviewNavBase: NavGroup = {
   label: "Main",
@@ -127,7 +149,7 @@ const accountNav: NavItem[] = [
   },
 ]
 
-const vaultPaths = medicalVaultItems.map((item) => item.href)
+const vaultPaths = medicalVaultItemConfig.map((item) => item.href)
 
 function NavLink({
   item,
@@ -172,8 +194,18 @@ function NavLink({
   )
 }
 
-function MedicalVaultNav({ onNavigate }: { onNavigate?: () => void }) {
+function MedicalVaultNav({
+  counts,
+  onNavigate,
+}: {
+  counts: MedicalVaultCounts
+  onNavigate?: () => void
+}) {
   const pathname = usePathname()
+  const medicalVaultItems = useMemo(
+    () => buildMedicalVaultItems(counts),
+    [counts]
+  )
   const isVaultActive = vaultPaths.some(
     (path) => pathname === path || pathname.startsWith(path)
   )
@@ -219,6 +251,7 @@ function MedicalVaultNav({ onNavigate }: { onNavigate?: () => void }) {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
+  const { counts: medicalVaultCounts } = useMedicalVaultCounts()
   const { data: profile } = useFetch<PatientProfileResponse>({
     path: PATIENT_PROFILE_API.get,
     queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
@@ -307,7 +340,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
             My Health
           </p>
-          <MedicalVaultNav onNavigate={onNavigate} />
+          <MedicalVaultNav
+            counts={medicalVaultCounts}
+            onNavigate={onNavigate}
+          />
         </div>
 
         <div>

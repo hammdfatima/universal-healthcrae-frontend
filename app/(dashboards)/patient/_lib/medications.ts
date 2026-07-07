@@ -1,15 +1,9 @@
-import { format, isValid, parse } from "date-fns"
+import { format, isAfter, isValid, parse, startOfDay } from "date-fns"
 import { z } from "zod"
 
-export type Medication = {
-  id: string
-  medicineName: string
-  condition: string
-  prescribedBy: string
-  dosage: string
-  startDate: string
-  endDate: string | null
-}
+import type { Medication } from "@/lib/api/medications"
+
+export type { Medication }
 
 export const medicationSchema = z.object({
   medicineName: z.string().min(1, "Medicine name is required."),
@@ -31,47 +25,6 @@ export const medicationDefaultValues: MedicationFormValues = {
   endDate: undefined,
 }
 
-export const initialMedications: Medication[] = [
-  {
-    id: "1",
-    medicineName: "Metformin",
-    condition: "Type 2 Diabetes",
-    prescribedBy: "Dr. Brooklyn Belle",
-    dosage: "500 mg",
-    startDate: "01/15/2024",
-    endDate: null,
-  },
-  {
-    id: "2",
-    medicineName: "Lisinopril",
-    condition: "Hypertension",
-    prescribedBy: "Dr. John Richards",
-    dosage: "10 mg",
-    startDate: "03/22/2023",
-    endDate: null,
-  },
-  {
-    id: "3",
-    medicineName: "Atorvastatin",
-    condition: "High Cholesterol",
-    prescribedBy: "Dr. John Richards",
-    dosage: "20 mg",
-    startDate: "06/10/2022",
-    endDate: null,
-  },
-  {
-    id: "4",
-    medicineName: "Vitamin D3",
-    condition: "Vitamin D Deficiency",
-    prescribedBy: "Dr. Jane Mitchell",
-    dosage: "2000 IU",
-    startDate: "11/05/2025",
-    endDate: "05/05/2026",
-  },
-]
-
-export const MEDICATIONS_STORAGE_KEY = "uhc-medications"
-
 export function formatMedicationDate(date: Date): string {
   return format(date, "MM/dd/yyyy")
 }
@@ -88,24 +41,17 @@ export function formatMedicationEndDate(value: string | null): string {
   return value ?? "—"
 }
 
-export function getMedicationsFromStorage(): Medication[] {
-  if (typeof window === "undefined") return initialMedications
+export function isMedicationEnded(endDate: string | null): boolean {
+  if (!endDate) return false
 
-  try {
-    const stored = localStorage.getItem(MEDICATIONS_STORAGE_KEY)
-    if (!stored) return initialMedications
-    return JSON.parse(stored) as Medication[]
-  } catch {
-    return initialMedications
-  }
+  const parsedEndDate = parseMedicationDate(endDate)
+  if (!parsedEndDate) return false
+
+  return isAfter(startOfDay(new Date()), startOfDay(parsedEndDate))
 }
 
-export function saveMedicationsToStorage(medications: Medication[]) {
-  localStorage.setItem(MEDICATIONS_STORAGE_KEY, JSON.stringify(medications))
-}
-
-export function getMedicationById(id: string): Medication | undefined {
-  return getMedicationsFromStorage().find((medication) => medication.id === id)
+export function isMedicationActive(endDate: string | null): boolean {
+  return !isMedicationEnded(endDate)
 }
 
 export function medicationToFormValues(
@@ -121,18 +67,14 @@ export function medicationToFormValues(
   }
 }
 
-export function formValuesToMedication(
-  values: MedicationFormValues,
-  id: string
-): Medication {
+export function formValuesToPayload(values: MedicationFormValues) {
   return {
-    id,
-    medicineName: values.medicineName,
-    condition: values.condition,
-    prescribedBy: values.prescribedBy,
-    dosage: values.dosage,
+    medicineName: values.medicineName.trim(),
+    condition: values.condition.trim(),
+    prescribedBy: values.prescribedBy.trim(),
+    dosage: values.dosage.trim(),
     startDate: formatMedicationDate(values.startDate),
-    endDate: values.endDate ? formatMedicationDate(values.endDate) : null,
+    endDate: values.endDate ? formatMedicationDate(values.endDate) : "",
   }
 }
 

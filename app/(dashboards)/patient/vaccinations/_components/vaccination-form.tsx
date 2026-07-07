@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 import {
   type VaccinationFormValues,
@@ -11,9 +10,9 @@ import {
 import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import TimePickerField from "@/components/ui/time-picker-field"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
 
 type VaccinationFormProps = {
   title: string
@@ -21,6 +20,7 @@ type VaccinationFormProps = {
   defaultValues?: VaccinationFormValues
   onSubmit: (values: VaccinationFormValues) => void
   submitLabel: string
+  isSubmitting?: boolean
 }
 
 export default function VaccinationForm({
@@ -29,10 +29,8 @@ export default function VaccinationForm({
   defaultValues = vaccinationDefaultValues,
   onSubmit,
   submitLabel,
+  isSubmitting = false,
 }: VaccinationFormProps) {
-  const router = useRouter()
-  const { toastSuccess } = useToast()
-
   return (
     <div className="mx-auto max-w-7xl p-4">
       <Typography as="h1" variant="h3">
@@ -47,15 +45,7 @@ export default function VaccinationForm({
           schema={vaccinationSchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-5" }}
-          onSubmit={(values) => {
-            onSubmit(values)
-            toastSuccess(
-              submitLabel === "Save"
-                ? "Vaccination added successfully."
-                : "Vaccination updated successfully."
-            )
-            router.push("/patient/vaccinations")
-          }}
+          onSubmit={onSubmit}
         >
           {({ components }) => {
             const { Input: FormInput, Field } = components
@@ -113,7 +103,13 @@ export default function VaccinationForm({
                   <Button type="button" variant="outline" asChild>
                     <Link href="/patient/vaccinations">Close</Link>
                   </Button>
-                  <Button type="submit">{submitLabel}</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader variant="button" color="white" />
+                    ) : (
+                      submitLabel
+                    )}
+                  </Button>
                 </div>
               </>
             )

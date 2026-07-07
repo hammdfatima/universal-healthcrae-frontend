@@ -3,36 +3,34 @@
 import { AlertTriangle } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { useEffect, useState } from "react"
 
 import {
-  type Allergy,
   formatSymptomsList,
-  getAllergiesFromStorage,
-  initialAllergies,
+  getNatureBadgeOutlineClass,
 } from "@/app/(dashboards)/patient/_lib/allergies"
+import EmptyCard from "@/components/empty-card"
+import ErrorCard from "@/components/error-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  ALLERGIES_API,
+  ALLERGIES_QUERY_KEYS,
+  type AllergiesListResponse,
+} from "@/lib/api/allergies"
 import { cn } from "@/lib/utils"
 
-function getNatureBadgeClass(nature: string) {
-  if (nature === "Very Severe" || nature === "Severe") {
-    return "bg-destructive/10 text-destructive border-destructive/20"
-  }
-  if (nature === "Moderate") {
-    return "bg-amber-100 text-amber-800 border-amber-200"
-  }
-  return "bg-muted text-muted-foreground border-border"
-}
-
 export default function AllergiesOverviewCard() {
-  const [allergies, setAllergies] = useState<Allergy[]>(initialAllergies)
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useFetch<AllergiesListResponse>({
+      path: ALLERGIES_API.list,
+      queryKey: ALLERGIES_QUERY_KEYS.list,
+    })
 
-  useEffect(() => {
-    setAllergies(getAllergiesFromStorage())
-  }, [])
+  const allergies = (data?.allergies ?? []).slice(0, 2)
 
   return (
     <Card className="border-border/60 shadow-sm">
@@ -53,32 +51,56 @@ export default function AllergiesOverviewCard() {
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
-        {allergies.slice(0, 2).map((allergy) => (
-          <div
-            key={allergy.id}
-            className="rounded-2xl border border-border/60 bg-muted/30 p-4 transition-colors hover:bg-muted/50"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <Typography variant="small" className="font-semibold">
-                  {allergy.allergyType}
-                </Typography>
-                <Typography variant="muted" className="mt-1 text-sm">
-                  {formatSymptomsList(allergy.symptoms, 1)}
-                </Typography>
+        {isLoading ? (
+          <Loader label="Loading allergies..." className="py-8" />
+        ) : isError ? (
+          <ErrorCard
+            error={error}
+            onRetry={() => refetch()}
+            isLoading={isFetching}
+          />
+        ) : allergies.length === 0 ? (
+          <EmptyCard
+            icon={AlertTriangle}
+            title="No allergies recorded"
+            description="Document known allergies so your care team can treat you safely."
+            action={
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Link href={"/patient/allergies/new" as Route}>
+                  Add allergy
+                </Link>
+              </Button>
+            }
+            className="border-none shadow-none"
+          />
+        ) : (
+          allergies.map((allergy) => (
+            <div
+              key={allergy.id}
+              className="rounded-2xl border border-border/60 bg-muted/30 p-4 transition-colors hover:bg-muted/50"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <Typography variant="small" className="font-semibold">
+                    {allergy.allergyType}
+                  </Typography>
+                  <Typography variant="muted" className="mt-1 text-sm">
+                    {formatSymptomsList(allergy.symptoms, 1)}
+                  </Typography>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "shrink-0 rounded-full",
+                    getNatureBadgeOutlineClass(allergy.nature)
+                  )}
+                >
+                  {allergy.nature}
+                </Badge>
               </div>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "shrink-0 rounded-full",
-                  getNatureBadgeClass(allergy.nature)
-                )}
-              >
-                {allergy.nature}
-              </Badge>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   )

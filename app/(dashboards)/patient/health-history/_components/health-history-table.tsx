@@ -1,44 +1,54 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Eye, History, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
-  getHealthHistoryFromStorage,
   getPrescribedByFilterOptions,
-  type HealthHistoryEntry,
-  initialHealthHistory,
-  saveHealthHistoryToStorage,
   truncateDetails,
 } from "@/app/(dashboards)/patient/_lib/health-history"
 import HealthHistoryDetailsDialog from "@/app/(dashboards)/patient/health-history/_components/health-history-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { HealthHistoryEntry } from "@/lib/api/health-history"
+import {
+  HEALTH_HISTORY_API,
+  HEALTH_HISTORY_QUERY_KEYS,
+  type HealthHistoryListResponse,
+} from "@/lib/api/health-history"
 
 export default function HealthHistoryTable() {
   const router = useRouter()
-  const [entries, setEntries] =
-    useState<HealthHistoryEntry[]>(initialHealthHistory)
+  const queryClient = useQueryClient()
   const [selectedEntry, setSelectedEntry] = useState<HealthHistoryEntry | null>(
     null
   )
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setEntries(getHealthHistoryFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<HealthHistoryListResponse>({
+      path: HEALTH_HISTORY_API.list,
+      queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+    })
+
+  const entries = data?.entries ?? []
 
   const prescribedByOptions = useMemo(
     () => getPrescribedByFilterOptions(entries),
     [entries]
   )
 
-  function updateEntries(next: HealthHistoryEntry[]) {
-    setEntries(next)
-    saveHealthHistoryToStorage(next)
-  }
+  const { onRequest: deleteHealthHistoryEntry, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-health-history-entry",
+    method: "delete",
+  })
 
   function openDetails(entry: HealthHistoryEntry) {
     setSelectedEntry(entry)
@@ -46,8 +56,17 @@ export default function HealthHistoryTable() {
   }
 
   function handleDelete(entry: HealthHistoryEntry) {
-    updateEntries(entries.filter((item) => item.id !== entry.id))
-    setSelectedEntry(null)
+    deleteHealthHistoryEntry({
+      path: HEALTH_HISTORY_API.delete(entry.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedEntry(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<HealthHistoryEntry>[] = [
@@ -116,6 +135,11 @@ export default function HealthHistoryTable() {
         data={entries}
         getRowId={(row) => row.id}
         searchPlaceholder="Search health history..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={
           prescribedByOptions.length > 0
             ? [
@@ -142,6 +166,7 @@ export default function HealthHistoryTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

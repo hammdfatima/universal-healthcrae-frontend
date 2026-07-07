@@ -22,7 +22,7 @@ export default function EmptyCard({
 }: EmptyCardProps) {
   return (
     <Card className={cn("w-full border-dashed shadow-none", className)}>
-      <CardContent className="flex flex-col items-center justify-center px-4 py-10 text-center">
+      <CardContent className="flex h-full flex-col items-center justify-center px-4 py-10 text-center">
         <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
           <Icon className="size-7 text-muted-foreground" aria-hidden />
         </div>

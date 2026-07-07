@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import {
   Select,
   SelectContent,
@@ -12,7 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import useToast from "@/hooks/use-toast"
+import useApi from "@/hooks/use-api"
+import {
+  type CreateUserQueryPayload,
+  USER_QUERIES_API,
+  USER_QUERY_SUBJECT_OPTIONS,
+  type UserQuerySubject,
+} from "@/lib/api/user-queries"
 
 const contactSchema = z.object({
   name: z.string().min(2, "Please enter your full name."),
@@ -24,13 +31,6 @@ const contactSchema = z.object({
     .max(1000, "Message must be 1000 characters or less."),
 })
 
-const subjectOptions = [
-  { value: "general", label: "General Inquiry" },
-  { value: "support", label: "Technical Support" },
-  { value: "billing", label: "Billing & Subscriptions" },
-  { value: "partnership", label: "Partnership" },
-] as const
-
 const defaultValues = {
   name: "",
   email: "",
@@ -39,8 +39,13 @@ const defaultValues = {
 }
 
 export default function ContactForm() {
-  const { toastSuccess } = useToast()
   const [formKey, setFormKey] = useState(0)
+
+  const { onRequest: submitQuery, isPending } = useApi<CreateUserQueryPayload>({
+    key: "create-user-query",
+    method: "post",
+    showSuccessToast: true,
+  })
 
   return (
     <FormModified
@@ -50,11 +55,19 @@ export default function ContactForm() {
       formKey={formKey}
       formProps={{ className: "flex h-full flex-1 flex-col" }}
       fieldsetProps={{ className: "flex h-full flex-1 flex-col gap-5" }}
-      onSubmit={() => {
-        toastSuccess(
-          "Thank you! We'll get back to you within 1–2 business days."
-        )
-        setFormKey((key) => key + 1)
+      onSubmit={(values) => {
+        submitQuery({
+          path: USER_QUERIES_API.create,
+          data: {
+            fullName: values.name.trim(),
+            email: values.email.trim(),
+            subject: values.subject as UserQuerySubject,
+            message: values.message.trim(),
+          },
+          onSuccess: () => {
+            setFormKey((key) => key + 1)
+          },
+        })
       }}
     >
       {({ components: { Input, Textarea, Field } }) => (
@@ -76,7 +89,7 @@ export default function ContactForm() {
                   <SelectValue placeholder="Select a topic" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subjectOptions.map((option) => (
+                  {USER_QUERY_SUBJECT_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -94,8 +107,16 @@ export default function ContactForm() {
             className="min-h-32 flex-1"
           />
 
-          <Button type="submit" className="mt-auto w-full sm:w-auto">
-            Send Message
+          <Button
+            type="submit"
+            className="mt-auto w-full sm:w-auto"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <Loader variant="button" color="white" />
+            ) : (
+              "Send Message"
+            )}
           </Button>
         </>
       )}

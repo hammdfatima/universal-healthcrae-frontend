@@ -4,8 +4,9 @@ import { Calendar, FileText, Pencil, ScanLine, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
-import type { ImagingResult } from "@/app/(dashboards)/patient/_lib/imaging"
-import ImagingFilePreview from "@/app/(dashboards)/patient/imaging/_components/imaging-file-preview"
+import { getImagingResultFileSource } from "@/app/(dashboards)/patient/_lib/imaging"
+import FilePreviewCard from "@/components/file-preview-card"
+import FilePreviewDialog from "@/components/file-preview-dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,14 +25,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { ImagingResult } from "@/lib/api/imaging-results"
 
 type ImagingResultDetailsDialogProps = {
   result: ImagingResult | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (result: ImagingResult) => void
+  isDeleting?: boolean
 }
 
 export default function ImagingResultDetailsDialog({
@@ -39,11 +42,14 @@ export default function ImagingResultDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: ImagingResultDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   if (!result) return null
+
+  const fileSource = getImagingResultFileSource(result)
 
   return (
     <>
@@ -91,7 +97,17 @@ export default function ImagingResultDetailsDialog({
               <Typography variant="small" className="font-semibold">
                 Imaging Scan
               </Typography>
-              <ImagingFilePreview result={result} />
+              {fileSource ? (
+                <FilePreviewCard
+                  fileName={result.fileName}
+                  fileMimeType={result.fileMimeType}
+                  onClick={() => setPreviewOpen(true)}
+                />
+              ) : (
+                <Typography variant="muted" className="text-sm">
+                  No file attached to this imaging record.
+                </Typography>
+              )}
             </div>
           </div>
 
@@ -124,6 +140,14 @@ export default function ImagingResultDetailsDialog({
         </DialogContent>
       </Dialog>
 
+      <FilePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        fileName={result.fileName}
+        fileMimeType={result.fileMimeType}
+        fileSource={fileSource}
+      />
+
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -134,17 +158,21 @@ export default function ImagingResultDetailsDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(result)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Imaging record deleted.")
               }}
             >
-              Delete
+              {isDeleting ? (
+                <Loader variant="button" color="white" />
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

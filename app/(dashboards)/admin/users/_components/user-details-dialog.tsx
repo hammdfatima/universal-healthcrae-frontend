@@ -6,12 +6,15 @@ import {
   CreditCard,
   Mail,
   UserRound,
+  Users,
 } from "lucide-react"
 import type { ReactNode } from "react"
 import { UserAvatar } from "@/app/(dashboards)/admin/_lib/user-avatar"
 import { UserStatusBadge } from "@/app/(dashboards)/admin/_lib/user-status-badge"
 import {
   type AdminUser,
+  formatFamilyMemberCount,
+  formatFamilyMemberEligibility,
   formatJoinedDate,
   formatPlan,
 } from "@/app/(dashboards)/admin/_lib/users"
@@ -125,6 +128,35 @@ export default function UserDetailsDialog({
             value={user.emailVerified ? "Yes" : "No"}
             className="sm:col-span-2"
           />
+
+          {user.isFamilyMemberAccount && user.addedBy ? (
+            <DetailRow
+              icon={Users}
+              label="Added by"
+              value={
+                <div>
+                  <div>{user.addedBy.name}</div>
+                  <Typography variant="muted" className="text-sm">
+                    {user.addedBy.email}
+                  </Typography>
+                </div>
+              }
+              className="sm:col-span-2"
+            />
+          ) : (
+            <>
+              <DetailRow
+                icon={Users}
+                label="Family members"
+                value={formatFamilyMemberCount(user.familyMemberCount)}
+              />
+              <DetailRow
+                icon={Users}
+                label="Can add"
+                value={formatFamilyMemberEligibility(user)}
+              />
+            </>
+          )}
         </div>
 
         <DialogFooter className="border-t border-border/60 px-6 py-4 sm:justify-end">

@@ -2,25 +2,28 @@
 
 import { CreditCard, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-
-import {
-  type AdminPayment,
-  getPaymentsFromStorage,
-  initialAdminPayments,
-} from "@/app/(dashboards)/admin/_lib/payments"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import { useFetch } from "@/hooks/use-fetch"
+import type { AdminPayment } from "@/lib/api/admin-payments"
+import {
+  ADMIN_PAYMENTS_API,
+  ADMIN_PAYMENTS_QUERY_KEYS,
+  type AdminPaymentsListResponse,
+} from "@/lib/api/admin-payments"
 
 export default function PaymentsTable() {
   const router = useRouter()
-  const [payments, setPayments] = useState<AdminPayment[]>(initialAdminPayments)
 
-  useEffect(() => {
-    setPayments(getPaymentsFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useFetch<AdminPaymentsListResponse>({
+      path: ADMIN_PAYMENTS_API.list,
+      queryKey: ADMIN_PAYMENTS_QUERY_KEYS.list,
+    })
+
+  const payments = data?.payments ?? []
 
   const columns: DataTableColumn<AdminPayment>[] = [
     {
@@ -121,6 +124,13 @@ export default function PaymentsTable() {
       getRowId={(row) => row.id}
       searchPlaceholder="Search payments..."
       icon={<CreditCard className="size-6" aria-hidden />}
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      onRetry={() => refetch()}
+      isRetrying={isFetching && !isLoading}
+      emptyMessage="No payment records found."
+      emptyDescription="Payments will appear here after patients complete subscription checkout."
     />
   )
 }

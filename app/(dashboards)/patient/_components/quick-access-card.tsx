@@ -1,3 +1,5 @@
+"use client"
+
 import type { LucideIcon } from "lucide-react"
 import {
   Activity,
@@ -9,57 +11,73 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
+import { useMemo } from "react"
 
-import { healthCounts } from "@/app/(dashboards)/patient/_lib/mock-data"
+import {
+  type MedicalVaultCounts,
+  useMedicalVaultCounts,
+} from "@/app/(dashboards)/patient/_lib/use-medical-vault-counts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Typography } from "@/components/ui/typography"
 
-type QuickLink = {
+type QuickLinkConfig = {
+  countKey: keyof MedicalVaultCounts
   label: string
   href: Route
   icon: LucideIcon
-  count?: number
 }
 
-const vaultLinks: QuickLink[] = [
+const vaultLinkConfig: QuickLinkConfig[] = [
   {
+    countKey: "medications",
     label: "Medications",
     href: "/patient/medications" as Route,
     icon: Activity,
-    count: healthCounts.medications,
   },
   {
+    countKey: "allergies",
     label: "Allergies",
     href: "/patient/allergies" as Route,
     icon: AlertTriangle,
-    count: healthCounts.allergies,
   },
   {
+    countKey: "healthHistory",
     label: "Health History",
-    href: "/patient/medical-history" as Route,
+    href: "/patient/health-history" as Route,
     icon: History,
   },
   {
+    countKey: "vaccinations",
     label: "Immunizations",
     href: "/patient/vaccinations" as Route,
     icon: Syringe,
-    count: healthCounts.vaccinations,
   },
   {
+    countKey: "labResults",
     label: "Laboratory",
     href: "/patient/lab" as Route,
     icon: FlaskConical,
-    count: healthCounts.labResults,
   },
   {
+    countKey: "imagingResults",
     label: "Imaging",
     href: "/patient/imaging" as Route,
     icon: ScanLine,
-    count: healthCounts.radiology,
   },
 ]
 
 export default function QuickAccessCard() {
+  const { counts } = useMedicalVaultCounts()
+
+  const vaultLinks = useMemo(
+    () =>
+      vaultLinkConfig.map((link) => ({
+        ...link,
+        count: counts[link.countKey],
+      })),
+    [counts]
+  )
+
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeader className="pb-3">
@@ -80,11 +98,9 @@ export default function QuickAccessCard() {
                   <Icon className="size-4 text-secondary" aria-hidden />
                 </span>
                 <span className="flex-1">{label}</span>
-                {count !== undefined ? (
-                  <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary tabular-nums">
-                    {count}
-                  </span>
-                ) : null}
+                <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-semibold text-secondary tabular-nums">
+                  {count}
+                </span>
               </Link>
             </li>
           ))}

@@ -1,31 +1,39 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
+import { formatDistanceToNow } from "date-fns"
 import {
   Activity,
   Bell,
   CheckCheck,
   FlaskConical,
+  LogIn,
+  ScanLine,
   Settings,
   Stethoscope,
   Syringe,
 } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { type ComponentType, useEffect, useState } from "react"
 
-import {
-  getNotificationsFromStorage,
-  getUnreadNotificationCount,
-  type Notification,
-  type NotificationType,
-  saveNotificationsToStorage,
-} from "@/app/(dashboards)/patient/_lib/notifications"
 import { Button } from "@/components/ui/button"
+import { Loader } from "@/components/ui/loader"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  type AppNotification,
+  NOTIFICATIONS_API,
+  NOTIFICATIONS_QUERY_KEYS,
+  type NotificationsListResponse,
+  type NotificationType,
+} from "@/lib/api/notifications"
 import { cn } from "@/lib/utils"
 
 const notificationIcons: Record<
@@ -35,37 +43,59 @@ const notificationIcons: Record<
   lab: FlaskConical,
   medication: Activity,
   vaccination: Syringe,
+  imaging: ScanLine,
   provider: Stethoscope,
   system: Settings,
 }
 
 export default function NotificationDropdown() {
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
+
+  const { data, isLoading, refetch } = useFetch<NotificationsListResponse>({
+    path: NOTIFICATIONS_API.list,
+    queryKey: NOTIFICATIONS_QUERY_KEYS.list,
+  })
 
   useEffect(() => {
-    setNotifications(getNotificationsFromStorage())
-  }, [])
+    if (open) {
+      void refetch()
+    }
+  }, [open, refetch])
 
-  const unreadCount = getUnreadNotificationCount(notifications)
+  const { onRequest: markRead } = useApi<Record<string, never>>({
+    key: "mark-notification-read",
+    method: "patch",
+  })
 
-  function updateNotifications(next: Notification[]) {
-    setNotifications(next)
-    saveNotificationsToStorage(next)
+  const { onRequest: markAllRead, isPending: isMarkingAllRead } = useApi<
+    Record<string, never>
+  >({
+    key: "mark-all-notifications-read",
+    method: "patch",
+  })
+
+  const notifications = data?.notifications ?? []
+  const unreadCount = data?.unreadCount ?? 0
+
+  function invalidateNotifications() {
+    queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEYS.list })
   }
 
-  function markAsRead(id: string) {
-    updateNotifications(
-      notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    )
+  function handleMarkAsRead(id: string) {
+    markRead({
+      path: NOTIFICATIONS_API.markRead(id),
+      data: {},
+      onSuccess: () => invalidateNotifications(),
+    })
   }
 
-  function markAllAsRead() {
-    updateNotifications(
-      notifications.map((notification) => ({ ...notification, read: true }))
-    )
+  function handleMarkAllAsRead() {
+    markAllRead({
+      path: NOTIFICATIONS_API.markAllRead,
+      data: {},
+      onSuccess: () => invalidateNotifications(),
+    })
   }
 
   return (
@@ -100,7 +130,8 @@ export default function NotificationDropdown() {
               variant="ghost"
               size="sm"
               className="h-8 gap-1.5 px-2 text-xs text-primary"
-              onClick={markAllAsRead}
+              disabled={isMarkingAllRead}
+              onClick={handleMarkAllAsRead}
             >
               <CheckCheck className="size-3.5" aria-hidden />
               Mark all read
@@ -109,7 +140,11 @@ export default function NotificationDropdown() {
         </div>
 
         <div className="thin-scrollbar max-h-80 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader label="Loading notifications..." />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <Typography variant="muted" className="text-sm">
                 You&apos;re all caught up.
@@ -118,14 +153,18 @@ export default function NotificationDropdown() {
           ) : (
             <ul>
               {notifications.map((notification) => {
-                const Icon = notificationIcons[notification.type]
+                const Icon =
+                  notification.type === "system" &&
+                  notification.title === "New sign-in"
+                    ? LogIn
+                    : notificationIcons[notification.type]
 
                 return (
                   <li key={notification.id}>
                     <NotificationItem
                       notification={notification}
                       icon={Icon}
-                      onRead={() => markAsRead(notification.id)}
+                      onRead={() => handleMarkAsRead(notification.id)}
                       onNavigate={() => setOpen(false)}
                     />
                   </li>
@@ -145,11 +184,15 @@ function NotificationItem({
   onRead,
   onNavigate,
 }: {
-  notification: Notification
+  notification: AppNotification
   icon: ComponentType<{ className?: string }>
   onRead: () => void
   onNavigate: () => void
 }) {
+  const timeLabel = formatDistanceToNow(new Date(notification.createdAt), {
+    addSuffix: true,
+  })
+
   const content = (
     <>
       <span
@@ -185,7 +228,7 @@ function NotificationItem({
           {notification.message}
         </Typography>
         <Typography variant="muted" className="mt-1.5 text-[11px]">
-          {notification.time}
+          {timeLabel}
         </Typography>
       </div>
     </>
@@ -200,7 +243,7 @@ function NotificationItem({
   if (notification.href) {
     return (
       <Link
-        href={notification.href}
+        href={notification.href as Route}
         className={className}
         onClick={() => {
           if (!notification.read) onRead()

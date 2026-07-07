@@ -1,5 +1,9 @@
 import { z } from "zod"
 
+import type { Allergy } from "@/lib/api/allergies"
+
+export type { Allergy }
+
 export const ALLERGY_TYPE_FOOD = "Food"
 
 export const allergyTypeOptions = [
@@ -52,14 +56,6 @@ export const foodTriggerOptions = [
   "Wheat",
 ] as const
 
-export type Allergy = {
-  id: string
-  allergyType: string
-  nature: string
-  symptoms: string[]
-  triggers: string[]
-}
-
 export const allergySchema = z
   .object({
     allergyType: z.string().min(1, "Select an allergy type."),
@@ -86,49 +82,6 @@ export const allergyDefaultValues: AllergyFormValues = {
   triggers: [],
 }
 
-export const initialAllergies: Allergy[] = [
-  {
-    id: "1",
-    allergyType: "Drug",
-    nature: "Severe",
-    symptoms: ["Hives", "Shortness of breath", "Weak pulse"],
-    triggers: [],
-  },
-  {
-    id: "2",
-    allergyType: "Food",
-    nature: "Moderate",
-    symptoms: [
-      "Swelling of the tongue, affecting the ability to talk or breathe",
-      "Wheezing",
-      "Dizziness or feeling faint",
-    ],
-    triggers: ["Shellfish"],
-  },
-]
-
-export const ALLERGIES_STORAGE_KEY = "uhc-allergies"
-
-export function getAllergiesFromStorage(): Allergy[] {
-  if (typeof window === "undefined") return initialAllergies
-
-  try {
-    const stored = localStorage.getItem(ALLERGIES_STORAGE_KEY)
-    if (!stored) return initialAllergies
-    return JSON.parse(stored) as Allergy[]
-  } catch {
-    return initialAllergies
-  }
-}
-
-export function saveAllergiesToStorage(allergies: Allergy[]) {
-  localStorage.setItem(ALLERGIES_STORAGE_KEY, JSON.stringify(allergies))
-}
-
-export function getAllergyById(id: string): Allergy | undefined {
-  return getAllergiesFromStorage().find((allergy) => allergy.id === id)
-}
-
 export function allergyToFormValues(allergy: Allergy): AllergyFormValues {
   return {
     allergyType: allergy.allergyType,
@@ -138,12 +91,8 @@ export function allergyToFormValues(allergy: Allergy): AllergyFormValues {
   }
 }
 
-export function formValuesToAllergy(
-  values: AllergyFormValues,
-  id: string
-): Allergy {
+export function formValuesToPayload(values: AllergyFormValues) {
   return {
-    id,
     allergyType: values.allergyType,
     nature: values.nature,
     symptoms: values.symptoms,
@@ -165,4 +114,24 @@ export function formatSymptomsList(symptoms: string[], max = 2): string {
 export function formatTriggersList(triggers: string[]): string {
   if (triggers.length === 0) return "—"
   return triggers.join(", ")
+}
+
+export function getNatureBadgeClass(nature: string) {
+  if (nature === "Very Severe" || nature === "Severe") {
+    return "bg-destructive/10 text-destructive hover:bg-destructive/10"
+  }
+  if (nature === "Moderate") {
+    return "bg-amber-100 text-amber-800 hover:bg-amber-100"
+  }
+  return "bg-muted text-muted-foreground hover:bg-muted"
+}
+
+export function getNatureBadgeOutlineClass(nature: string) {
+  if (nature === "Very Severe" || nature === "Severe") {
+    return "bg-destructive/10 text-destructive border-destructive/20"
+  }
+  if (nature === "Moderate") {
+    return "bg-amber-100 text-amber-800 border-amber-200"
+  }
+  return "bg-muted text-muted-foreground border-border"
 }

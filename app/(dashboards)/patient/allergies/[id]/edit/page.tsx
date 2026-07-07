@@ -1,36 +1,63 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useParams, useRouter } from "next/navigation"
+import { useMemo } from "react"
 
 import {
-  type Allergy,
   type AllergyFormValues,
   allergyToFormValues,
-  formValuesToAllergy,
-  getAllergiesFromStorage,
-  getAllergyById,
-  saveAllergiesToStorage,
+  formValuesToPayload,
 } from "@/app/(dashboards)/patient/_lib/allergies"
 import AllergyForm from "@/app/(dashboards)/patient/allergies/_components/allergy-form"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  ALLERGIES_API,
+  ALLERGIES_QUERY_KEYS,
+  type AllergiesListResponse,
+  type UpdateAllergyPayload,
+} from "@/lib/api/allergies"
 
 export default function EditAllergyPage() {
   const params = useParams<{ id: string }>()
-  const [allergy, setAllergy] = useState<Allergy | null>(null)
+  const router = useRouter()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    setAllergy(getAllergyById(params.id) ?? null)
-  }, [params.id])
+  const { data, isLoading } = useFetch<AllergiesListResponse>({
+    path: ALLERGIES_API.list,
+    queryKey: ALLERGIES_QUERY_KEYS.list,
+  })
+
+  const allergy = useMemo(
+    () => data?.allergies.find((item) => item.id === params.id) ?? null,
+    [data?.allergies, params.id]
+  )
+
+  const { onRequest: updateAllergy, isPending } = useApi<UpdateAllergyPayload>({
+    key: "update-allergy",
+    method: "patch",
+  })
 
   function handleSubmit(values: AllergyFormValues) {
     if (!allergy) return
 
-    const allergies = getAllergiesFromStorage()
-    const updated = formValuesToAllergy(values, allergy.id)
-    saveAllergiesToStorage(
-      allergies.map((item) => (item.id === allergy.id ? updated : item))
-    )
+    updateAllergy({
+      path: ALLERGIES_API.update(allergy.id),
+      data: formValuesToPayload(values),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ALLERGIES_QUERY_KEYS.list,
+        })
+        router.push("/patient/allergies")
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <Loader variant="full-page" label="Loading allergy..." />
   }
 
   if (!allergy) {
@@ -51,6 +78,7 @@ export default function EditAllergyPage() {
       description={`Update details for your ${allergy.allergyType.toLowerCase()} allergy.`}
       defaultValues={allergyToFormValues(allergy)}
       submitLabel="Save Changes"
+      isSubmitting={isPending}
       onSubmit={handleSubmit}
     />
   )

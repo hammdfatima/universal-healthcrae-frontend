@@ -1,17 +1,30 @@
-type UnauthorizedHandler = (() => void) | null
+import type { SessionEndReason } from "@/lib/auth/constants"
 
-let unauthorizedHandler: UnauthorizedHandler = null
+type SessionEndHandler = ((reason: SessionEndReason) => void) | null
 
-export function registerUnauthorizedHandler(handler: () => void) {
-  unauthorizedHandler = handler
+let sessionEndHandler: SessionEndHandler = null
+
+export function registerSessionEndHandler(
+  handler: (reason: SessionEndReason) => void
+) {
+  sessionEndHandler = handler
 
   return () => {
-    if (unauthorizedHandler === handler) {
-      unauthorizedHandler = null
+    if (sessionEndHandler === handler) {
+      sessionEndHandler = null
     }
   }
 }
 
+export function handleSessionEnd(reason: SessionEndReason) {
+  sessionEndHandler?.(reason)
+}
+
+/** @deprecated Use handleSessionEnd("revoked") */
+export function registerUnauthorizedHandler(handler: () => void) {
+  return registerSessionEndHandler(() => handler())
+}
+
 export function handleUnauthorized() {
-  unauthorizedHandler?.()
+  handleSessionEnd("revoked")
 }

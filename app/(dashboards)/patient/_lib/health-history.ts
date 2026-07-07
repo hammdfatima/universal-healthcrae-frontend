@@ -1,13 +1,9 @@
 import { format, isValid, parse } from "date-fns"
 import { z } from "zod"
 
-export type HealthHistoryEntry = {
-  id: string
-  illnessName: string
-  diagnosisDate: string
-  prescribedBy: string
-  details: string
-}
+import type { HealthHistoryEntry } from "@/lib/api/health-history"
+
+export type { HealthHistoryEntry }
 
 export const healthHistorySchema = z.object({
   illnessName: z.string().min(1, "Illness or condition name is required."),
@@ -27,27 +23,6 @@ export const healthHistoryDefaultValues: HealthHistoryFormValues = {
   details: "",
 }
 
-export const initialHealthHistory: HealthHistoryEntry[] = [
-  {
-    id: "1",
-    illnessName: "Type 2 Diabetes",
-    diagnosisDate: "03/15/2019",
-    prescribedBy: "Dr. Brooklyn Belle",
-    details:
-      "Diagnosed following elevated HbA1c. Started on Metformin 500 mg twice daily with lifestyle changes.",
-  },
-  {
-    id: "2",
-    illnessName: "Hypertension",
-    diagnosisDate: "08/22/2020",
-    prescribedBy: "Dr. John Richards",
-    details:
-      "Stage 1 hypertension confirmed after multiple readings. Prescribed Lisinopril 10 mg daily.",
-  },
-]
-
-export const HEALTH_HISTORY_STORAGE_KEY = "uhc-health-history"
-
 export function formatHealthHistoryDate(date: Date): string {
   return format(date, "MM/dd/yyyy")
 }
@@ -58,28 +33,6 @@ export function parseHealthHistoryDate(
   if (!value) return undefined
   const parsed = parse(value, "MM/dd/yyyy", new Date())
   return isValid(parsed) ? parsed : undefined
-}
-
-export function getHealthHistoryFromStorage(): HealthHistoryEntry[] {
-  if (typeof window === "undefined") return initialHealthHistory
-
-  try {
-    const stored = localStorage.getItem(HEALTH_HISTORY_STORAGE_KEY)
-    if (!stored) return initialHealthHistory
-    return JSON.parse(stored) as HealthHistoryEntry[]
-  } catch {
-    return initialHealthHistory
-  }
-}
-
-export function saveHealthHistoryToStorage(entries: HealthHistoryEntry[]) {
-  localStorage.setItem(HEALTH_HISTORY_STORAGE_KEY, JSON.stringify(entries))
-}
-
-export function getHealthHistoryEntryById(
-  id: string
-): HealthHistoryEntry | undefined {
-  return getHealthHistoryFromStorage().find((entry) => entry.id === id)
 }
 
 export function healthHistoryToFormValues(
@@ -93,16 +46,12 @@ export function healthHistoryToFormValues(
   }
 }
 
-export function formValuesToHealthHistoryEntry(
-  values: HealthHistoryFormValues,
-  id: string
-): HealthHistoryEntry {
+export function formValuesToPayload(values: HealthHistoryFormValues) {
   return {
-    id,
-    illnessName: values.illnessName,
+    illnessName: values.illnessName.trim(),
     diagnosisDate: formatHealthHistoryDate(values.diagnosisDate),
-    prescribedBy: values.prescribedBy,
-    details: values.details,
+    prescribedBy: values.prescribedBy.trim(),
+    details: values.details.trim(),
   }
 }
 

@@ -1,56 +1,58 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { AlertTriangle, Eye, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
   ALLERGY_TYPE_FOOD,
-  type Allergy,
   formatSymptomsList,
   formatTriggersList,
-  getAllergiesFromStorage,
   getAllergyTypeFilterOptions,
-  initialAllergies,
+  getNatureBadgeClass,
   natureOptions,
-  saveAllergiesToStorage,
 } from "@/app/(dashboards)/patient/_lib/allergies"
 import AllergyDetailsDialog from "@/app/(dashboards)/patient/allergies/_components/allergy-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { Allergy } from "@/lib/api/allergies"
+import {
+  ALLERGIES_API,
+  ALLERGIES_QUERY_KEYS,
+  type AllergiesListResponse,
+} from "@/lib/api/allergies"
 import { cn } from "@/lib/utils"
-
-function getNatureBadgeClass(nature: string) {
-  if (nature === "Very Severe" || nature === "Severe") {
-    return "bg-destructive/10 text-destructive hover:bg-destructive/10"
-  }
-  if (nature === "Moderate") {
-    return "bg-amber-100 text-amber-800 hover:bg-amber-100"
-  }
-  return "bg-muted text-muted-foreground hover:bg-muted"
-}
 
 export default function AllergiesTable() {
   const router = useRouter()
-  const [allergies, setAllergies] = useState<Allergy[]>(initialAllergies)
+  const queryClient = useQueryClient()
   const [selectedAllergy, setSelectedAllergy] = useState<Allergy | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setAllergies(getAllergiesFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<AllergiesListResponse>({
+      path: ALLERGIES_API.list,
+      queryKey: ALLERGIES_QUERY_KEYS.list,
+    })
+
+  const allergies = data?.allergies ?? []
 
   const typeOptions = useMemo(
     () => getAllergyTypeFilterOptions(allergies),
     [allergies]
   )
 
-  function updateAllergies(next: Allergy[]) {
-    setAllergies(next)
-    saveAllergiesToStorage(next)
-  }
+  const { onRequest: deleteAllergy, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-allergy",
+    method: "delete",
+  })
 
   function openDetails(allergy: Allergy) {
     setSelectedAllergy(allergy)
@@ -58,8 +60,17 @@ export default function AllergiesTable() {
   }
 
   function handleDelete(allergy: Allergy) {
-    updateAllergies(allergies.filter((item) => item.id !== allergy.id))
-    setSelectedAllergy(null)
+    deleteAllergy({
+      path: ALLERGIES_API.delete(allergy.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ALLERGIES_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedAllergy(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<Allergy>[] = [
@@ -139,6 +150,11 @@ export default function AllergiesTable() {
         data={allergies}
         getRowId={(row) => row.id}
         searchPlaceholder="Search allergies..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={[
           {
             id: "allergyType",
@@ -170,6 +186,7 @@ export default function AllergiesTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

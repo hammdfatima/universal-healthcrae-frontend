@@ -1,33 +1,41 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Eye, Plus, Syringe } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
   getAdministeredByFilterOptions,
   getPrescribedByFilterOptions,
-  getVaccinationsFromStorage,
-  initialVaccinations,
-  saveVaccinationsToStorage,
-  type Vaccination,
 } from "@/app/(dashboards)/patient/_lib/vaccinations"
 import VaccinationDetailsDialog from "@/app/(dashboards)/patient/vaccinations/_components/vaccination-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { Vaccination } from "@/lib/api/vaccinations"
+import {
+  VACCINATIONS_API,
+  VACCINATIONS_QUERY_KEYS,
+  type VaccinationsListResponse,
+} from "@/lib/api/vaccinations"
 
 export default function VaccinationsTable() {
   const router = useRouter()
-  const [vaccinations, setVaccinations] =
-    useState<Vaccination[]>(initialVaccinations)
+  const queryClient = useQueryClient()
   const [selectedVaccination, setSelectedVaccination] =
     useState<Vaccination | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setVaccinations(getVaccinationsFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<VaccinationsListResponse>({
+      path: VACCINATIONS_API.list,
+      queryKey: VACCINATIONS_QUERY_KEYS.list,
+    })
+
+  const vaccinations = data?.vaccinations ?? []
 
   const prescribedByOptions = useMemo(
     () => getPrescribedByFilterOptions(vaccinations),
@@ -39,10 +47,12 @@ export default function VaccinationsTable() {
     [vaccinations]
   )
 
-  function updateVaccinations(next: Vaccination[]) {
-    setVaccinations(next)
-    saveVaccinationsToStorage(next)
-  }
+  const { onRequest: deleteVaccination, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-vaccination",
+    method: "delete",
+  })
 
   function openDetails(vaccination: Vaccination) {
     setSelectedVaccination(vaccination)
@@ -50,10 +60,17 @@ export default function VaccinationsTable() {
   }
 
   function handleDelete(vaccination: Vaccination) {
-    updateVaccinations(
-      vaccinations.filter((item) => item.id !== vaccination.id)
-    )
-    setSelectedVaccination(null)
+    deleteVaccination({
+      path: VACCINATIONS_API.delete(vaccination.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: VACCINATIONS_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedVaccination(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<Vaccination>[] = [
@@ -155,6 +172,11 @@ export default function VaccinationsTable() {
         data={vaccinations}
         getRowId={(row) => row.id}
         searchPlaceholder="Search vaccinations..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={filters}
         actions={
           <Button onClick={() => router.push("/patient/vaccinations/new")}>
@@ -170,6 +192,7 @@ export default function VaccinationsTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

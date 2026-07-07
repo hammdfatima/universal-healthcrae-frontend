@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
-import useToast from "@/hooks/use-toast"
 import { AUTH_API } from "@/lib/auth/constants"
 import { strongPasswordSchema } from "@/lib/auth/password"
 import { clearResetToken, getResetToken } from "@/lib/auth/session"
@@ -36,7 +35,6 @@ const defaultValues = {
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const { toastSuccess } = useToast()
   const [formKey, setFormKey] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -102,7 +100,6 @@ export default function ResetPasswordPage() {
               },
               onSuccess: () => {
                 clearResetToken()
-                toastSuccess("Password updated. You can log in now.")
                 setFormKey((key) => key + 1)
                 router.push("/login" as Route)
               },

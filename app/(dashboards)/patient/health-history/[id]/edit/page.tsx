@@ -1,36 +1,64 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useParams, useRouter } from "next/navigation"
+import { useMemo } from "react"
 
 import {
-  formValuesToHealthHistoryEntry,
-  getHealthHistoryEntryById,
-  getHealthHistoryFromStorage,
-  type HealthHistoryEntry,
+  formValuesToPayload,
   type HealthHistoryFormValues,
   healthHistoryToFormValues,
-  saveHealthHistoryToStorage,
 } from "@/app/(dashboards)/patient/_lib/health-history"
 import HealthHistoryForm from "@/app/(dashboards)/patient/health-history/_components/health-history-form"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import {
+  HEALTH_HISTORY_API,
+  HEALTH_HISTORY_QUERY_KEYS,
+  type HealthHistoryListResponse,
+  type UpdateHealthHistoryPayload,
+} from "@/lib/api/health-history"
 
 export default function EditHealthHistoryPage() {
   const params = useParams<{ id: string }>()
-  const [entry, setEntry] = useState<HealthHistoryEntry | null>(null)
+  const router = useRouter()
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    setEntry(getHealthHistoryEntryById(params.id) ?? null)
-  }, [params.id])
+  const { data, isLoading } = useFetch<HealthHistoryListResponse>({
+    path: HEALTH_HISTORY_API.list,
+    queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+  })
+
+  const entry = useMemo(
+    () => data?.entries.find((item) => item.id === params.id) ?? null,
+    [data?.entries, params.id]
+  )
+
+  const { onRequest: updateHealthHistoryEntry, isPending } =
+    useApi<UpdateHealthHistoryPayload>({
+      key: "update-health-history-entry",
+      method: "patch",
+    })
 
   function handleSubmit(values: HealthHistoryFormValues) {
     if (!entry) return
 
-    const entries = getHealthHistoryFromStorage()
-    const updated = formValuesToHealthHistoryEntry(values, entry.id)
-    saveHealthHistoryToStorage(
-      entries.map((item) => (item.id === entry.id ? updated : item))
-    )
+    updateHealthHistoryEntry({
+      path: HEALTH_HISTORY_API.update(entry.id),
+      data: formValuesToPayload(values),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+        })
+        router.push("/patient/health-history")
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <Loader variant="full-page" label="Loading diagnosis..." />
   }
 
   if (!entry) {
@@ -38,7 +66,8 @@ export default function EditHealthHistoryPage() {
       <div className="mx-auto max-w-3xl py-12 text-center">
         <Typography variant="h4">Diagnosis not found</Typography>
         <Typography variant="muted" className="mt-2">
-          This entry may have been removed or the link is invalid.
+          This health history entry may have been removed or the link is
+          invalid.
         </Typography>
       </div>
     )
@@ -51,6 +80,7 @@ export default function EditHealthHistoryPage() {
       description={`Update details for ${entry.illnessName}.`}
       defaultValues={healthHistoryToFormValues(entry)}
       submitLabel="Save Changes"
+      isSubmitting={isPending}
       onSubmit={handleSubmit}
     />
   )

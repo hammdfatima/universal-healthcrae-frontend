@@ -10,16 +10,42 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import { cn } from "@/lib/utils"
 
 type PaymentInvoiceViewProps = {
-  payment: AdminPayment
+  payment?: AdminPayment | null
+  isLoading?: boolean
 }
 
 export default function PaymentInvoiceView({
   payment,
+  isLoading = false,
 }: PaymentInvoiceViewProps) {
+  if (isLoading || !payment) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-6 p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Typography as="h1" variant="h3">
+              Invoice Details
+            </Typography>
+            <Typography variant="muted" className="mt-1">
+              Loading invoice...
+            </Typography>
+          </div>
+        </div>
+
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <CardContent className="flex min-h-[420px] items-center justify-center py-16">
+            <Loader label="Loading invoice..." />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

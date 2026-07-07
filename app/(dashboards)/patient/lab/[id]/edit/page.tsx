@@ -1,36 +1,81 @@
 "use client"
 
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useParams, useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
 
 import {
-  formValuesToLabResult,
-  getLabResultById,
-  getLabResultsFromStorage,
-  type LabResult,
+  formValuesToPayload,
+  getUploadErrorMessage,
   type LabResultFormValues,
   labResultToFormValues,
-  saveLabResultsToStorage,
+  resolveLabResultFile,
 } from "@/app/(dashboards)/patient/_lib/lab"
 import LabResultForm from "@/app/(dashboards)/patient/lab/_components/lab-result-form"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import useToast from "@/hooks/use-toast"
+import {
+  LAB_RESULTS_API,
+  LAB_RESULTS_QUERY_KEYS,
+  type LabResultsListResponse,
+  type UpdateLabResultPayload,
+} from "@/lib/api/lab-results"
 
 export default function EditLabResultPage() {
   const params = useParams<{ id: string }>()
-  const [result, setResult] = useState<LabResult | null>(null)
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const { toastError } = useToast()
+  const [isUploading, setIsUploading] = useState(false)
 
-  useEffect(() => {
-    setResult(getLabResultById(params.id) ?? null)
-  }, [params.id])
+  const { data, isLoading } = useFetch<LabResultsListResponse>({
+    path: LAB_RESULTS_API.list,
+    queryKey: LAB_RESULTS_QUERY_KEYS.list,
+  })
 
-  function handleSubmit(values: LabResultFormValues) {
+  const result = useMemo(
+    () => data?.labResults.find((item) => item.id === params.id) ?? null,
+    [data?.labResults, params.id]
+  )
+
+  const { onRequest: updateLabResult, isPending } =
+    useApi<UpdateLabResultPayload>({
+      key: "update-lab-result",
+      method: "patch",
+    })
+
+  async function handleSubmit(
+    values: LabResultFormValues,
+    selectedFile: File | null
+  ) {
     if (!result) return
 
-    const results = getLabResultsFromStorage()
-    const updated = formValuesToLabResult(values, result.id)
-    saveLabResultsToStorage(
-      results.map((item) => (item.id === result.id ? updated : item))
-    )
+    try {
+      setIsUploading(true)
+      const file = await resolveLabResultFile(values, selectedFile)
+      setIsUploading(false)
+
+      updateLabResult({
+        path: LAB_RESULTS_API.update(result.id),
+        data: formValuesToPayload(values, file),
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: LAB_RESULTS_QUERY_KEYS.list,
+          })
+          router.push("/patient/lab")
+        },
+      })
+    } catch (error) {
+      setIsUploading(false)
+      toastError(getUploadErrorMessage(error))
+    }
+  }
+
+  if (isLoading) {
+    return <Loader variant="full-page" label="Loading lab result..." />
   }
 
   if (!result) {
@@ -51,6 +96,7 @@ export default function EditLabResultPage() {
       description={`Update details for ${result.fileName}.`}
       defaultValues={labResultToFormValues(result)}
       submitLabel="Save Changes"
+      isSubmitting={isPending || isUploading}
       onSubmit={handleSubmit}
     />
   )

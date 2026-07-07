@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRef } from "react"
 
 import {
   type LabResultFormValues,
+  LOCAL_FILE_SENTINEL,
   labResultDefaultValues,
   labResultSchema,
 } from "@/app/(dashboards)/patient/_lib/lab"
@@ -12,15 +13,20 @@ import DatePickerField from "@/components/date-picker-field"
 import FileUploadField from "@/components/file-upload-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import { MAX_LAB_FILE_SIZE_BYTES } from "@/lib/api/files"
 
 type LabResultFormProps = {
   title: string
   description: string
   defaultValues?: LabResultFormValues
-  onSubmit: (values: LabResultFormValues) => void
+  onSubmit: (
+    values: LabResultFormValues,
+    selectedFile: File | null
+  ) => void | Promise<void>
   submitLabel: string
+  isSubmitting?: boolean
 }
 
 export default function LabResultForm({
@@ -29,9 +35,9 @@ export default function LabResultForm({
   defaultValues = labResultDefaultValues,
   onSubmit,
   submitLabel,
+  isSubmitting = false,
 }: LabResultFormProps) {
-  const router = useRouter()
-  const { toastSuccess } = useToast()
+  const selectedFileRef = useRef<File | null>(null)
 
   return (
     <div className="mx-auto max-w-7xl p-4">
@@ -47,15 +53,7 @@ export default function LabResultForm({
           schema={labResultSchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-5" }}
-          onSubmit={(values) => {
-            onSubmit(values)
-            toastSuccess(
-              submitLabel === "Save"
-                ? "Lab result added successfully."
-                : "Lab result updated successfully."
-            )
-            router.push("/patient/lab")
-          }}
+          onSubmit={(values) => onSubmit(values, selectedFileRef.current)}
         >
           {({ components, methods }) => {
             const { Input: FormInput, Field } = components
@@ -81,6 +79,7 @@ export default function LabResultForm({
                       value={field.value as Date | undefined}
                       onChange={field.onChange}
                       placeholder="MM/DD/YYYY"
+                      maxDate={new Date()}
                     />
                   )}
                 </Field>
@@ -92,7 +91,9 @@ export default function LabResultForm({
                   <FileUploadField
                     title="Upload lab report"
                     description="Drag and drop your lab report here, or browse from your device"
-                    hint="PDF, PNG, JPG, or WEBP · Max recommended 10 MB"
+                    hint="PDF, PNG, JPG, or WEBP"
+                    maxSizeBytes={MAX_LAB_FILE_SIZE_BYTES}
+                    localFileSentinel={LOCAL_FILE_SENTINEL}
                     value={
                       methods.watch("fileData")
                         ? {
@@ -103,12 +104,22 @@ export default function LabResultForm({
                           }
                         : null
                     }
+                    onFileSelect={(file) => {
+                      selectedFileRef.current = file
+                    }}
                     onChange={(file) => {
                       if (!file) {
+                        selectedFileRef.current = null
                         methods.setValue("fileData", "", {
                           shouldValidate: true,
                         })
                         methods.setValue("fileMimeType", "", {
+                          shouldValidate: true,
+                        })
+                        methods.setValue("filePublicId", "", {
+                          shouldValidate: true,
+                        })
+                        methods.setValue("fileResourceType", "", {
                           shouldValidate: true,
                         })
                         return
@@ -118,6 +129,12 @@ export default function LabResultForm({
                         shouldValidate: true,
                       })
                       methods.setValue("fileMimeType", file.fileMimeType, {
+                        shouldValidate: true,
+                      })
+                      methods.setValue("filePublicId", "", {
+                        shouldValidate: true,
+                      })
+                      methods.setValue("fileResourceType", "", {
                         shouldValidate: true,
                       })
 
@@ -142,7 +159,13 @@ export default function LabResultForm({
                   <Button type="button" variant="outline" asChild>
                     <Link href="/patient/lab">Close</Link>
                   </Button>
-                  <Button type="submit">{submitLabel}</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader variant="button" color="white" />
+                    ) : (
+                      submitLabel
+                    )}
+                  </Button>
                 </div>
               </>
             )

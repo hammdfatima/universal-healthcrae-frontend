@@ -10,8 +10,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-
-import type { HealthHistoryEntry } from "@/app/(dashboards)/patient/_lib/health-history"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +29,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { HealthHistoryEntry } from "@/lib/api/health-history"
 
 type HealthHistoryDetailsDialogProps = {
   entry: HealthHistoryEntry | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (entry: HealthHistoryEntry) => void
+  isDeleting?: boolean
 }
 
 export default function HealthHistoryDetailsDialog({
@@ -45,8 +44,8 @@ export default function HealthHistoryDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: HealthHistoryDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!entry) return null
@@ -127,11 +126,11 @@ export default function HealthHistoryDetailsDialog({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(entry)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Diagnosis deleted.")
               }}
             >
               Delete

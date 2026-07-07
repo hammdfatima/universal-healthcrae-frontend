@@ -1,5 +1,7 @@
 "use client"
 
+import { startOfDay, subDays } from "date-fns"
+
 import {
   bloodGroupOptions,
   genderOptions,
@@ -120,6 +122,7 @@ export default function PatientProfileForm({
                     value={field.value as Date | undefined}
                     onChange={field.onChange}
                     placeholder="MM/DD/YYYY"
+                    maxDate={subDays(startOfDay(new Date()), 1)}
                   />
                 )}
               </Field>

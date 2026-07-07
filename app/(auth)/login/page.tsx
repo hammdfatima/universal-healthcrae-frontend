@@ -104,12 +104,23 @@ function LoginPageContent() {
               },
               onError: (error) => {
                 if (
-                  axios.isAxiosError(error) &&
-                  error.response?.status === 403
+                  !axios.isAxiosError(error) ||
+                  error.response?.status !== 403
                 ) {
-                  setSubmittedEmail(values.email)
-                  setVerifyOpen(true)
+                  return
                 }
+
+                const message = error.response.data?.message as
+                  | string
+                  | undefined
+                const isBlocked = message?.toLowerCase().includes("blocked")
+
+                if (isBlocked) {
+                  return
+                }
+
+                setSubmittedEmail(values.email)
+                setVerifyOpen(true)
               },
             })
           }}

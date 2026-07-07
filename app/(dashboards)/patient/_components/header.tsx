@@ -1,7 +1,9 @@
 "use client"
 
 import { Menu, Search } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
+import Link from "next/link"
 
 import NotificationDropdown from "@/app/(dashboards)/patient/_components/notification-dropdown"
 import { Button } from "@/components/ui/button"
@@ -55,13 +57,15 @@ export default function PatientHeader({ onMenuClick }: PatientHeaderProps) {
 
 function LinkLogo({ className }: { className?: string }) {
   return (
-    <Image
-      src="/logo.jpeg"
-      alt="Universal Health Charts"
-      width={200}
-      height={50}
-      className={cn("h-8 w-auto sm:h-9", className)}
-      quality={100}
-    />
+    <Link href={"/" as Route} className={cn("shrink-0", className)}>
+      <Image
+        src="/logo.jpeg"
+        alt="Universal Health Charts"
+        width={200}
+        height={50}
+        className="h-8 w-auto sm:h-9"
+        quality={100}
+      />
+    </Link>
   )
 }

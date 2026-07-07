@@ -63,7 +63,7 @@ const useApi = <T,>({
       case "put":
         return axios.put<ApiResponse<any>>(REQUEST_PATH, data, config)
       case "delete":
-        return axios.delete<ApiResponse<any>>(REQUEST_PATH, { headers })
+        return axios.delete<ApiResponse<any>>(REQUEST_PATH, { headers, data })
       case "patch":
         return axios.patch<ApiResponse<any>>(REQUEST_PATH, data, config)
       default:

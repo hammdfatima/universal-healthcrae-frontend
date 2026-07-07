@@ -11,8 +11,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-
-import type { Vaccination } from "@/app/(dashboards)/patient/_lib/vaccinations"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,13 +30,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
+import type { Vaccination } from "@/lib/api/vaccinations"
 
 type VaccinationDetailsDialogProps = {
   vaccination: Vaccination | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onDelete: (vaccination: Vaccination) => void
+  isDeleting?: boolean
 }
 
 export default function VaccinationDetailsDialog({
@@ -46,8 +45,8 @@ export default function VaccinationDetailsDialog({
   open,
   onOpenChange,
   onDelete,
+  isDeleting = false,
 }: VaccinationDetailsDialogProps) {
-  const { toastSuccess } = useToast()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (!vaccination) return null
@@ -134,11 +133,11 @@ export default function VaccinationDetailsDialog({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
               onClick={() => {
                 onDelete(vaccination)
                 setDeleteOpen(false)
                 onOpenChange(false)
-                toastSuccess("Vaccination deleted.")
               }}
             >
               Delete

@@ -1,7 +1,18 @@
-import { format, isValid, parse, parseISO } from "date-fns"
+import {
+  format,
+  isBefore,
+  isValid,
+  parse,
+  parseISO,
+  startOfDay,
+} from "date-fns"
 import { z } from "zod"
 
 import { strongPasswordSchema } from "@/lib/auth/password"
+
+function isDateOfBirthInPast(date: Date): boolean {
+  return isBefore(startOfDay(date), startOfDay(new Date()))
+}
 
 export const bloodGroupOptions = [
   { label: "A+", value: "A+" },
@@ -44,7 +55,7 @@ export type SubscriptionInfo = {
 
 export type AccountSettings = {
   emailNotifications: boolean
-  marketingEmails: boolean
+  inAppNotifications: boolean
 }
 
 export const profileSchema = z.object({
@@ -53,7 +64,11 @@ export const profileSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   phone: z.string().min(1, "Phone number is required."),
   profileImage: z.string(),
-  dateOfBirth: z.date({ message: "Date of birth is required." }),
+  dateOfBirth: z
+    .date({ message: "Date of birth is required." })
+    .refine(isDateOfBirthInPast, {
+      message: "Date of birth must be in the past.",
+    }),
   bloodGroup: z.string().min(1, "Blood group is required."),
   gender: z.string(),
   address: z.string(),
@@ -146,7 +161,7 @@ export const initialSubscription: SubscriptionInfo = {
 
 export const initialAccountSettings: AccountSettings = {
   emailNotifications: true,
-  marketingEmails: false,
+  inAppNotifications: true,
 }
 
 export const PROFILE_STORAGE_KEY = "uhc-patient-profile"

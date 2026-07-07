@@ -1,44 +1,56 @@
 "use client"
 
+import { useQueryClient } from "@tanstack/react-query"
 import { Activity, Eye, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
   formatMedicationEndDate,
   getConditionFilterOptions,
-  getMedicationsFromStorage,
-  initialMedications,
-  type Medication,
-  saveMedicationsToStorage,
+  isMedicationActive,
+  isMedicationEnded,
 } from "@/app/(dashboards)/patient/_lib/medications"
 import MedicationDetailsDialog from "@/app/(dashboards)/patient/medications/_components/medication-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
+import useApi from "@/hooks/use-api"
+import { useFetch } from "@/hooks/use-fetch"
+import type { Medication } from "@/lib/api/medications"
+import {
+  MEDICATIONS_API,
+  MEDICATIONS_QUERY_KEYS,
+  type MedicationsListResponse,
+} from "@/lib/api/medications"
 
 export default function MedicationsTable() {
   const router = useRouter()
-  const [medications, setMedications] =
-    useState<Medication[]>(initialMedications)
+  const queryClient = useQueryClient()
   const [selectedMedication, setSelectedMedication] =
     useState<Medication | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
-  useEffect(() => {
-    setMedications(getMedicationsFromStorage())
-  }, [])
+  const { data, isLoading, isError, error, isFetching, refetch } =
+    useFetch<MedicationsListResponse>({
+      path: MEDICATIONS_API.list,
+      queryKey: MEDICATIONS_QUERY_KEYS.list,
+    })
+
+  const medications = data?.medications ?? []
 
   const conditionOptions = useMemo(
     () => getConditionFilterOptions(medications),
     [medications]
   )
 
-  function updateMedications(next: Medication[]) {
-    setMedications(next)
-    saveMedicationsToStorage(next)
-  }
+  const { onRequest: deleteMedication, isPending: isDeleting } = useApi<
+    Record<string, never>
+  >({
+    key: "delete-medication",
+    method: "delete",
+  })
 
   function openDetails(medication: Medication) {
     setSelectedMedication(medication)
@@ -46,8 +58,17 @@ export default function MedicationsTable() {
   }
 
   function handleDelete(medication: Medication) {
-    updateMedications(medications.filter((item) => item.id !== medication.id))
-    setSelectedMedication(null)
+    deleteMedication({
+      path: MEDICATIONS_API.delete(medication.id),
+      data: {},
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: MEDICATIONS_QUERY_KEYS.list,
+        })
+        refetch()
+        setSelectedMedication(null)
+      },
+    })
   }
 
   const columns: DataTableColumn<Medication>[] = [
@@ -103,7 +124,7 @@ export default function MedicationsTable() {
       id: "status",
       header: "Status",
       cell: (row) =>
-        !row.endDate ? (
+        isMedicationActive(row.endDate) ? (
           <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">
             Active
           </Badge>
@@ -149,6 +170,11 @@ export default function MedicationsTable() {
         data={medications}
         getRowId={(row) => row.id}
         searchPlaceholder="Search medications..."
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isRetrying={isFetching && !isLoading}
         filters={
           conditionOptions.length > 0
             ? [
@@ -162,8 +188,9 @@ export default function MedicationsTable() {
                   id: "status",
                   label: "Status",
                   filterFn: (row, value) => {
-                    if (value === "active") return !row.endDate
-                    if (value === "ended") return Boolean(row.endDate)
+                    if (value === "active")
+                      return isMedicationActive(row.endDate)
+                    if (value === "ended") return isMedicationEnded(row.endDate)
                     return true
                   },
                   options: [
@@ -188,6 +215,7 @@ export default function MedicationsTable() {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   )

@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { type ComponentType, useEffect } from "react"
 import type { UseFormReturn } from "react-hook-form"
 import { useWatch } from "react-hook-form"
@@ -20,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { FormFieldProps } from "@/components/ui/form-modified"
 import FormModified from "@/components/ui/form-modified"
+import { Loader } from "@/components/ui/loader"
 import {
   Select,
   SelectContent,
@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Typography } from "@/components/ui/typography"
-import useToast from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
 type AllergyFormProps = {
@@ -37,42 +36,46 @@ type AllergyFormProps = {
   defaultValues?: AllergyFormValues
   onSubmit: (values: AllergyFormValues) => void
   submitLabel: string
+  isSubmitting?: boolean
 }
 
 type FormFieldsProps = {
   methods: UseFormReturn<AllergyFormValues>
   Field: ComponentType<Omit<FormFieldProps<AllergyFormValues>, "control">>
   submitLabel: string
+  isSubmitting: boolean
 }
 
 function CheckboxGroup({
+  idPrefix,
   options,
   value,
   onChange,
 }: {
+  idPrefix: string
   options: readonly string[]
   value: string[]
   onChange: (next: string[]) => void
 }) {
   return (
-    <div className="thin-scrollbar grid max-h-64 gap-2 sm:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2 pr-1 sm:grid-cols-2 lg:grid-cols-3">
       {options.map((option) => {
         const checked = value.includes(option)
-        const inputId = option.replace(/\s+/g, "-").toLowerCase()
+        const inputId = `${idPrefix}-${option.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`
 
         return (
           <label
             key={option}
             htmlFor={inputId}
             className={cn(
-              "flex cursor-pointer items-start gap-3 rounded-full border border-border/60 bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40",
+              "flex h-full min-h-14 cursor-pointer items-start gap-3 rounded-full border border-border/60 bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40",
               checked && "border-primary/30 bg-primary/5"
             )}
           >
             <Checkbox
               id={inputId}
               checked={checked}
-              className="mt-0.5"
+              className="mt-0.5 shrink-0"
               onCheckedChange={(isChecked) => {
                 if (isChecked) onChange([...value, option])
                 else onChange(value.filter((item) => item !== option))
@@ -86,7 +89,12 @@ function CheckboxGroup({
   )
 }
 
-function AllergyFormFields({ methods, Field, submitLabel }: FormFieldsProps) {
+function AllergyFormFields({
+  methods,
+  Field,
+  submitLabel,
+  isSubmitting,
+}: FormFieldsProps) {
   const allergyType = useWatch({
     control: methods.control,
     name: "allergyType",
@@ -149,6 +157,7 @@ function AllergyFormFields({ methods, Field, submitLabel }: FormFieldsProps) {
         <Field name="symptoms">
           {(field) => (
             <CheckboxGroup
+              idPrefix="symptom"
               options={symptomOptions}
               value={(field.value as string[]) ?? []}
               onChange={field.onChange}
@@ -158,13 +167,14 @@ function AllergyFormFields({ methods, Field, submitLabel }: FormFieldsProps) {
       </div>
 
       {allergyType === ALLERGY_TYPE_FOOD ? (
-        <div className="space-y-3">
+        <div className="space-y-3 pt-2">
           <Typography variant="small" className="font-semibold">
             Triggers
           </Typography>
           <Field name="triggers">
             {(field) => (
               <CheckboxGroup
+                idPrefix="trigger"
                 options={foodTriggerOptions}
                 value={(field.value as string[]) ?? []}
                 onChange={field.onChange}
@@ -178,7 +188,13 @@ function AllergyFormFields({ methods, Field, submitLabel }: FormFieldsProps) {
         <Button type="button" variant="outline" asChild>
           <Link href="/patient/allergies">Close</Link>
         </Button>
-        <Button type="submit">{submitLabel}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <Loader variant="button" color="white" />
+          ) : (
+            submitLabel
+          )}
+        </Button>
       </div>
     </>
   )
@@ -190,10 +206,8 @@ export default function AllergyForm({
   defaultValues = allergyDefaultValues,
   onSubmit,
   submitLabel,
+  isSubmitting = false,
 }: AllergyFormProps) {
-  const router = useRouter()
-  const { toastSuccess } = useToast()
-
   return (
     <div className="mx-auto max-w-7xl p-4">
       <Typography as="h1" variant="h3">
@@ -208,21 +222,14 @@ export default function AllergyForm({
           schema={allergySchema}
           defaultValues={defaultValues}
           fieldsetProps={{ className: "space-y-6" }}
-          onSubmit={(values) => {
-            onSubmit(values)
-            toastSuccess(
-              submitLabel === "Save"
-                ? "Allergy added successfully."
-                : "Allergy updated successfully."
-            )
-            router.push("/patient/allergies")
-          }}
+          onSubmit={onSubmit}
         >
           {({ components, methods }) => (
             <AllergyFormFields
               methods={methods}
               Field={components.Field}
               submitLabel={submitLabel}
+              isSubmitting={isSubmitting}
             />
           )}
         </FormModified>
