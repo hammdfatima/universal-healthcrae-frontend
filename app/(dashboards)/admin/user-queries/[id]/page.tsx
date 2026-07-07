@@ -1,7 +1,6 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import Link from "next/link"
 import { useParams } from "next/navigation"
 import { z } from "zod"
 
@@ -75,16 +74,18 @@ export default function UserQueryDetailPage() {
     )
   }
 
+  const queryId = data.id
+
   function handleReply(values: z.infer<typeof replySchema>) {
     sendReply({
-      path: USER_QUERIES_API.admin.reply(data!.id),
+      path: USER_QUERIES_API.admin.reply(queryId),
       data: { reply: values.reply.trim() },
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: USER_QUERIES_QUERY_KEYS.adminList,
         })
         queryClient.invalidateQueries({
-          queryKey: USER_QUERIES_QUERY_KEYS.adminDetail(data!.id),
+          queryKey: USER_QUERIES_QUERY_KEYS.adminDetail(queryId),
         })
         refetch()
       },
