@@ -29,7 +29,7 @@ export default function EmergencyAccessPage({
   })
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-4xl px-5 pb-24 pt-8 sm:px-6 sm:pb-10 sm:pt-10">
       <div className="mb-8">
         <Typography variant="h2">Emergency Medical Records</Typography>
         {!recordsQuery.isLoading &&

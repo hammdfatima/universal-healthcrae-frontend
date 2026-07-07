@@ -71,7 +71,7 @@ export default function EmergencyRecordsView({
   const profileImage = getProfileValue(records.profile, "profileImage")
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 pb-6 sm:space-y-6 sm:pb-0">
       {showHeader ? (
         <section className="rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3">
           <Typography
@@ -402,15 +402,25 @@ function FileRecordItem({
   return (
     <>
       <div className="rounded-xl border border-border/50 bg-background px-4 py-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <FileText className="size-4 shrink-0 text-primary" aria-hidden />
-              <Typography variant="small" className="font-semibold">
+            <div className="flex min-w-0 items-start gap-2">
+              <FileText
+                className="mt-0.5 size-4 shrink-0 text-primary"
+                aria-hidden
+              />
+              <Typography
+                variant="small"
+                className="min-w-0 break-all font-semibold sm:truncate"
+                title={title}
+              >
                 {title}
               </Typography>
             </div>
-            <Typography variant="muted" className="mt-1 text-sm">
+            <Typography
+              variant="muted"
+              className="mt-1 break-words text-sm sm:pl-6"
+            >
               {description}
             </Typography>
           </div>
@@ -419,7 +429,7 @@ function FileRecordItem({
               type="button"
               variant="outline"
               size="sm"
-              className="shrink-0 gap-1.5"
+              className="w-full shrink-0 gap-1.5 sm:w-auto"
               onClick={() => setPreviewOpen(true)}
             >
               <Eye className="size-3.5" aria-hidden />

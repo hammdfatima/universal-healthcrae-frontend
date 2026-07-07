@@ -53,8 +53,8 @@ export default function ContactForm() {
       schema={contactSchema}
       defaultValues={defaultValues}
       formKey={formKey}
-      formProps={{ className: "flex h-full flex-1 flex-col" }}
-      fieldsetProps={{ className: "flex h-full flex-1 flex-col gap-5" }}
+      formProps={{ className: "flex w-full min-w-0 flex-1 flex-col" }}
+      fieldsetProps={{ className: "flex w-full min-w-0 flex-1 flex-col gap-5" }}
       onSubmit={(values) => {
         submitQuery({
           path: USER_QUERIES_API.create,
@@ -72,7 +72,7 @@ export default function ContactForm() {
     >
       {({ components: { Input, Textarea, Field } }) => (
         <>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid w-full min-w-0 gap-5 sm:grid-cols-2">
             <Input name="name" label="Full Name" placeholder="John Smith" />
             <Input
               name="email"
