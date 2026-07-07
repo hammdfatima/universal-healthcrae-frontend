@@ -1,6 +1,8 @@
 "use client"
 
-import { FileText } from "lucide-react"
+import { FileText, QrCode } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useState } from "react"
 
 import ReviewRecordsDialog from "@/app/(dashboards)/patient/_components/review-records-dialog"
@@ -64,15 +66,28 @@ export default function DashboardWelcome() {
               Track medications, allergies, immunizations, and your complete
               medical vault in one secure place.
             </Typography>
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-5 gap-1.5 bg-white text-secondary hover:bg-white/90"
-              onClick={() => setRecordsOpen(true)}
-            >
-              <FileText className="size-4" aria-hidden />
-              Review Records
-            </Button>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                className="gap-1.5 bg-white text-secondary hover:bg-white/90"
+                onClick={() => setRecordsOpen(true)}
+              >
+                <FileText className="size-4" aria-hidden />
+                Review Records
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="gap-1.5 bg-white/15 text-secondary-foreground hover:bg-white/25"
+                asChild
+              >
+                <Link href={"/patient/emergency-qr" as Route}>
+                  <QrCode className="size-4" aria-hidden />
+                  Emergency QR
+                </Link>
+              </Button>
+            </div>
           </div>
           <Typography
             variant="small"

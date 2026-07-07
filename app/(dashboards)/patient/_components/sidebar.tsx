@@ -9,6 +9,7 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  QrCode,
   ScanLine,
   Settings,
   Shield,
@@ -142,6 +143,11 @@ const careTeamNav: NavGroup = {
 }
 
 const accountNav: NavItem[] = [
+  {
+    label: "Emergency QR",
+    href: "/patient/emergency-qr" as Route,
+    icon: QrCode,
+  },
   {
     label: "Settings",
     href: "/patient/settings" as Route,

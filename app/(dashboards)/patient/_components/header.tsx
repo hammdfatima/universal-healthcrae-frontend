@@ -1,13 +1,13 @@
 "use client"
 
-import { Menu, Search } from "lucide-react"
+import { Menu } from "lucide-react"
 import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
 import NotificationDropdown from "@/app/(dashboards)/patient/_components/notification-dropdown"
+import DashboardSearch from "@/components/dashboard-search"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
 type PatientHeaderProps = {
@@ -33,18 +33,11 @@ export default function PatientHeader({ onMenuClick }: PatientHeaderProps) {
 
           <LinkLogo className="shrink-0" />
 
-          <div className="relative hidden min-w-0 flex-1 md:block md:max-w-md lg:max-w-xl">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              placeholder="Search medications, doctors, documents..."
-              className="h-11 bg-muted/40 pl-11"
-              aria-label="Search dashboard"
-            />
-          </div>
+          <DashboardSearch
+            portal="patient"
+            placeholder="Search medications, doctors, documents..."
+            className="md:max-w-md lg:max-w-xl"
+          />
         </div>
 
         <div className="flex shrink-0 items-center">
