@@ -1,4 +1,5 @@
 import AreYouPrepared from "@/app/_components/are-you-prepared"
+import FamilyIncludesPets from "@/app/_components/family-includes-pets"
 import Hero from "@/app/_components/hero"
 import HowItWorks from "@/app/_components/how-it-works"
 import LandingPricingSection from "@/app/_components/landing-pricing-section"
@@ -11,6 +12,7 @@ export default function HomePage() {
       <Hero />
       <AreYouPrepared />
       <HowItWorks />
+      <FamilyIncludesPets />
       <WhoItsFor />
       <LandingPricingSection />
       <TestimonialsSlider />

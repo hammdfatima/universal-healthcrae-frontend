@@ -33,8 +33,9 @@ type LabResultDetailsDialogProps = {
   result: LabResult | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDelete: (result: LabResult) => void
+  onDelete?: (result: LabResult) => void
   isDeleting?: boolean
+  readOnly?: boolean
 }
 
 export default function LabResultDetailsDialog({
@@ -43,6 +44,7 @@ export default function LabResultDetailsDialog({
   onOpenChange,
   onDelete,
   isDeleting = false,
+  readOnly = false,
 }: LabResultDetailsDialogProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -106,32 +108,34 @@ export default function LabResultDetailsDialog({
             </div>
           </div>
 
-          <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 gap-1.5"
-              asChild
-            >
-              <Link
-                href={`/patient/lab/${result.id}/edit`}
-                onClick={() => onOpenChange(false)}
+          {!readOnly ? (
+            <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 gap-1.5"
+                asChild
               >
-                <Pencil className="size-4 shrink-0" aria-hidden />
-                Edit
-              </Link>
-            </Button>
+                <Link
+                  href={`/patient/lab/${result.id}/edit`}
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Pencil className="size-4 shrink-0" aria-hidden />
+                  Edit
+                </Link>
+              </Button>
 
-            <Button
-              type="button"
-              variant="destructive"
-              className="flex-1 gap-1.5"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="size-4 shrink-0" aria-hidden />
-              Delete
-            </Button>
-          </div>
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1 gap-1.5"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-4 shrink-0" aria-hidden />
+                Delete
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -158,7 +162,7 @@ export default function LabResultDetailsDialog({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
               onClick={() => {
-                onDelete(result)
+                onDelete?.(result)
                 setDeleteOpen(false)
                 onOpenChange(false)
               }}

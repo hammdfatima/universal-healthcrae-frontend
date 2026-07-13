@@ -7,7 +7,7 @@ import { Typography } from "@/components/ui/typography"
 export const metadata: Metadata = {
   title: "About | Universal Health Charts",
   description:
-    "Learn how Universal Health Charts helps you securely store and manage your healthcare information.",
+    "Learn how families securely organize medical information for loved ones—and pets—in one place.",
 }
 
 const securityFeatures = [
@@ -37,11 +37,12 @@ export default function AboutPage() {
       <section className="border-b border-border/70 bg-brand-primary-light/40 px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <Typography as="h1" variant="h1">
-            About Universal Health Charts
+            Protect What Matters Most
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            A secure personal health record platform that gives you ownership of
-            your medical data — accessible when it matters most.
+            Because the people you worry about—Mom, Dad, your spouse, your
+            grandchildren, even your pets—deserve to have their important
+            medical information ready when it matters.
           </Typography>
         </div>
       </section>
@@ -52,17 +53,16 @@ export default function AboutPage() {
             Our Mission
           </Typography>
           <Typography variant="p" color="muted" className="mt-4">
-            Universal Health Charts was built to solve a simple but critical
-            problem: healthcare information is scattered across providers,
-            hospitals, and patient portals. We bring everything together in one
-            secure medical vault — so you and your loved ones can access
-            medications, allergies, conditions, and emergency contacts anytime,
-            anywhere.
+            Healthcare information is scattered across providers, hospitals, and
+            patient portals—and pet records are often even more disorganized.
+            Families need one secure place for medications, allergies,
+            conditions, vaccinations, and emergency contacts for everyone they
+            care about.
           </Typography>
           <Typography variant="p" color="muted" className="mt-4">
             Whether you&apos;re at home, traveling, or facing an unexpected
-            emergency, your important medical information stays within reach
-            through secure cloud access and Emergency QR codes.
+            emergency, you shouldn&apos;t have to hunt for the details that keep
+            the people—and pets—you love safe.
           </Typography>
         </div>
       </section>

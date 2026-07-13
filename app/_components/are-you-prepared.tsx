@@ -1,4 +1,9 @@
-import { Building2, GraduationCap, HeartHandshake, Plane } from "lucide-react"
+import {
+  Building2,
+  GraduationCap,
+  HeartHandshake,
+  PawPrint,
+} from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Typography } from "@/components/ui/typography"
@@ -23,10 +28,10 @@ const scenarios = [
       "Make sure their medical history is available even when you're hundreds of miles away.",
   },
   {
-    icon: Plane,
-    question: "You're traveling out of state?",
+    icon: PawPrint,
+    question: "Your pet needs emergency care?",
     detail:
-      "Your health information should travel with you — not stay locked in a filing cabinet.",
+      "Vets need vaccinations, medications, and allergies fast — not a scramble through old folders.",
   },
 ] as const
 

@@ -31,7 +31,7 @@ export function getFamilyPageCopy(tier: PlanTier | null) {
     return {
       title: "My Spouse",
       description:
-        "Manage your spouse's profile linked to your health records and emergency contacts.",
+        "Manage your spouse's profile linked to your health records and emergency contacts. Use the Pets tab for pet profiles — they count toward your plan seat.",
       addButton: "Add Spouse",
       addTitle: "Add Spouse",
       addDescription:
@@ -48,11 +48,11 @@ export function getFamilyPageCopy(tier: PlanTier | null) {
   return {
     title: "My Family",
     description:
-      "Manage family members linked to your health records and emergency contacts.",
+      "Manage family members and pets linked to your health records and emergency contacts. Pets count toward your plan seats but do not get separate login accounts.",
     addButton: "Add Family Member",
     addTitle: "Add Family Member",
     addDescription:
-      "Add a family member to your health profile and optionally mark them as an emergency contact.",
+      "Add a family member to your health profile and optionally mark them as an emergency contact. Add pets from the Pets tab.",
     saveLabel: "Save Member",
     searchPlaceholder: "Search family members...",
     emptyMessage:

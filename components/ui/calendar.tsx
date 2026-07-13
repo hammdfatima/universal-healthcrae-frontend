@@ -157,7 +157,7 @@ function Calendar({
     props.selectedClassName
   )
   const _todayClassName = cn(
-    "[&>button]:bg-accent [&>button]:text-accent-foreground",
+    "[&>button]:bg-transparent [&>button]:font-semibold [&>button]:text-primary [&>button]:underline [&>button]:underline-offset-4",
     props.todayClassName
   )
   const _outsideClassName = cn(
@@ -218,6 +218,12 @@ function Calendar({
             onNextClick={onNextClick}
           />
         ),
+        DayButton: ({
+          className,
+          day: _day,
+          modifiers: _modifiers,
+          ...dayProps
+        }) => <button type="button" className={cn(className)} {...dayProps} />,
         CaptionLabel: (props) => (
           <CaptionLabel
             showYearSwitcher={showYearSwitcher}
@@ -408,6 +414,7 @@ function CaptionLabel({
   }
   return (
     <Button
+      type="button"
       className="h-7 w-full truncate text-sm font-medium"
       variant="ghost"
       size="sm"

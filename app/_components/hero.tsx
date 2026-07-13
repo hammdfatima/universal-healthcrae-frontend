@@ -37,8 +37,7 @@ export default function Hero() {
                 color="inherit"
                 className="text-3xl leading-tight text-white sm:text-4xl lg:text-[2.65rem] lg:leading-[1.12]"
               >
-                Your Family&apos;s Medical Information. Available When It
-                Matters Most.
+                Protect What Matters Most.
               </Typography>
 
               <Typography
@@ -46,8 +45,8 @@ export default function Hero() {
                 color="inherit"
                 className="mt-5 text-base leading-relaxed text-white/90 sm:text-lg"
               >
-                Keep medications, allergies, emergency contacts, and important
-                health documents secure and accessible anytime, anywhere.
+                Securely organize important medical information for your
+                family—and even your pets—all in one place.
               </Typography>
 
               <div className="mt-8">
@@ -65,7 +64,9 @@ export default function Hero() {
                 color="inherit"
                 className="mt-6 text-sm text-white/75"
               >
-                Your family&apos;s healthcare information, all in one place.
+                Because when something happens, you shouldn&apos;t have to hunt
+                for Mom&apos;s meds, Dad&apos;s allergies, or your dog&apos;s
+                vaccine records.
               </Typography>
             </div>
 

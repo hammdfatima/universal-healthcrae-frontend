@@ -35,8 +35,9 @@ type HealthHistoryDetailsDialogProps = {
   entry: HealthHistoryEntry | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDelete: (entry: HealthHistoryEntry) => void
+  onDelete?: (entry: HealthHistoryEntry) => void
   isDeleting?: boolean
+  readOnly?: boolean
 }
 
 export default function HealthHistoryDetailsDialog({
@@ -45,6 +46,7 @@ export default function HealthHistoryDetailsDialog({
   onOpenChange,
   onDelete,
   isDeleting = false,
+  readOnly = false,
 }: HealthHistoryDetailsDialogProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -84,32 +86,34 @@ export default function HealthHistoryDetailsDialog({
             <DetailRow icon={FileText} label="Details" value={entry.details} />
           </div>
 
-          <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 gap-1.5"
-              asChild
-            >
-              <Link
-                href={`/patient/health-history/${entry.id}/edit`}
-                onClick={() => onOpenChange(false)}
+          {!readOnly ? (
+            <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 gap-1.5"
+                asChild
               >
-                <Pencil className="size-4 shrink-0" aria-hidden />
-                Edit
-              </Link>
-            </Button>
+                <Link
+                  href={`/patient/health-history/${entry.id}/edit`}
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Pencil className="size-4 shrink-0" aria-hidden />
+                  Edit
+                </Link>
+              </Button>
 
-            <Button
-              type="button"
-              variant="destructive"
-              className="flex-1 gap-1.5"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="size-4 shrink-0" aria-hidden />
-              Delete
-            </Button>
-          </div>
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1 gap-1.5"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-4 shrink-0" aria-hidden />
+                Delete
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -128,7 +132,7 @@ export default function HealthHistoryDetailsDialog({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
               onClick={() => {
-                onDelete(entry)
+                onDelete?.(entry)
                 setDeleteOpen(false)
                 onOpenChange(false)
               }}

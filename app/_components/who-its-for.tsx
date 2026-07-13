@@ -3,7 +3,7 @@ import {
   GraduationCap,
   HeartHandshake,
   HeartPulse,
-  Medal,
+  PawPrint,
   Plane,
   Users,
 } from "lucide-react"
@@ -25,22 +25,22 @@ const audiences: { icon: LucideIcon; label: string; description: string }[] = [
       "Households who want everyone's health information organized in one secure place.",
   },
   {
+    icon: PawPrint,
+    label: "Pet Parents",
+    description:
+      "People who worry about their dog or cat as much as anyone else in the family.",
+  },
+  {
     icon: Plane,
     label: "Travelers",
     description:
       "People who need their medical history available wherever life takes them.",
   },
   {
-    icon: Medal,
-    label: "Veterans",
-    description:
-      "Those managing care across multiple providers, specialists, and facilities.",
-  },
-  {
     icon: GraduationCap,
-    label: "College Students",
+    label: "College Families",
     description:
-      "Young adults away from home with health needs parents should be able to share.",
+      "Parents of young adults away from home who still need to share health details quickly.",
   },
   {
     icon: HeartPulse,

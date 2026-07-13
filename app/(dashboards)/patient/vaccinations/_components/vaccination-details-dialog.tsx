@@ -36,8 +36,9 @@ type VaccinationDetailsDialogProps = {
   vaccination: Vaccination | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDelete: (vaccination: Vaccination) => void
+  onDelete?: (vaccination: Vaccination) => void
   isDeleting?: boolean
+  readOnly?: boolean
 }
 
 export default function VaccinationDetailsDialog({
@@ -46,6 +47,7 @@ export default function VaccinationDetailsDialog({
   onOpenChange,
   onDelete,
   isDeleting = false,
+  readOnly = false,
 }: VaccinationDetailsDialogProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -91,32 +93,34 @@ export default function VaccinationDetailsDialog({
             <DetailRow icon={Clock} label="Time" value={vaccination.time} />
           </div>
 
-          <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 gap-1.5"
-              asChild
-            >
-              <Link
-                href={`/patient/vaccinations/${vaccination.id}/edit`}
-                onClick={() => onOpenChange(false)}
+          {!readOnly ? (
+            <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 gap-1.5"
+                asChild
               >
-                <Pencil className="size-4 shrink-0" aria-hidden />
-                Edit
-              </Link>
-            </Button>
+                <Link
+                  href={`/patient/vaccinations/${vaccination.id}/edit`}
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Pencil className="size-4 shrink-0" aria-hidden />
+                  Edit
+                </Link>
+              </Button>
 
-            <Button
-              type="button"
-              variant="destructive"
-              className="flex-1 gap-1.5"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="size-4 shrink-0" aria-hidden />
-              Delete
-            </Button>
-          </div>
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1 gap-1.5"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-4 shrink-0" aria-hidden />
+                Delete
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -135,7 +139,7 @@ export default function VaccinationDetailsDialog({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
               onClick={() => {
-                onDelete(vaccination)
+                onDelete?.(vaccination)
                 setDeleteOpen(false)
                 onOpenChange(false)
               }}

@@ -19,30 +19,30 @@ const steps: {
   {
     step: 2,
     icon: Stethoscope,
-    title: "Enter medical information",
+    title: "Add who you care about",
     description:
-      "Add medications, allergies, conditions, and emergency contacts for each family member.",
+      "Medications, allergies, conditions, and emergency contacts for Mom, Dad, your spouse—and your pets.",
   },
   {
     step: 3,
     icon: FileUp,
     title: "Upload important documents",
     description:
-      "Store lab reports, advance directives, and other health documents in one place.",
+      "Keep lab reports, advance directives, and other records ready when someone needs them.",
   },
   {
     step: 4,
     icon: QrCode,
-    title: "Receive your QR Emergency Card",
+    title: "Be ready in an emergency",
     description:
-      "Every member gets a unique QR code so caregivers can access critical details instantly.",
+      "Give caregivers a way to reach critical details fast when someone can't speak for themselves.",
   },
   {
     step: 5,
     icon: Globe,
-    title: "Access your information anywhere",
+    title: "Access it when it matters",
     description:
-      "View and update your family's health information from home, on the road, or in an emergency.",
+      "From home, on the road, or at the hospital—your family's information is there when you need it.",
   },
 ]
 
@@ -52,11 +52,11 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
           <Typography as="h2" variant="h2">
-            How Universal Health Charts Works
+            How It Works
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Your family&apos;s secure medical information center — set up once,
-            ready whenever you need it.
+            Set it up once for the people—and pets—you worry about. Ready when
+            life gets urgent.
           </Typography>
         </div>
 

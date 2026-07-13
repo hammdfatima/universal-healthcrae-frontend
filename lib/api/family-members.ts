@@ -15,6 +15,8 @@ export type FamilyMember = {
 export type FamilyMembersListResponse = {
   members: FamilyMember[]
   limit: number
+  usedSeats: number
+  petCount: number
 }
 
 export type CreateFamilyMemberPayload = {

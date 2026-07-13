@@ -31,6 +31,7 @@ import {
   VACCINATIONS_QUERY_KEYS,
   type VaccinationsListResponse,
 } from "@/lib/api/vaccinations"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export type MedicalVaultCounts = {
   medications: number
@@ -42,29 +43,31 @@ export type MedicalVaultCounts = {
 }
 
 export function useMedicalVaultCounts() {
+  const { withPatientQuery, vaultQueryKey } = useVaultPatient()
+
   const medicationsQuery = useFetch<MedicationsListResponse>({
-    path: MEDICATIONS_API.list,
-    queryKey: MEDICATIONS_QUERY_KEYS.list,
+    path: withPatientQuery(MEDICATIONS_API.list),
+    queryKey: vaultQueryKey(MEDICATIONS_QUERY_KEYS.list),
   })
   const allergiesQuery = useFetch<AllergiesListResponse>({
-    path: ALLERGIES_API.list,
-    queryKey: ALLERGIES_QUERY_KEYS.list,
+    path: withPatientQuery(ALLERGIES_API.list),
+    queryKey: vaultQueryKey(ALLERGIES_QUERY_KEYS.list),
   })
   const healthHistoryQuery = useFetch<HealthHistoryListResponse>({
-    path: HEALTH_HISTORY_API.list,
-    queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+    path: withPatientQuery(HEALTH_HISTORY_API.list),
+    queryKey: vaultQueryKey(HEALTH_HISTORY_QUERY_KEYS.list),
   })
   const vaccinationsQuery = useFetch<VaccinationsListResponse>({
-    path: VACCINATIONS_API.list,
-    queryKey: VACCINATIONS_QUERY_KEYS.list,
+    path: withPatientQuery(VACCINATIONS_API.list),
+    queryKey: vaultQueryKey(VACCINATIONS_QUERY_KEYS.list),
   })
   const labResultsQuery = useFetch<LabResultsListResponse>({
-    path: LAB_RESULTS_API.list,
-    queryKey: LAB_RESULTS_QUERY_KEYS.list,
+    path: withPatientQuery(LAB_RESULTS_API.list),
+    queryKey: vaultQueryKey(LAB_RESULTS_QUERY_KEYS.list),
   })
   const imagingResultsQuery = useFetch<ImagingResultsListResponse>({
-    path: IMAGING_RESULTS_API.list,
-    queryKey: IMAGING_RESULTS_QUERY_KEYS.list,
+    path: withPatientQuery(IMAGING_RESULTS_API.list),
+    queryKey: vaultQueryKey(IMAGING_RESULTS_QUERY_KEYS.list),
   })
 
   const counts: MedicalVaultCounts = {

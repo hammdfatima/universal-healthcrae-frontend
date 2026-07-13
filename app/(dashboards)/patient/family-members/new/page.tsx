@@ -17,6 +17,7 @@ import {
   FAMILY_MEMBERS_API,
   FAMILY_MEMBERS_QUERY_KEYS,
 } from "@/lib/api/family-members"
+import { PETS_QUERY_KEYS } from "@/lib/api/pets"
 import { generateTemporaryPassword } from "@/lib/auth/generate-password"
 
 export default function NewFamilyMemberPage() {
@@ -63,6 +64,7 @@ export default function NewFamilyMemberPage() {
         queryClient.invalidateQueries({
           queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
         })
+        queryClient.invalidateQueries({ queryKey: PETS_QUERY_KEYS.list })
         router.push("/patient/family-members")
       },
     })

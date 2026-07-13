@@ -21,18 +21,21 @@ import {
   VACCINATIONS_QUERY_KEYS,
   type VaccinationsListResponse,
 } from "@/lib/api/vaccinations"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export default function VaccinationsTable() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { withPatientQuery, vaultQueryKey, isViewingOwnVault, activePatient } =
+    useVaultPatient()
   const [selectedVaccination, setSelectedVaccination] =
     useState<Vaccination | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<VaccinationsListResponse>({
-      path: VACCINATIONS_API.list,
-      queryKey: VACCINATIONS_QUERY_KEYS.list,
+      path: withPatientQuery(VACCINATIONS_API.list),
+      queryKey: vaultQueryKey(VACCINATIONS_QUERY_KEYS.list),
     })
 
   const vaccinations = data?.vaccinations ?? []
@@ -166,7 +169,11 @@ export default function VaccinationsTable() {
     <>
       <DataTable
         title="Immunizations"
-        description="Track your vaccinations and immunization history."
+        description={
+          isViewingOwnVault
+            ? "Track your vaccinations and immunization history."
+            : `Viewing vaccinations for ${activePatient?.firstName ?? "family member"} ${activePatient?.lastName ?? ""}`.trim()
+        }
         icon={<Syringe className="size-5" />}
         columns={columns}
         data={vaccinations}
@@ -179,20 +186,27 @@ export default function VaccinationsTable() {
         isRetrying={isFetching && !isLoading}
         filters={filters}
         actions={
-          <Button onClick={() => router.push("/patient/vaccinations/new")}>
-            <Plus className="size-4" aria-hidden />
-            Add Vaccination
-          </Button>
+          isViewingOwnVault ? (
+            <Button onClick={() => router.push("/patient/vaccinations/new")}>
+              <Plus className="size-4" aria-hidden />
+              Add Vaccination
+            </Button>
+          ) : undefined
         }
-        emptyMessage="No vaccinations found. Add your first immunization record to get started."
+        emptyMessage={
+          isViewingOwnVault
+            ? "No vaccinations found. Add your first immunization record to get started."
+            : "No vaccinations shared for this family member."
+        }
       />
 
       <VaccinationDetailsDialog
         vaccination={selectedVaccination}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onDelete={handleDelete}
+        onDelete={isViewingOwnVault ? handleDelete : undefined}
         isDeleting={isDeleting}
+        readOnly={!isViewingOwnVault}
       />
     </>
   )

@@ -27,17 +27,20 @@ import {
   type AllergiesListResponse,
 } from "@/lib/api/allergies"
 import { cn } from "@/lib/utils"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export default function AllergiesTable() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { withPatientQuery, vaultQueryKey, isViewingOwnVault, activePatient } =
+    useVaultPatient()
   const [selectedAllergy, setSelectedAllergy] = useState<Allergy | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<AllergiesListResponse>({
-      path: ALLERGIES_API.list,
-      queryKey: ALLERGIES_QUERY_KEYS.list,
+      path: withPatientQuery(ALLERGIES_API.list),
+      queryKey: vaultQueryKey(ALLERGIES_QUERY_KEYS.list),
     })
 
   const allergies = data?.allergies ?? []
@@ -144,7 +147,11 @@ export default function AllergiesTable() {
     <>
       <DataTable
         title="Known Allergies"
-        description="Track allergy types, severity, symptoms, and food triggers."
+        description={
+          isViewingOwnVault
+            ? "Track allergy types, severity, symptoms, and food triggers."
+            : `Viewing allergies for ${activePatient?.firstName ?? "family member"} ${activePatient?.lastName ?? ""}`.trim()
+        }
         icon={<AlertTriangle className="size-5" />}
         columns={columns}
         data={allergies}
@@ -173,20 +180,27 @@ export default function AllergiesTable() {
           },
         ]}
         actions={
-          <Button onClick={() => router.push("/patient/allergies/new")}>
-            <Plus className="size-4" aria-hidden />
-            Add Allergy
-          </Button>
+          isViewingOwnVault ? (
+            <Button onClick={() => router.push("/patient/allergies/new")}>
+              <Plus className="size-4" aria-hidden />
+              Add Allergy
+            </Button>
+          ) : undefined
         }
-        emptyMessage="No allergies found. Add your first allergy record to get started."
+        emptyMessage={
+          isViewingOwnVault
+            ? "No allergies found. Add your first allergy record to get started."
+            : "No allergies shared for this family member."
+        }
       />
 
       <AllergyDetailsDialog
         allergy={selectedAllergy}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onDelete={handleDelete}
+        onDelete={isViewingOwnVault ? handleDelete : undefined}
         isDeleting={isDeleting}
+        readOnly={!isViewingOwnVault}
       />
     </>
   )

@@ -21,10 +21,13 @@ import {
   IMAGING_RESULTS_QUERY_KEYS,
   type ImagingResultsListResponse,
 } from "@/lib/api/imaging-results"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export default function ImagingResultsTable() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { withPatientQuery, vaultQueryKey, isViewingOwnVault, activePatient } =
+    useVaultPatient()
   const [selectedResult, setSelectedResult] = useState<ImagingResult | null>(
     null
   )
@@ -32,8 +35,8 @@ export default function ImagingResultsTable() {
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<ImagingResultsListResponse>({
-      path: IMAGING_RESULTS_API.list,
-      queryKey: IMAGING_RESULTS_QUERY_KEYS.list,
+      path: withPatientQuery(IMAGING_RESULTS_API.list),
+      queryKey: vaultQueryKey(IMAGING_RESULTS_QUERY_KEYS.list),
     })
 
   const results = data?.imagingResults ?? []
@@ -153,7 +156,11 @@ export default function ImagingResultsTable() {
     <>
       <DataTable
         title="Imaging"
-        description="View and manage your radiology scans and imaging reports."
+        description={
+          isViewingOwnVault
+            ? "View and manage your radiology scans and imaging reports."
+            : `Viewing imaging for ${activePatient?.firstName ?? "family member"} ${activePatient?.lastName ?? ""}`.trim()
+        }
         icon={<ScanLine className="size-5" />}
         columns={columns}
         data={results}
@@ -166,20 +173,27 @@ export default function ImagingResultsTable() {
         isRetrying={isFetching && !isLoading}
         filters={filters}
         actions={
-          <Button onClick={() => router.push("/patient/imaging/new")}>
-            <Plus className="size-4" aria-hidden />
-            Add Imaging
-          </Button>
+          isViewingOwnVault ? (
+            <Button onClick={() => router.push("/patient/imaging/new")}>
+              <Plus className="size-4" aria-hidden />
+              Add Imaging
+            </Button>
+          ) : undefined
         }
-        emptyMessage="No imaging records found. Upload your first scan to get started."
+        emptyMessage={
+          isViewingOwnVault
+            ? "No imaging records found. Upload your first scan to get started."
+            : "No imaging shared for this family member."
+        }
       />
 
       <ImagingResultDetailsDialog
         result={selectedResult}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onDelete={handleDelete}
+        onDelete={isViewingOwnVault ? handleDelete : undefined}
         isDeleting={isDeleting}
+        readOnly={!isViewingOwnVault}
       />
     </>
   )

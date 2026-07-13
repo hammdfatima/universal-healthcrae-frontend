@@ -18,17 +18,20 @@ import {
   LAB_RESULTS_QUERY_KEYS,
   type LabResultsListResponse,
 } from "@/lib/api/lab-results"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export default function LabResultsTable() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { withPatientQuery, vaultQueryKey, isViewingOwnVault, activePatient } =
+    useVaultPatient()
   const [selectedResult, setSelectedResult] = useState<LabResult | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<LabResultsListResponse>({
-      path: LAB_RESULTS_API.list,
-      queryKey: LAB_RESULTS_QUERY_KEYS.list,
+      path: withPatientQuery(LAB_RESULTS_API.list),
+      queryKey: vaultQueryKey(LAB_RESULTS_QUERY_KEYS.list),
     })
 
   const results = data?.labResults ?? []
@@ -113,7 +116,11 @@ export default function LabResultsTable() {
     <>
       <DataTable
         title="Laboratory"
-        description="View and manage your lab reports and test results."
+        description={
+          isViewingOwnVault
+            ? "View and manage your lab reports and test results."
+            : `Viewing lab results for ${activePatient?.firstName ?? "family member"} ${activePatient?.lastName ?? ""}`.trim()
+        }
         icon={<FlaskConical className="size-5" />}
         columns={columns}
         data={results}
@@ -137,20 +144,27 @@ export default function LabResultsTable() {
             : []
         }
         actions={
-          <Button onClick={() => router.push("/patient/lab/new")}>
-            <Plus className="size-4" aria-hidden />
-            Add Lab Result
-          </Button>
+          isViewingOwnVault ? (
+            <Button onClick={() => router.push("/patient/lab/new")}>
+              <Plus className="size-4" aria-hidden />
+              Add Lab Result
+            </Button>
+          ) : undefined
         }
-        emptyMessage="No lab results found. Upload your first lab report to get started."
+        emptyMessage={
+          isViewingOwnVault
+            ? "No lab results found. Upload your first lab report to get started."
+            : "No lab results shared for this family member."
+        }
       />
 
       <LabResultDetailsDialog
         result={selectedResult}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onDelete={handleDelete}
+        onDelete={isViewingOwnVault ? handleDelete : undefined}
         isDeleting={isDeleting}
+        readOnly={!isViewingOwnVault}
       />
     </>
   )

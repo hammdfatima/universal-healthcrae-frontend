@@ -24,18 +24,21 @@ import {
   MEDICATIONS_QUERY_KEYS,
   type MedicationsListResponse,
 } from "@/lib/api/medications"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export default function MedicationsTable() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { withPatientQuery, vaultQueryKey, isViewingOwnVault, activePatient } =
+    useVaultPatient()
   const [selectedMedication, setSelectedMedication] =
     useState<Medication | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<MedicationsListResponse>({
-      path: MEDICATIONS_API.list,
-      queryKey: MEDICATIONS_QUERY_KEYS.list,
+      path: withPatientQuery(MEDICATIONS_API.list),
+      queryKey: vaultQueryKey(MEDICATIONS_QUERY_KEYS.list),
     })
 
   const medications = data?.medications ?? []
@@ -164,7 +167,11 @@ export default function MedicationsTable() {
     <>
       <DataTable
         title="Medications"
-        description="Manage your current and past prescriptions."
+        description={
+          isViewingOwnVault
+            ? "Manage your current and past prescriptions."
+            : `Viewing medications for ${activePatient?.firstName ?? "family member"} ${activePatient?.lastName ?? ""}`.trim()
+        }
         icon={<Activity className="size-5" />}
         columns={columns}
         data={medications}
@@ -202,20 +209,27 @@ export default function MedicationsTable() {
             : []
         }
         actions={
-          <Button onClick={() => router.push("/patient/medications/new")}>
-            <Plus className="size-4" aria-hidden />
-            Add Medication
-          </Button>
+          isViewingOwnVault ? (
+            <Button onClick={() => router.push("/patient/medications/new")}>
+              <Plus className="size-4" aria-hidden />
+              Add Medication
+            </Button>
+          ) : undefined
         }
-        emptyMessage="No medications found. Add your first medication to get started."
+        emptyMessage={
+          isViewingOwnVault
+            ? "No medications found. Add your first medication to get started."
+            : "No medications shared for this family member."
+        }
       />
 
       <MedicationDetailsDialog
         medication={selectedMedication}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onDelete={handleDelete}
+        onDelete={isViewingOwnVault ? handleDelete : undefined}
         isDeleting={isDeleting}
+        readOnly={!isViewingOwnVault}
       />
     </>
   )

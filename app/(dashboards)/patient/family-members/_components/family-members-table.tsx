@@ -1,9 +1,10 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { Eye, Plus, Users } from "lucide-react"
+import { Eye, Pencil, Plus, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
+import SharedMedicalRecordsDialog from "@/app/(dashboards)/patient/_components/shared-medical-records-dialog"
 import { relationshipOptions } from "@/app/(dashboards)/patient/_lib/family-members"
 import FamilyMemberDetailsDialog from "@/app/(dashboards)/patient/family-members/_components/family-member-details-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
@@ -11,7 +12,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
-import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import { useSubscriptionPlan } from "@/hooks/use-subscription-plan"
 import type { FamilyMember } from "@/lib/api/family-members"
@@ -21,20 +21,29 @@ import {
   type FamilyMembersListResponse,
   type UpdateFamilyMemberPayload,
 } from "@/lib/api/family-members"
+import {
+  MEDICAL_RECORD_SHARES_API,
+  MEDICAL_RECORD_SHARES_QUERY_KEYS,
+  type SidebarFamilyMember,
+  type SidebarFamilyResponse,
+} from "@/lib/api/medical-record-shares"
+import { PETS_QUERY_KEYS } from "@/lib/api/pets"
 
-export default function FamilyMembersTable() {
+type FamilyMembersTableProps = {
+  canAdd: boolean
+  limit: number
+  usedSeats: number
+}
+
+export default function FamilyMembersTable({
+  canAdd,
+  limit,
+  usedSeats,
+}: FamilyMembersTableProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
-  const {
-    tier,
-    isLoading: isPlanLoading,
-    supportsFamilyMembers,
-    memberLimit,
-    pageCopy,
-  } = useSubscriptionPlan()
+  const { tier, isLoading: isPlanLoading, pageCopy } = useSubscriptionPlan()
   const isCouplePlan = tier === "couple"
-  const isAccountOwner = !user?.isFamilyMemberAccount
 
   const {
     data,
@@ -46,20 +55,30 @@ export default function FamilyMembersTable() {
   } = useFetch<FamilyMembersListResponse>({
     path: FAMILY_MEMBERS_API.list,
     queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
-    enabled: supportsFamilyMembers && isAccountOwner && !isPlanLoading,
+  })
+
+  const { data: sidebarFamily } = useFetch<SidebarFamilyResponse>({
+    path: MEDICAL_RECORD_SHARES_API.sidebarFamily,
+    queryKey: MEDICAL_RECORD_SHARES_QUERY_KEYS.sidebarFamily,
   })
 
   const members = data?.members ?? []
-  const limit = data?.limit ?? memberLimit
-  const canAddMember = members.length < limit
-  const isLoading =
-    isPlanLoading ||
-    (supportsFamilyMembers && isAccountOwner && isMembersLoading)
+  const isLoading = isPlanLoading || isMembersLoading
+  const shareByUserId = useMemo(() => {
+    const map = new Map<string, boolean>()
+    for (const member of sidebarFamily?.members ?? []) {
+      map.set(member.userId, member.hasSharedRecordsWithMe)
+    }
+    return map
+  }, [sidebarFamily?.members])
 
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(
     null
   )
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [recordsMember, setRecordsMember] =
+    useState<SidebarFamilyMember | null>(null)
+  const [recordsOpen, setRecordsOpen] = useState(false)
 
   const { onRequest: updateFamilyMember } = useApi<UpdateFamilyMemberPayload>({
     key: "update-family-member-inline",
@@ -74,17 +93,22 @@ export default function FamilyMembersTable() {
     method: "delete",
   })
 
-  useEffect(() => {
-    if (isPlanLoading) return
-
-    if (!supportsFamilyMembers || !isAccountOwner) {
-      router.replace("/patient")
-    }
-  }, [isAccountOwner, isPlanLoading, router, supportsFamilyMembers])
-
   function openDetails(member: FamilyMember) {
     setSelectedMember(member)
     setDetailsOpen(true)
+  }
+
+  function openSharedRecords(member: FamilyMember) {
+    setRecordsMember({
+      userId: member.memberUserId,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      relationship: member.relationship,
+      isAccountOwner: false,
+      hasSharedRecordsWithMe: shareByUserId.get(member.memberUserId) ?? false,
+    })
+    setRecordsOpen(true)
   }
 
   function handleMarkEmergencyContact(member: FamilyMember) {
@@ -115,6 +139,7 @@ export default function FamilyMembersTable() {
         queryClient.invalidateQueries({
           queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
         })
+        queryClient.invalidateQueries({ queryKey: PETS_QUERY_KEYS.list })
         refetch()
       },
     })
@@ -174,28 +199,35 @@ export default function FamilyMembersTable() {
     {
       id: "actions",
       header: "",
-      className: "w-12 text-right",
-      headerClassName: "w-12 text-right",
+      className: "w-24 text-right",
+      headerClassName: "w-24 text-right",
       searchable: false,
       cell: (row) => (
-        <Button
-          type="button"
-          variant="ghost"
-          className="size-8 rounded-full"
-          aria-label={`View ${row.firstName} ${row.lastName}`}
-          onClick={() => openDetails(row)}
-        >
-          <Eye className="size-4" aria-hidden />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-8 rounded-full"
+            aria-label={`View records for ${row.firstName} ${row.lastName}`}
+            onClick={() => openSharedRecords(row)}
+          >
+            <Eye className="size-4" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-8 rounded-full"
+            aria-label={`Manage ${row.firstName} ${row.lastName}`}
+            onClick={() => openDetails(row)}
+          >
+            <Pencil className="size-4" aria-hidden />
+          </Button>
+        </div>
       ),
     },
   ]
 
-  if (!isPlanLoading && (!supportsFamilyMembers || !isAccountOwner)) {
-    return null
-  }
-
-  const addMemberAction = canAddMember ? (
+  const addMemberAction = canAdd ? (
     <Button onClick={() => router.push("/patient/family-members/new")}>
       <Plus className="size-4" aria-hidden />
       {pageCopy.addButton}
@@ -261,11 +293,11 @@ export default function FamilyMembersTable() {
         emptyAction={addMemberAction}
       />
 
-      {!canAddMember ? (
+      {!canAdd ? (
         <Typography variant="muted" className="ml-6 text-sm">
           {isCouplePlan
-            ? "Your couple's plan includes one spouse profile. Remove the existing profile to add a different spouse."
-            : `Your family plan supports up to ${limit} family members.`}
+            ? "Your couple's plan includes one household profile. Remove the existing profile to add a different spouse or pet."
+            : `Your family plan supports up to ${limit} household members including pets (${usedSeats}/${limit} used).`}
         </Typography>
       ) : null}
 
@@ -277,6 +309,12 @@ export default function FamilyMembersTable() {
         onDelete={handleDelete}
         isCouplePlan={isCouplePlan}
         isDeleting={isDeleting}
+      />
+
+      <SharedMedicalRecordsDialog
+        member={recordsMember}
+        open={recordsOpen}
+        onOpenChange={setRecordsOpen}
       />
     </>
   )

@@ -21,10 +21,13 @@ import {
   HEALTH_HISTORY_QUERY_KEYS,
   type HealthHistoryListResponse,
 } from "@/lib/api/health-history"
+import { useVaultPatient } from "@/provider/vault-patient-provider"
 
 export default function HealthHistoryTable() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { withPatientQuery, vaultQueryKey, isViewingOwnVault, activePatient } =
+    useVaultPatient()
   const [selectedEntry, setSelectedEntry] = useState<HealthHistoryEntry | null>(
     null
   )
@@ -32,8 +35,8 @@ export default function HealthHistoryTable() {
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<HealthHistoryListResponse>({
-      path: HEALTH_HISTORY_API.list,
-      queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
+      path: withPatientQuery(HEALTH_HISTORY_API.list),
+      queryKey: vaultQueryKey(HEALTH_HISTORY_QUERY_KEYS.list),
     })
 
   const entries = data?.entries ?? []
@@ -129,7 +132,11 @@ export default function HealthHistoryTable() {
     <>
       <DataTable
         title="Health History"
-        description="Record past illnesses, diagnoses, and treatments."
+        description={
+          isViewingOwnVault
+            ? "Record past illnesses, diagnoses, and treatments."
+            : `Viewing health history for ${activePatient?.firstName ?? "family member"} ${activePatient?.lastName ?? ""}`.trim()
+        }
         icon={<History className="size-5" />}
         columns={columns}
         data={entries}
@@ -153,20 +160,27 @@ export default function HealthHistoryTable() {
             : []
         }
         actions={
-          <Button onClick={() => router.push("/patient/health-history/new")}>
-            <Plus className="size-4" aria-hidden />
-            Add Diagnosis
-          </Button>
+          isViewingOwnVault ? (
+            <Button onClick={() => router.push("/patient/health-history/new")}>
+              <Plus className="size-4" aria-hidden />
+              Add Diagnosis
+            </Button>
+          ) : undefined
         }
-        emptyMessage="No diagnoses found. Add your first health history entry to get started."
+        emptyMessage={
+          isViewingOwnVault
+            ? "No diagnoses found. Add your first health history entry to get started."
+            : "No health history shared for this family member."
+        }
       />
 
       <HealthHistoryDetailsDialog
         entry={selectedEntry}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        onDelete={handleDelete}
+        onDelete={isViewingOwnVault ? handleDelete : undefined}
         isDeleting={isDeleting}
+        readOnly={!isViewingOwnVault}
       />
     </>
   )

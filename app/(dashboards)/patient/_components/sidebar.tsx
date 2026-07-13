@@ -38,10 +38,10 @@ import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import { useSubscriptionPlan } from "@/hooks/use-subscription-plan"
 import {
-  FAMILY_MEMBERS_API,
-  FAMILY_MEMBERS_QUERY_KEYS,
-  type FamilyMembersListResponse,
-} from "@/lib/api/family-members"
+  MEDICAL_RECORD_SHARES_API,
+  MEDICAL_RECORD_SHARES_QUERY_KEYS,
+  type SidebarFamilyResponse,
+} from "@/lib/api/medical-record-shares"
 import {
   PATIENT_PROFILE_API,
   PATIENT_PROFILE_QUERY_KEYS,
@@ -264,10 +264,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   })
   const { planName, supportsFamilyMembers, navLabel } = useSubscriptionPlan()
   const isAccountOwner = !user?.isFamilyMemberAccount
-  const { data: familyMembersData } = useFetch<FamilyMembersListResponse>({
-    path: FAMILY_MEMBERS_API.list,
-    queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
-    enabled: supportsFamilyMembers && isAccountOwner,
+  const showFamilyNav =
+    (supportsFamilyMembers && isAccountOwner) ||
+    Boolean(user?.isFamilyMemberAccount)
+
+  const { data: sidebarFamily } = useFetch<SidebarFamilyResponse>({
+    path: MEDICAL_RECORD_SHARES_API.sidebarFamily,
+    queryKey: MEDICAL_RECORD_SHARES_QUERY_KEYS.sidebarFamily,
+    enabled: Boolean(user) && showFamilyNav,
   })
 
   if (!user) {
@@ -278,14 +282,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const initials = getUserInitials(user)
   const profileImage = profile?.profileImage ?? user.profileImage ?? null
   const overviewItems: NavItem[] = [...overviewNavBase.items]
-  const familyMemberCount = familyMembersData?.members.length ?? 0
+  const familyCount = sidebarFamily?.members.length ?? 0
 
-  if (supportsFamilyMembers && isAccountOwner) {
+  if (showFamilyNav) {
     overviewItems.push({
-      label: navLabel,
+      label: isAccountOwner ? navLabel : "My Family",
       href: "/patient/family-members" as Route,
       icon: Users,
-      badge: familyMemberCount > 0 ? String(familyMemberCount) : undefined,
+      badge: familyCount > 0 ? String(familyCount) : undefined,
     })
   }
 

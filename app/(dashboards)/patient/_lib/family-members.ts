@@ -8,7 +8,6 @@ export const relationshipOptions = [
   { label: "Child", value: "Child" },
   { label: "Parent", value: "Parent" },
   { label: "Sibling", value: "Sibling" },
-  { label: "Other", value: "Other" },
 ] as const
 
 export const familyMemberSchema = z.object({
