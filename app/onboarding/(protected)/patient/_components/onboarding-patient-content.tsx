@@ -22,7 +22,7 @@ import {
   type PatientProfileResponse,
   profileResponseToFormValues,
 } from "@/lib/api/patient-profile"
-import { getAuthToken, getAuthUser, setAuthSession } from "@/lib/auth/session"
+import { getAuthUser, setAuthSession } from "@/lib/auth/session"
 
 function getInitialFormValues(
   user: ReturnType<typeof useAuth>["user"]
@@ -178,11 +178,10 @@ export default function OnboardingPatientContent() {
                       apiProfileToPatientProfile(updatedProfile)
                     saveProfileToStorage(savedProfile)
 
-                    const token = getAuthToken()
                     const currentUser = getAuthUser()
 
-                    if (token && currentUser) {
-                      setAuthSession(token, {
+                    if (currentUser) {
+                      setAuthSession({
                         ...currentUser,
                         firstName: updatedProfile.firstName,
                         lastName: updatedProfile.lastName,

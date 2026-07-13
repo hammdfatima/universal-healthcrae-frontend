@@ -10,7 +10,6 @@ import {
   FILES_QUERY_KEYS,
   type UploadedFile,
 } from "@/lib/api/files"
-import { getAuthToken } from "@/lib/auth/session"
 import { buildRequestUrl } from "@/lib/utils"
 
 type ApiResponse<T> = {
@@ -36,7 +35,6 @@ export function useFileUpload() {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const token = getAuthToken()
       const formData = new FormData()
       formData.append("file", file)
 
@@ -44,11 +42,7 @@ export function useFileUpload() {
         buildRequestUrl(env.NEXT_PUBLIC_API_URL, FILES_API.upload),
         formData,
         {
-          headers: token
-            ? {
-                Authorization: `Bearer ${token}`,
-              }
-            : {},
+          withCredentials: true,
         }
       )
 
@@ -64,20 +58,14 @@ export function useFileUpload() {
       publicId: string
       resourceType?: CloudinaryResourceType
     }) => {
-      const token = getAuthToken()
-
       const response = await axios.delete<ApiResponse<{ message: string }>>(
         buildRequestUrl(env.NEXT_PUBLIC_API_URL, FILES_API.delete),
         {
-          headers: token
-            ? {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              }
-            : {
-                "Content-Type": "application/json",
-              },
+          headers: {
+            "Content-Type": "application/json",
+          },
           data: { publicId, resourceType },
+          withCredentials: true,
         }
       )
 

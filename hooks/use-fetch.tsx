@@ -4,7 +4,7 @@ import type { UseQueryOptions } from "@tanstack/react-query"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { env } from "@/env"
-import { getAuthToken } from "@/lib/auth/session"
+import { getAuthUser } from "@/lib/auth/session"
 import { handleSessionEnd } from "@/lib/auth/unauthorized"
 import { buildRequestUrl } from "@/lib/utils"
 
@@ -19,7 +19,6 @@ type IUseFetch<T> = {
 } & Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">
 
 export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
-  const token = getAuthToken()
   if (!queryKey) {
     throw new Error("queryKey is required")
   }
@@ -31,11 +30,7 @@ export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
   const fetchData = async (): Promise<T> => {
     try {
       const response = await axios.get(REQUEST_URL, {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : {},
+        withCredentials: true,
       })
       if (response.data.data) {
         return response.data.data
@@ -47,8 +42,11 @@ export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
       }
       const message = error.response.data?.message as string | undefined
       const status = error.response.status
+      const isPublicEmergency = path.includes("/emergency-access/public/")
+      // Cookie session is invalid — clear local user. Skip guests and public emergency unlock.
       const shouldEndSession =
-        getAuthToken() &&
+        !isPublicEmergency &&
+        Boolean(getAuthUser()) &&
         (status === 401 ||
           (status === 403 && message?.toLowerCase().includes("blocked")))
 

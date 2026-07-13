@@ -17,32 +17,36 @@ import {
 import SessionExpiredModal from "@/components/auth/session-expired-modal"
 import { env } from "@/env"
 import useToast from "@/hooks/use-toast"
-import { AUTH_API } from "@/lib/api/auth"
 import { clearActivity, isInactive, touchActivity } from "@/lib/auth/activity"
-import type { SessionEndReason } from "@/lib/auth/constants"
+import { AUTH_API, type SessionEndReason } from "@/lib/auth/constants"
 import { AUTH_SESSION_CHANGE_EVENT } from "@/lib/auth/events"
 import { hasRole, isAdmin, isUser } from "@/lib/auth/roles"
 import {
   clearAuthSession,
-  getAuthToken,
+  getAuthUser,
   getPostAuthRedirect,
   readAuthSession,
   setAuthSession,
 } from "@/lib/auth/session"
-import { isAccessTokenExpired } from "@/lib/auth/token"
-import type { AuthTokenResponse, AuthUser, UserRole } from "@/lib/auth/types"
+import type {
+  AuthTokenResponse,
+  AuthUser,
+  SessionValidationResponse,
+  UserRole,
+} from "@/lib/auth/types"
 import { registerSessionEndHandler } from "@/lib/auth/unauthorized"
 import { buildRequestUrl } from "@/lib/utils"
 
 type AuthContextValue = {
   user: AuthUser | null
+  /** Always null — session JWT is httpOnly. Kept for API compatibility. */
   token: string | null
   isAuthenticated: boolean
   isReady: boolean
   isAdmin: boolean
   isUser: boolean
   hasRole: (roles: UserRole[]) => boolean
-  login: (session: AuthTokenResponse) => void
+  login: (session: AuthTokenResponse | { user: AuthUser }) => void
   logout: (redirectTo?: Route) => void
   refreshSession: () => void
 }
@@ -64,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient()
   const { toastError } = useToast()
   const [session, setSession] = useState<{
-    token: string
     user: AuthUser
   } | null>(null)
   const [isReady, setIsReady] = useState(false)
@@ -87,21 +90,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!nextSession) {
       clearAuthSession()
       clearActivity()
+      setSession(null)
+    } else {
+      // Refresh role cookies so Next.js proxy stays in sync with localStorage.
+      setAuthSession(nextSession.user)
+      setSession(nextSession)
     }
 
-    setSession(nextSession)
     setIsReady(true)
   }, [])
 
   const logout = useCallback(
     (redirectTo: Route = "/login") => {
-      clearAuthSession()
-      clearActivity()
-      setSession(null)
-      setSessionEndReason(null)
-      sessionEndHandledRef.current = false
-      queryClient.clear()
-      router.push(redirectTo)
+      const clearLocal = () => {
+        clearAuthSession()
+        clearActivity()
+        setSession(null)
+        setSessionEndReason(null)
+        sessionEndHandledRef.current = false
+        queryClient.clear()
+        router.push(redirectTo)
+      }
+
+      void axios
+        .post(
+          buildRequestUrl(env.NEXT_PUBLIC_API_URL, AUTH_API.logout),
+          {},
+          { withCredentials: true }
+        )
+        .catch(() => {
+          // Cookie may already be invalid; still clear local state.
+        })
+        .finally(clearLocal)
     },
     [queryClient, router]
   )
@@ -110,32 +130,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout("/login")
   }, [logout])
 
-  const login = useCallback((authSession: AuthTokenResponse) => {
-    sessionEndHandledRef.current = false
-    setSessionEndReason(null)
-    setAuthSession(authSession.token, authSession.user)
-    setSession({
-      token: authSession.token,
-      user: authSession.user,
-    })
-  }, [])
-
-  const checkLocalSessionState = useCallback(
-    (token: string) => {
-      if (isAccessTokenExpired(token)) {
-        endSession("expired")
-        return false
-      }
-
-      if (isInactive()) {
-        endSession("inactive")
-        return false
-      }
-
-      return true
+  const login = useCallback(
+    (authSession: AuthTokenResponse | { user: AuthUser }) => {
+      sessionEndHandledRef.current = false
+      setSessionEndReason(null)
+      setAuthSession(authSession.user)
+      setSession({ user: authSession.user })
     },
-    [endSession]
+    []
   )
+
+  const checkLocalSessionState = useCallback(() => {
+    if (isInactive()) {
+      endSession("inactive")
+      return false
+    }
+
+    return true
+  }, [endSession])
 
   useEffect(() => {
     refreshSession()
@@ -161,20 +173,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (axios.isAxiosError(error) && getAuthToken()) {
-          const status = error.response?.status
-          const message = error.response?.data?.message as string | undefined
-          const isBlocked =
-            status === 403 && message?.toLowerCase().includes("blocked")
-          const isSessionExpired = status === 401
+        if (axios.isAxiosError(error) && getAuthUser()) {
+          const requestUrl = String(error.config?.url ?? "")
+          const isPublicEmergency = requestUrl.includes(
+            "/emergency-access/public/"
+          )
 
-          if (isBlocked) {
-            if (message) {
-              toastError(message)
+          if (!isPublicEmergency) {
+            const status = error.response?.status
+            const message = error.response?.data?.message as string | undefined
+            const isBlocked =
+              status === 403 && message?.toLowerCase().includes("blocked")
+            const isSessionExpired = status === 401
+
+            if (isBlocked) {
+              if (message) {
+                toastError(message)
+              }
+              endSession("blocked")
+            } else if (isSessionExpired) {
+              endSession("revoked")
             }
-            endSession("blocked")
-          } else if (isSessionExpired) {
-            endSession("revoked")
           }
         }
 
@@ -188,11 +207,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [endSession, toastError])
 
   useEffect(() => {
-    if (!session?.token || sessionEndReason) {
+    if (!session?.user.id || sessionEndReason) {
       return
     }
 
-    if (!checkLocalSessionState(session.token)) {
+    if (!checkLocalSessionState()) {
       return
     }
 
@@ -205,12 +224,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const intervalId = window.setInterval(() => {
-      checkLocalSessionState(session.token)
+      checkLocalSessionState()
     }, SESSION_CHECK_INTERVAL_MS)
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        checkLocalSessionState(session.token)
+        checkLocalSessionState()
       }
     }
 
@@ -223,10 +242,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.clearInterval(intervalId)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [checkLocalSessionState, session?.token, sessionEndReason])
+  }, [checkLocalSessionState, session?.user.id, sessionEndReason])
 
   useEffect(() => {
-    if (!session?.token || sessionEndReason) {
+    if (!session?.user.id || sessionEndReason) {
       return
     }
 
@@ -235,19 +254,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      if (!checkLocalSessionState(session.token)) {
+      if (!checkLocalSessionState()) {
         return
       }
 
       try {
-        await axios.get(
-          buildRequestUrl(env.NEXT_PUBLIC_API_URL, AUTH_API.session),
-          {
-            headers: {
-              Authorization: `Bearer ${session.token}`,
-            },
-          }
-        )
+        const response = await axios.get<{
+          data: SessionValidationResponse
+        }>(buildRequestUrl(env.NEXT_PUBLIC_API_URL, AUTH_API.session), {
+          withCredentials: true,
+        })
+
+        const payload = response.data.data
+        if (payload?.valid && payload.user) {
+          setAuthSession(payload.user)
+          setSession({ user: payload.user })
+        }
       } catch {
         // Interceptor handles blocked or revoked sessions.
       }
@@ -271,12 +293,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.clearInterval(intervalId)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [checkLocalSessionState, session?.token, sessionEndReason])
+  }, [checkLocalSessionState, session?.user.id, sessionEndReason])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user: session?.user ?? null,
-      token: session?.token ?? null,
+      token: null,
       isAuthenticated: Boolean(session),
       isReady,
       isAdmin: session ? isAdmin(session.user.role) : false,

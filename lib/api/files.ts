@@ -53,10 +53,8 @@ type ApiResponse<T> = {
 export async function uploadFile(file: File): Promise<UploadedFile> {
   const { default: axios, isAxiosError } = await import("axios")
   const { env } = await import("@/env")
-  const { getAuthToken } = await import("@/lib/auth/session")
   const { buildRequestUrl } = await import("@/lib/utils")
 
-  const token = getAuthToken()
   const formData = new FormData()
   formData.append("file", file)
 
@@ -65,11 +63,7 @@ export async function uploadFile(file: File): Promise<UploadedFile> {
       buildRequestUrl(env.NEXT_PUBLIC_API_URL, FILES_API.upload),
       formData,
       {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : {},
+        withCredentials: true,
       }
     )
 

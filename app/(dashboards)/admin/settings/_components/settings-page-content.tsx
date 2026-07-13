@@ -1,7 +1,8 @@
 "use client"
 
-import { KeyRound, Settings, UserRound } from "lucide-react"
+import { KeyRound, Settings, ShieldCheck, UserRound } from "lucide-react"
 
+import AdminAuthenticatorMfaTab from "@/app/(dashboards)/admin/settings/_components/authenticator-mfa-tab"
 import AdminChangePasswordTab from "@/app/(dashboards)/admin/settings/_components/change-password-tab"
 import AdminProfileTab from "@/app/(dashboards)/admin/settings/_components/profile-tab"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -40,6 +41,10 @@ export default function AdminSettingsPageContent() {
             <KeyRound className="size-4" aria-hidden />
             Change Password
           </TabsTrigger>
+          <TabsTrigger value="mfa" className={tabTriggerClass}>
+            <ShieldCheck className="size-4" aria-hidden />
+            Authenticator MFA
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -47,6 +52,9 @@ export default function AdminSettingsPageContent() {
         </TabsContent>
         <TabsContent value="password">
           <AdminChangePasswordTab />
+        </TabsContent>
+        <TabsContent value="mfa">
+          <AdminAuthenticatorMfaTab />
         </TabsContent>
       </Tabs>
     </div>

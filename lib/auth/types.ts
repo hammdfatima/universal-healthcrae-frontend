@@ -11,11 +11,34 @@ export type AuthUser = {
   emailVerified: boolean
   mustChangePassword?: boolean
   isFamilyMemberAccount?: boolean
+  mfaEnabled?: boolean
 }
 
+/** Successful authenticated session (cookie set by API). */
 export type AuthTokenResponse = {
-  token: string
+  mfaRequired: false
   user: AuthUser
+}
+
+export type MfaChallengeResponse = {
+  mfaRequired: true
+  mfaToken: string
+}
+
+export type LoginResponse = AuthTokenResponse | MfaChallengeResponse
+
+export type SessionValidationResponse = {
+  valid: true
+  user: AuthUser
+}
+
+export type MfaStatusResponse = {
+  mfaEnabled: boolean
+}
+
+export type MfaSetupResponse = {
+  secret: string
+  otpauthUrl: string
 }
 
 export type ResetTokenResponse = {

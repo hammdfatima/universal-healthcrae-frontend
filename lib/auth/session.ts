@@ -1,12 +1,10 @@
 import type { Route } from "next"
 import { touchActivity } from "@/lib/auth/activity"
-import { AUTH_STORAGE_KEYS } from "@/lib/auth/constants"
+import { AUTH_COOKIE_KEYS, AUTH_STORAGE_KEYS } from "@/lib/auth/constants"
 import { dispatchAuthSessionChange } from "@/lib/auth/events"
-import { isAccessTokenExpired } from "@/lib/auth/token"
 import type { AuthUser } from "@/lib/auth/types"
 
 export type AuthSession = {
-  token: string
   user: AuthUser
 }
 
@@ -14,12 +12,24 @@ function canUseStorage() {
   return typeof window !== "undefined"
 }
 
-export function getAuthToken() {
-  if (!canUseStorage()) {
-    return null
-  }
+function setAuthCookies(role: AuthUser["role"]) {
+  const maxAge = 60 * 60 * 24
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:"
+      ? "; Secure"
+      : ""
+  document.cookie = `${AUTH_COOKIE_KEYS.present}=1; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`
+  document.cookie = `${AUTH_COOKIE_KEYS.role}=${role}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`
+}
 
-  return localStorage.getItem(AUTH_STORAGE_KEYS.token)
+function clearAuthCookies() {
+  document.cookie = `${AUTH_COOKIE_KEYS.present}=; Path=/; Max-Age=0; SameSite=Lax`
+  document.cookie = `${AUTH_COOKIE_KEYS.role}=; Path=/; Max-Age=0; SameSite=Lax`
+}
+
+/** @deprecated Session JWT is httpOnly; always returns null. */
+export function getAuthToken(): string | null {
+  return null
 }
 
 export function getAuthUser(): AuthUser | null {
@@ -40,36 +50,35 @@ export function getAuthUser(): AuthUser | null {
 }
 
 export function readAuthSession(): AuthSession | null {
-  const token = getAuthToken()
   const user = getAuthUser()
 
-  if (!token || !user || isAccessTokenExpired(token)) {
+  if (!user) {
     return null
   }
 
-  return { token, user }
+  return { user }
 }
 
-export function setAuthSession(token: string, user: AuthUser) {
+export function setAuthSession(user: AuthUser) {
   if (!canUseStorage()) {
     return
   }
 
-  localStorage.setItem(AUTH_STORAGE_KEYS.token, token)
+  localStorage.removeItem(AUTH_STORAGE_KEYS.token)
   localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user))
+  setAuthCookies(user.role)
   touchActivity()
   dispatchAuthSessionChange()
 }
 
 export function updateAuthUser(patch: Partial<AuthUser>) {
   const currentUser = getAuthUser()
-  const token = getAuthToken()
 
-  if (!currentUser || !token) {
+  if (!currentUser) {
     return
   }
 
-  setAuthSession(token, { ...currentUser, ...patch })
+  setAuthSession({ ...currentUser, ...patch })
 }
 
 export function clearAuthSession() {
@@ -79,6 +88,7 @@ export function clearAuthSession() {
 
   localStorage.removeItem(AUTH_STORAGE_KEYS.token)
   localStorage.removeItem(AUTH_STORAGE_KEYS.user)
+  clearAuthCookies()
   dispatchAuthSessionChange()
 }
 

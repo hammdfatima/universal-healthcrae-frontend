@@ -33,7 +33,6 @@ import {
   type SubscriptionMeResponse,
   type UserSubscription,
 } from "@/lib/api/subscriptions"
-import { getAuthToken } from "@/lib/auth/session"
 import { buildRequestUrl } from "@/lib/utils"
 
 function formatBillingCycle(cycle: UserSubscription["plan"]["billingCycle"]) {
@@ -113,7 +112,6 @@ export default function SubscriptionTab() {
     const sessionId = searchParams.get("session_id")
     if (!sessionId) return
 
-    const token = getAuthToken()
     const verifyUrl = buildRequestUrl(
       env.NEXT_PUBLIC_API_URL,
       SUBSCRIPTIONS_API.verifyCheckout(sessionId)
@@ -121,7 +119,7 @@ export default function SubscriptionTab() {
 
     void axios
       .get(verifyUrl, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true,
       })
       .then(() => refetch())
       .finally(() => {

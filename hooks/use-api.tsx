@@ -4,7 +4,6 @@ import type { AxiosProgressEvent } from "axios"
 import axios from "axios"
 import { env } from "@/env"
 import useToast from "@/hooks/use-toast"
-import { getAuthToken } from "@/lib/auth/session"
 import { buildRequestUrl } from "@/lib/utils"
 
 type DataRequestType<T> = {
@@ -39,9 +38,7 @@ const useApi = <T,>({
   method = "post",
 }: IUsePostApi<T> = {}) => {
   const API_URL = env.NEXT_PUBLIC_API_URL
-  const token = getAuthToken()
   const { toastError, toastSuccess } = useToast()
-  const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
   const postRequest = ({
     data,
@@ -50,9 +47,7 @@ const useApi = <T,>({
   }: DataRequestType<T>) => {
     const REQUEST_PATH = buildRequestUrl(API_URL, path)
 
-    // config contains token and data jo api per ja raha hai
     const config = {
-      headers,
       onUploadProgress,
       withCredentials: true,
     }
@@ -63,7 +58,10 @@ const useApi = <T,>({
       case "put":
         return axios.put<ApiResponse<any>>(REQUEST_PATH, data, config)
       case "delete":
-        return axios.delete<ApiResponse<any>>(REQUEST_PATH, { headers, data })
+        return axios.delete<ApiResponse<any>>(REQUEST_PATH, {
+          data,
+          withCredentials: true,
+        })
       case "patch":
         return axios.patch<ApiResponse<any>>(REQUEST_PATH, data, config)
       default:

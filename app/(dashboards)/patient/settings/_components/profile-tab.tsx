@@ -18,7 +18,7 @@ import {
   type PatientSettings,
   type UpdateProfilePayload,
 } from "@/lib/api/patient-settings"
-import { getAuthToken, getAuthUser, setAuthSession } from "@/lib/auth/session"
+import { getAuthUser, setAuthSession } from "@/lib/auth/session"
 
 export default function ProfileTab() {
   const queryClient = useQueryClient()
@@ -72,13 +72,12 @@ export default function ProfileTab() {
           updatedSettings
         )
 
-        const token = getAuthToken()
         const currentUser = getAuthUser()
 
-        if (token && currentUser && updatedSettings.profile) {
+        if (currentUser && updatedSettings.profile) {
           const { firstName, lastName, profileImage } = updatedSettings.profile
 
-          setAuthSession(token, {
+          setAuthSession({
             ...currentUser,
             name:
               [firstName, lastName].filter(Boolean).join(" ").trim() ||

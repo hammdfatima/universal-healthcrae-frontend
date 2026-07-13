@@ -50,9 +50,7 @@ function SubscriptionSuccessContent() {
             SUBSCRIPTIONS_API.verifyCheckout(sessionId)
           ),
           {
-            headers: {
-              Authorization: `Bearer ${session.token}`,
-            },
+            withCredentials: true,
           }
         )
 

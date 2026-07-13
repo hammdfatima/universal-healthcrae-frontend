@@ -20,7 +20,7 @@ import {
   ADMIN_PROFILE_API,
   ADMIN_PROFILE_QUERY_KEYS,
 } from "@/lib/api/admin-profile"
-import { getAuthToken, getAuthUser, setAuthSession } from "@/lib/auth/session"
+import { getAuthUser, setAuthSession } from "@/lib/auth/session"
 
 export default function AdminProfileTab() {
   const queryClient = useQueryClient()
@@ -72,11 +72,10 @@ export default function AdminProfileTab() {
           updatedProfile
         )
 
-        const token = getAuthToken()
         const currentUser = getAuthUser()
 
-        if (token && currentUser) {
-          setAuthSession(token, {
+        if (currentUser) {
+          setAuthSession({
             ...currentUser,
             email: updatedProfile.email,
             name: updatedProfile.name,

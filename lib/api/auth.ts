@@ -1,3 +1,1 @@
-export const AUTH_API = {
-  session: "/auth/session",
-} as const
+export { AUTH_API } from "@/lib/auth/constants"

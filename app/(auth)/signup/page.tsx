@@ -337,7 +337,7 @@ export default function SignupPage() {
         email={submittedEmail}
         mode="signup"
         onVerified={(result) => {
-          if ("token" in result) {
+          if ("user" in result) {
             handleVerified(result)
           }
         }}

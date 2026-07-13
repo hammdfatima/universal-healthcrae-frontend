@@ -1,10 +1,17 @@
 "use client"
 
-import { CreditCard, KeyRound, Settings, UserRound } from "lucide-react"
+import {
+  CreditCard,
+  KeyRound,
+  Settings,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import AccountTab from "@/app/(dashboards)/patient/settings/_components/account-tab"
+import AuthenticatorMfaTab from "@/app/(dashboards)/patient/settings/_components/authenticator-mfa-tab"
 import ChangePasswordTab from "@/app/(dashboards)/patient/settings/_components/change-password-tab"
 import ProfileTab from "@/app/(dashboards)/patient/settings/_components/profile-tab"
 import SubscriptionTab from "@/app/(dashboards)/patient/settings/_components/subscription-tab"
@@ -17,7 +24,13 @@ const tabTriggerClass = cn(
   "text-foreground/75 hover:bg-secondary/60 hover:text-secondary-foreground"
 )
 
-const validTabs = ["profile", "subscription", "account", "password"] as const
+const validTabs = [
+  "profile",
+  "subscription",
+  "account",
+  "password",
+  "mfa",
+] as const
 
 type SettingsTab = (typeof validTabs)[number]
 
@@ -86,6 +99,10 @@ export default function SettingsPageContent() {
             <KeyRound className="size-4" aria-hidden />
             Change Password
           </TabsTrigger>
+          <TabsTrigger value="mfa" className={tabTriggerClass}>
+            <ShieldCheck className="size-4" aria-hidden />
+            Authenticator MFA
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -99,6 +116,9 @@ export default function SettingsPageContent() {
         </TabsContent>
         <TabsContent value="password">
           <ChangePasswordTab />
+        </TabsContent>
+        <TabsContent value="mfa">
+          <AuthenticatorMfaTab />
         </TabsContent>
       </Tabs>
     </div>

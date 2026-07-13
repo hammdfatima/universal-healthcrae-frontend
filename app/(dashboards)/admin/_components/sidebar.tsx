@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  ScrollText,
   Settings,
   Tags,
   Users,
@@ -50,6 +51,11 @@ const managementNav: NavItem[] = [
     label: "User Queries",
     href: "/admin/user-queries" as Route,
     icon: MessageSquare,
+  },
+  {
+    label: "Audit Logs",
+    href: "/admin/audit-logs" as Route,
+    icon: ScrollText,
   },
 ]
 

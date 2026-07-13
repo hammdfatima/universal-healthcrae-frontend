@@ -13,6 +13,11 @@ import VerifyEmailModal from "@/app/_components/verify-email-modal"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
 import { Input } from "@/components/ui/input"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
@@ -20,7 +25,9 @@ import { useAuth } from "@/hooks/use-auth"
 import useToast from "@/hooks/use-toast"
 import { AUTH_API } from "@/lib/auth/constants"
 import { getPostAuthRedirect } from "@/lib/auth/session"
-import type { AuthTokenResponse } from "@/lib/auth/types"
+import type { AuthTokenResponse, LoginResponse } from "@/lib/auth/types"
+
+const OTP_SLOTS = [0, 1, 2, 3, 4, 5] as const
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -36,11 +43,13 @@ function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = searchParams.get("next")
-  const { toastSuccess } = useToast()
+  const { toastSuccess, toastError } = useToast()
   const [formKey, setFormKey] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [verifyOpen, setVerifyOpen] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState("")
+  const [mfaToken, setMfaToken] = useState<string | null>(null)
+  const [mfaCode, setMfaCode] = useState("")
 
   const { login: saveSession } = useAuth()
   const { onRequest: login, isPending } = useApi<{
@@ -51,16 +60,115 @@ function LoginPageContent() {
     showSuccessToast: false,
   })
 
+  const { onRequest: verifyMfaLogin, isPending: isVerifyingMfa } = useApi<{
+    mfaToken: string
+    code: string
+  }>({
+    key: "verify-mfa-login",
+    showSuccessToast: false,
+  })
+
   const completeLogin = (result: AuthTokenResponse) => {
     saveSession(result)
     toastSuccess("Welcome back!")
     setFormKey((key) => key + 1)
+    setMfaToken(null)
+    setMfaCode("")
 
     const redirectPath = nextPath?.startsWith("/")
       ? (nextPath as Route)
       : getPostAuthRedirect(result.user)
 
     router.push(redirectPath)
+  }
+
+  const handleMfaVerify = () => {
+    if (!mfaToken || mfaCode.length !== 6) {
+      toastError("Please enter the 6-digit authenticator code.")
+      return
+    }
+
+    verifyMfaLogin({
+      path: AUTH_API.verifyMfaLogin,
+      data: { mfaToken, code: mfaCode },
+      onSuccess: (data: AuthTokenResponse) => {
+        completeLogin(data)
+      },
+    })
+  }
+
+  if (mfaToken) {
+    return (
+      <div className="w-full">
+        <Link href="/" className="mb-8 inline-block">
+          <Image
+            src="/logo.jpeg"
+            alt="Universal Health Charts"
+            width={320}
+            height={80}
+            className="h-10 w-auto sm:h-11"
+            quality={100}
+            sizes="240px"
+            priority
+          />
+        </Link>
+
+        <Typography as="h1" variant="h2">
+          Authenticator code
+        </Typography>
+        <Typography variant="muted" className="mt-2">
+          Enter the 6-digit code from your authenticator app to finish signing
+          in.
+        </Typography>
+
+        <div className="mt-8 space-y-5">
+          <div className="flex justify-center py-2">
+            <InputOTP
+              maxLength={6}
+              value={mfaCode}
+              onChange={setMfaCode}
+              disabled={isVerifyingMfa}
+              autoFocus
+            >
+              <InputOTPGroup className="gap-2">
+                {OTP_SLOTS.map((index) => (
+                  <InputOTPSlot
+                    key={index}
+                    index={index}
+                    className="size-11 rounded-full border text-base first:rounded-full last:rounded-full"
+                  />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <Button
+            type="button"
+            className="w-full"
+            disabled={isVerifyingMfa || mfaCode.length !== 6}
+            onClick={handleMfaVerify}
+          >
+            {isVerifyingMfa ? (
+              <Loader variant="button" color="white" />
+            ) : (
+              "Verify and log in"
+            )}
+          </Button>
+
+          <button
+            type="button"
+            className="w-full text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setMfaToken(null)
+              setMfaCode("")
+            }}
+            disabled={isVerifyingMfa}
+          >
+            Back to login
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -99,7 +207,13 @@ function LoginPageContent() {
                 email: values.email,
                 password: values.password,
               },
-              onSuccess: (data: AuthTokenResponse) => {
+              onSuccess: (data: LoginResponse) => {
+                if (data.mfaRequired) {
+                  setMfaToken(data.mfaToken)
+                  setMfaCode("")
+                  return
+                }
+
                 completeLogin(data)
               },
               onError: (error) => {
@@ -202,7 +316,7 @@ function LoginPageContent() {
         email={submittedEmail}
         mode="signup"
         onVerified={(result) => {
-          if ("token" in result) {
+          if ("user" in result) {
             completeLogin(result)
           }
         }}

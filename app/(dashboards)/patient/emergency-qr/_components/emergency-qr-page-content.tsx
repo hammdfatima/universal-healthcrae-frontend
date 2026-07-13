@@ -1,7 +1,15 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { Copy, Download, QrCode, RefreshCw, ShieldOff } from "lucide-react"
+import {
+  Copy,
+  Download,
+  Eye,
+  EyeOff,
+  QrCode,
+  RefreshCw,
+  ShieldOff,
+} from "lucide-react"
 import QRCode from "qrcode"
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
@@ -27,15 +36,17 @@ import {
 
 export default function EmergencyQrPageContent() {
   const queryClient = useQueryClient()
-  const { toastSuccess } = useToast()
+  const { toastSuccess, toastError } = useToast()
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  const [pin, setPin] = useState("")
+  const [confirmPin, setConfirmPin] = useState("")
 
   const statusQuery = useFetch<EmergencyAccessStatus>({
     path: EMERGENCY_ACCESS_API.status,
     queryKey: EMERGENCY_ACCESS_QUERY_KEYS.status,
   })
 
-  const generateApi = useApi<Record<string, never>>({
+  const generateApi = useApi<{ pin: string }>({
     key: "generate-emergency-access",
     method: "post",
     showSuccessToast: true,
@@ -82,10 +93,22 @@ export default function EmergencyQrPageContent() {
   }
 
   function handleGenerate() {
+    if (!/^\d{4,8}$/.test(pin)) {
+      toastError("PIN must be 4 to 8 digits.")
+      return
+    }
+
+    if (pin !== confirmPin) {
+      toastError("PIN confirmation does not match.")
+      return
+    }
+
     generateApi.onRequest<EmergencyAccessToken>({
       path: EMERGENCY_ACCESS_API.generate,
-      data: {},
+      data: { pin },
       onSuccess: () => {
+        setPin("")
+        setConfirmPin("")
         refreshStatus()
       },
     })
@@ -127,9 +150,8 @@ export default function EmergencyQrPageContent() {
         <Typography variant="h3">Emergency QR Access</Typography>
         {!statusQuery.isLoading ? (
           <Typography variant="muted" className="mt-2 max-w-2xl">
-            Create a QR code that links to your live medical vault. Anyone who
-            scans it will see your latest profile, medications, allergies, lab
-            files, imaging files, and emergency contacts.
+            Create a PIN-protected QR code that unlocks your medical vault for
+            72 hours. Scanners must enter your PIN before any records are shown.
           </Typography>
         ) : null}
       </div>
@@ -168,9 +190,12 @@ export default function EmergencyQrPageContent() {
                     <Badge variant="outline" className="rounded-full">
                       Active
                     </Badge>
+                    <Badge variant="secondary" className="rounded-full">
+                      Expires {new Date(access.expiresAt).toLocaleString()}
+                    </Badge>
                     {access.lastAccessedAt ? (
                       <Badge variant="secondary" className="rounded-full">
-                        Last scanned{" "}
+                        Last unlocked{" "}
                         {new Date(access.lastAccessedAt).toLocaleDateString()}
                       </Badge>
                     ) : null}
@@ -194,6 +219,12 @@ export default function EmergencyQrPageContent() {
                       <Copy className="size-4" aria-hidden />
                       Copy Access Link
                     </Button>
+                    <PinFields
+                      pin={pin}
+                      confirmPin={confirmPin}
+                      onPinChange={setPin}
+                      onConfirmPinChange={setConfirmPin}
+                    />
                     <Button
                       type="button"
                       variant="outline"
@@ -223,9 +254,15 @@ export default function EmergencyQrPageContent() {
                     aria-hidden
                   />
                   <Typography variant="muted" className="text-sm">
-                    You have not created an emergency QR code yet. Generate one
-                    to share your live medical records when needed.
+                    Set a 4–8 digit PIN, then generate a QR code. First
+                    responders will need both the link and your PIN.
                   </Typography>
+                  <PinFields
+                    pin={pin}
+                    confirmPin={confirmPin}
+                    onPinChange={setPin}
+                    onConfirmPinChange={setConfirmPin}
+                  />
                   <Button
                     type="button"
                     onClick={handleGenerate}
@@ -240,17 +277,16 @@ export default function EmergencyQrPageContent() {
 
           <Card className="border-border/60 shadow-sm">
             <CardHeader>
-              <CardTitle>What scanners will see</CardTitle>
+              <CardTitle>How emergency access works</CardTitle>
               <CardDescription>
-                This preview reflects the same live data shown through your QR
-                code, including uploaded files.
+                Links expire after 72 hours. Wrong PIN attempts are locked after
+                repeated failures and logged for audit.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Typography variant="muted" className="mb-4 text-sm">
-                Records update automatically whenever you change your medical
-                vault. Regenerating the QR creates a new link and invalidates
-                the previous one.
+                Regenerating creates a new link and PIN requirement and
+                invalidates the previous QR code.
               </Typography>
               {access?.isActive ? (
                 <PreviewHint accessUrl={access.accessUrl} />
@@ -267,18 +303,94 @@ export default function EmergencyQrPageContent() {
   )
 }
 
+function PinFields({
+  pin,
+  confirmPin,
+  onPinChange,
+  onConfirmPinChange,
+}: {
+  pin: string
+  confirmPin: string
+  onPinChange: (value: string) => void
+  onConfirmPinChange: (value: string) => void
+}) {
+  const [showPin, setShowPin] = useState(false)
+  const [showConfirmPin, setShowConfirmPin] = useState(false)
+
+  return (
+    <div className="grid gap-2 text-left">
+      <div className="relative">
+        <Input
+          type={showPin ? "text" : "password"}
+          inputMode="numeric"
+          autoComplete="new-password"
+          pattern="\d{4,8}"
+          maxLength={8}
+          placeholder="Create 4–8 digit PIN"
+          className="pr-11"
+          value={pin}
+          onChange={(event) =>
+            onPinChange(event.target.value.replace(/\D/g, "").slice(0, 8))
+          }
+        />
+        <button
+          type="button"
+          className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+          aria-label={showPin ? "Hide PIN" : "Show PIN"}
+          onClick={() => setShowPin((visible) => !visible)}
+        >
+          {showPin ? (
+            <EyeOff className="size-4" aria-hidden />
+          ) : (
+            <Eye className="size-4" aria-hidden />
+          )}
+        </button>
+      </div>
+      <div className="relative">
+        <Input
+          type={showConfirmPin ? "text" : "password"}
+          inputMode="numeric"
+          autoComplete="new-password"
+          pattern="\d{4,8}"
+          maxLength={8}
+          placeholder="Confirm PIN"
+          className="pr-11"
+          value={confirmPin}
+          onChange={(event) =>
+            onConfirmPinChange(
+              event.target.value.replace(/\D/g, "").slice(0, 8)
+            )
+          }
+        />
+        <button
+          type="button"
+          className="absolute top-1/2 right-4 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+          aria-label={showConfirmPin ? "Hide confirm PIN" : "Show confirm PIN"}
+          onClick={() => setShowConfirmPin((visible) => !visible)}
+        >
+          {showConfirmPin ? (
+            <EyeOff className="size-4" aria-hidden />
+          ) : (
+            <Eye className="size-4" aria-hidden />
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function PreviewHint({ accessUrl }: { accessUrl: string }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
       <Typography variant="small" className="font-semibold">
-        Public access link
+        PIN-protected access link
       </Typography>
       <Typography variant="muted" className="mt-1 break-all text-sm">
         {accessUrl}
       </Typography>
       <Typography variant="muted" className="mt-3 text-sm">
-        Open this link on another device to verify what first responders or
-        caregivers will see after scanning your QR code.
+        Opening this link only shows a PIN prompt. Records appear after the
+        correct PIN is entered.
       </Typography>
     </div>
   )
