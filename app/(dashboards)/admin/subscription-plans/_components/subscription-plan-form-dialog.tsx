@@ -7,6 +7,7 @@ import {
   planToFormValues,
   type SubscriptionPlan,
   type SubscriptionPlanFormValues,
+  sanitizePriceInput,
   subscriptionPlanDefaultValues,
   subscriptionPlanSchema,
 } from "@/app/(dashboards)/admin/_lib/subscription-plans"
@@ -20,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import FormModified from "@/components/ui/form-modified"
+import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import {
   Select,
@@ -67,8 +69,8 @@ export default function SubscriptionPlanFormDialog({
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update plan pricing, billing cycle, and features."
-              : "Create a new subscription plan for patients."}
+              ? "Update pricing, member limit, pets, and features."
+              : "Create a subscription plan with pricing, seat limit, and features."}
           </DialogDescription>
         </DialogHeader>
 
@@ -94,11 +96,33 @@ export default function SubscriptionPlanFormDialog({
                   />
 
                   <div className="grid gap-5 sm:grid-cols-2">
-                    <FormInput
+                    <Field
                       name="price"
-                      label="Price"
-                      placeholder="e.g. $9.95"
-                    />
+                      label="Price (USD)"
+                      description="Enter the amount in dollars. Currency is fixed to USD."
+                    >
+                      {(field) => (
+                        <div className="relative">
+                          <span className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                            $
+                          </span>
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            placeholder="9.95"
+                            className="pl-8 tabular-nums"
+                            value={(field.value as string) ?? ""}
+                            onBlur={field.onBlur}
+                            onChange={(event) => {
+                              field.onChange(
+                                sanitizePriceInput(event.target.value)
+                              )
+                            }}
+                          />
+                        </div>
+                      )}
+                    </Field>
 
                     <Field name="billingCycle" label="Billing Cycle">
                       {(field) => (
@@ -120,6 +144,35 @@ export default function SubscriptionPlanFormDialog({
                             ))}
                           </SelectContent>
                         </Select>
+                      )}
+                    </Field>
+                  </div>
+
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <FormInput
+                      name="memberLimit"
+                      label="Member limit"
+                      type="number"
+                      placeholder="0"
+                      description="Extra household seats beyond the account owner (0 = individual)."
+                    />
+
+                    <Field name="allowsPets" label="Allows pets">
+                      {(field) => (
+                        <label className="flex items-center gap-3 rounded-xl border border-border/60 px-4 py-3 text-sm">
+                          <input
+                            type="checkbox"
+                            className="size-4 accent-primary"
+                            checked={Boolean(field.value)}
+                            onChange={(event) =>
+                              field.onChange(event.target.checked)
+                            }
+                          />
+                          <span>
+                            Pets count toward seats and can be managed on this
+                            plan
+                          </span>
+                        </label>
                       )}
                     </Field>
                   </div>

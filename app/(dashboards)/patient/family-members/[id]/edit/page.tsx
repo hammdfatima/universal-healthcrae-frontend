@@ -51,12 +51,17 @@ export default function EditFamilyMemberPage() {
     })
 
   useEffect(() => {
-    if (isPlanLoading) return
+    if (isPlanLoading || isMembersLoading) return
 
     if (!supportsFamilyMembers) {
-      router.replace("/patient")
+      router.replace("/patient/family-members")
+      return
     }
-  }, [isPlanLoading, router, supportsFamilyMembers])
+
+    if (member && !member.isAccessible) {
+      router.replace("/patient/family-members")
+    }
+  }, [isMembersLoading, isPlanLoading, member, router, supportsFamilyMembers])
 
   function handleSubmit(values: FamilyMemberFormValues) {
     if (!member) return
@@ -80,7 +85,12 @@ export default function EditFamilyMemberPage() {
     })
   }
 
-  if (isPlanLoading || isMembersLoading || !supportsFamilyMembers) {
+  if (
+    isPlanLoading ||
+    isMembersLoading ||
+    !supportsFamilyMembers ||
+    (member && !member.isAccessible)
+  ) {
     return <Loader variant="full-page" label="Loading family member..." />
   }
 

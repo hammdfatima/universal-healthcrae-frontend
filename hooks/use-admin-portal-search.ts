@@ -22,6 +22,7 @@ import {
 import { USERS_API, USERS_QUERY_KEYS } from "@/lib/api/users"
 import { ADMIN_SEARCH_PAGES } from "@/lib/dashboard-search/admin-pages"
 import type { PortalSearchResult } from "@/lib/dashboard-search/types"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 
 function recordResult(
   id: string,
@@ -115,7 +116,7 @@ export function useAdminPortalSearch(enabled: boolean) {
           plan.planName,
           "/admin/subscription-plans",
           "Subscription Plans",
-          `${plan.price} · ${plan.billingCycle}`,
+          `${ensureCurrencyPrice(plan.price)} · ${plan.billingCycle}`,
           plan.features
         )
       )

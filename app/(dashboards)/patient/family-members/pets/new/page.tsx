@@ -26,12 +26,12 @@ import {
 export default function NewPetPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { isLoading, supportsFamilyMembers } = useSubscriptionPlan()
+  const { isLoading, supportsPets } = useSubscriptionPlan()
 
   const { data: membersData } = useFetch<FamilyMembersListResponse>({
     path: FAMILY_MEMBERS_API.list,
     queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
-    enabled: supportsFamilyMembers && !isLoading,
+    enabled: supportsPets && !isLoading,
   })
 
   const { onRequest: createPet, isPending } = useApi<CreatePetPayload>({
@@ -41,10 +41,10 @@ export default function NewPetPage() {
 
   useEffect(() => {
     if (isLoading) return
-    if (!supportsFamilyMembers) {
-      router.replace("/patient")
+    if (!supportsPets) {
+      router.replace("/patient/family-members?tab=pets")
     }
-  }, [isLoading, router, supportsFamilyMembers])
+  }, [isLoading, router, supportsPets])
 
   function handleSubmit(values: PetFormValues) {
     createPet({
@@ -82,7 +82,7 @@ export default function NewPetPage() {
     })
   }
 
-  if (isLoading || !supportsFamilyMembers) {
+  if (isLoading || !supportsPets) {
     return null
   }
 
@@ -92,7 +92,9 @@ export default function NewPetPage() {
       description="Add a pet to your family account. Pets count toward your plan seats but do not receive a separate login."
       submitLabel="Save Pet"
       isSubmitting={isPending}
-      familyMembers={membersData?.members ?? []}
+      familyMembers={(membersData?.members ?? []).filter(
+        (member) => member.isAccessible
+      )}
       onSubmit={handleSubmit}
     />
   )

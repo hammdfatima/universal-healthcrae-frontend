@@ -1,16 +1,35 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect } from "react"
+import type { UseFormReturn } from "react-hook-form"
 
 import {
+  defaultTimesForPerDay,
   type MedicationFormValues,
   medicationDefaultValues,
   medicationSchema,
 } from "@/app/(dashboards)/patient/_lib/medications"
 import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import FormModified from "@/components/ui/form-modified"
 import { Loader } from "@/components/ui/loader"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import TimePickerField from "@/components/ui/time-picker-field"
 import { Typography } from "@/components/ui/typography"
 
 type MedicationFormProps = {
@@ -20,6 +39,132 @@ type MedicationFormProps = {
   onSubmit: (values: MedicationFormValues) => void
   submitLabel: string
   isSubmitting?: boolean
+}
+
+const TIMES_PER_DAY_OPTIONS = [1, 2, 3, 4, 5, 6]
+
+function syncDoseTimes(
+  methods: UseFormReturn<MedicationFormValues>,
+  timesPerDay: number
+) {
+  const current = methods.getValues("timesOfDay") ?? []
+  const next = defaultTimesForPerDay(timesPerDay).map(
+    (fallback, index) => current[index] || fallback
+  )
+
+  if (
+    current.length === next.length &&
+    current.every((time, index) => time === next[index])
+  ) {
+    return
+  }
+
+  methods.setValue("timesOfDay", next, {
+    shouldDirty: true,
+    shouldValidate: true,
+  })
+}
+
+function ScheduleFields({
+  methods,
+}: {
+  methods: UseFormReturn<MedicationFormValues>
+}) {
+  const timesPerDay = Number(methods.watch("timesPerDay") || 1)
+  const timesOfDay = methods.watch("timesOfDay") ?? []
+  const doseSlots = Array.from({ length: timesPerDay }, (_, slot) => ({
+    id: `dose-${slot + 1}`,
+    label: `Dose ${slot + 1}`,
+    slot,
+  }))
+
+  useEffect(() => {
+    syncDoseTimes(methods, timesPerDay)
+  }, [timesPerDay, methods])
+
+  return (
+    <div className="space-y-5">
+      <div className="max-w-md">
+        <FormField
+          control={methods.control}
+          name="timesPerDay"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-muted-foreground">
+                How many times a day?
+              </FormLabel>
+              <FormControl>
+                <Select
+                  value={String(field.value ?? 1)}
+                  onValueChange={(value) => {
+                    const nextCount = Number.parseInt(value, 10)
+                    field.onChange(nextCount)
+                    syncDoseTimes(methods, nextCount)
+                  }}
+                >
+                  <SelectTrigger className="w-full rounded-full">
+                    <SelectValue placeholder="Select times per day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMES_PER_DAY_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={String(option)}>
+                        {option === 1
+                          ? "1 time per day"
+                          : `${option} times per day`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription>
+                We'll remind you at each dose time you set.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <div className="space-y-3">
+        <Typography
+          variant="small"
+          className="font-medium text-muted-foreground"
+        >
+          Dose times
+        </Typography>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {doseSlots.map(({ id, label, slot }) => (
+            <div key={id} className="space-y-2">
+              <Typography variant="small" className="text-muted-foreground">
+                {label}
+              </Typography>
+              <TimePickerField
+                value={timesOfDay[slot] || ""}
+                onChange={(time) => {
+                  const next = [...(methods.getValues("timesOfDay") ?? [])]
+                  while (next.length < timesPerDay) {
+                    next.push("")
+                  }
+                  next[slot] = time
+                  methods.setValue("timesOfDay", next.slice(0, timesPerDay), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }}
+                placeholder="Select time"
+              />
+            </div>
+          ))}
+        </div>
+        {methods.formState.errors.timesOfDay ? (
+          <Typography variant="small" className="text-destructive">
+            {methods.formState.errors.timesOfDay.message?.toString() ||
+              "Set a time for every dose."}
+          </Typography>
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 export default function MedicationForm({
@@ -46,7 +191,7 @@ export default function MedicationForm({
           fieldsetProps={{ className: "space-y-5" }}
           onSubmit={onSubmit}
         >
-          {({ components }) => {
+          {({ components, methods }) => {
             const { Input: FormInput, Field } = components
 
             return (
@@ -76,6 +221,8 @@ export default function MedicationForm({
                     placeholder="Dosage"
                   />
                 </div>
+
+                <ScheduleFields methods={methods} />
 
                 <div className="grid gap-5 sm:grid-cols-2">
                   <Field name="startDate" label="Start Date">

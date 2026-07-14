@@ -85,6 +85,14 @@ export default function FamilyMemberDetailsDialog({
                     Emergency Contact
                   </Badge>
                 ) : null}
+                {!member.isAccessible ? (
+                  <Badge
+                    variant="outline"
+                    className="mt-2 rounded-full text-muted-foreground"
+                  >
+                    Inactive on current plan
+                  </Badge>
+                ) : null}
               </div>
             </div>
           </DialogHeader>
@@ -100,41 +108,53 @@ export default function FamilyMemberDetailsDialog({
           </div>
 
           <div className="flex flex-row flex-wrap items-center gap-2 border-t border-border/60 bg-muted/20 px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="min-w-0 flex-1 gap-1.5"
-              onClick={() => {
-                onMarkEmergencyContact(member)
-                toastSuccess(
-                  member.isEmergencyContact
-                    ? "Removed from emergency contacts."
-                    : "Marked as emergency contact."
-                )
-              }}
-            >
-              <AlertTriangle className="size-4 shrink-0" aria-hidden />
-              <span className="truncate">
-                {member.isEmergencyContact
-                  ? "Remove Emergency"
-                  : "Mark Emergency"}
-              </span>
-            </Button>
+            {!member.isAccessible ? (
+              <Typography variant="muted" className="w-full text-sm">
+                This profile is inactive on your current plan. Upgrade to edit
+                or restore login access. You can still permanently delete the
+                link.
+              </Typography>
+            ) : null}
 
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 gap-1.5"
-              asChild
-            >
-              <Link
-                href={`/patient/family-members/${member.id}/edit`}
-                onClick={() => onOpenChange(false)}
+            {member.isAccessible ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="min-w-0 flex-1 gap-1.5"
+                onClick={() => {
+                  onMarkEmergencyContact(member)
+                  toastSuccess(
+                    member.isEmergencyContact
+                      ? "Removed from emergency contacts."
+                      : "Marked as emergency contact."
+                  )
+                }}
               >
-                <Pencil className="size-4 shrink-0" aria-hidden />
-                Edit
-              </Link>
-            </Button>
+                <AlertTriangle className="size-4 shrink-0" aria-hidden />
+                <span className="truncate">
+                  {member.isEmergencyContact
+                    ? "Remove Emergency"
+                    : "Mark Emergency"}
+                </span>
+              </Button>
+            ) : null}
+
+            {member.isAccessible ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 gap-1.5"
+                asChild
+              >
+                <Link
+                  href={`/patient/family-members/${member.id}/edit`}
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Pencil className="size-4 shrink-0" aria-hidden />
+                  Edit
+                </Link>
+              </Button>
+            ) : null}
 
             <Button
               type="button"

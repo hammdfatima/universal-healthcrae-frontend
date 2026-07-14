@@ -8,6 +8,7 @@ export type FamilyMember = {
   relationship: string
   dateOfBirth: string | null
   isEmergencyContact: boolean
+  isAccessible: boolean
   createdAt: string
   updatedAt: string
 }
@@ -17,6 +18,9 @@ export type FamilyMembersListResponse = {
   limit: number
   usedSeats: number
   petCount: number
+  pausedPetCount: number
+  canManage: boolean
+  supportsPets: boolean
 }
 
 export type CreateFamilyMemberPayload = {

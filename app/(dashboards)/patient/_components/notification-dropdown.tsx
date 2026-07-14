@@ -33,6 +33,7 @@ import {
   NOTIFICATIONS_QUERY_KEYS,
   type NotificationsListResponse,
   type NotificationType,
+  notificationsListPath,
 } from "@/lib/api/notifications"
 import { cn } from "@/lib/utils"
 
@@ -53,8 +54,9 @@ export default function NotificationDropdown() {
   const [open, setOpen] = useState(false)
 
   const { data, isLoading, refetch } = useFetch<NotificationsListResponse>({
-    path: NOTIFICATIONS_API.list,
+    path: notificationsListPath(),
     queryKey: NOTIFICATIONS_QUERY_KEYS.list,
+    refetchInterval: 60_000,
   })
 
   useEffect(() => {

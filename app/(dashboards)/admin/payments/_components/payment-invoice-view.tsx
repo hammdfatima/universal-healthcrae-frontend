@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 import { cn } from "@/lib/utils"
 
 type PaymentInvoiceViewProps = {
@@ -130,6 +131,16 @@ export default function PaymentInvoiceView({
               <Typography variant="muted" className="text-sm">
                 {payment.email}
               </Typography>
+              {payment.phone ? (
+                <Typography variant="muted" className="text-sm">
+                  {payment.phone}
+                </Typography>
+              ) : null}
+              {payment.address ? (
+                <Typography variant="muted" className="text-sm">
+                  {payment.address}
+                </Typography>
+              ) : null}
             </section>
 
             <section>
@@ -151,7 +162,7 @@ export default function PaymentInvoiceView({
                     variant="small"
                     className="font-semibold tabular-nums"
                   >
-                    {payment.amount}
+                    {ensureCurrencyPrice(payment.amount)}
                   </Typography>
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-border/60 bg-muted/10 px-4 py-4">
@@ -162,7 +173,7 @@ export default function PaymentInvoiceView({
                     variant="small"
                     className="font-bold tabular-nums"
                   >
-                    {payment.amount}
+                    {ensureCurrencyPrice(payment.amount)}
                   </Typography>
                 </div>
               </div>

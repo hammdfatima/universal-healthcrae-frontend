@@ -52,6 +52,8 @@ export type PetsListResponse = {
   limit: number
   usedSeats: number
   memberCount: number
+  pausedPetCount: number
+  supportsPets: boolean
 }
 
 export type CreatePetPayload = {

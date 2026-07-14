@@ -27,6 +27,12 @@ export const NOTIFICATIONS_API = {
   markAllRead: "/notifications/read-all",
 } as const
 
+export function notificationsListPath(
+  timezoneOffset = new Date().getTimezoneOffset()
+) {
+  return `${NOTIFICATIONS_API.list}?timezoneOffset=${timezoneOffset}`
+}
+
 export const NOTIFICATIONS_QUERY_KEYS = {
   list: ["notifications", "list"] as const,
 }

@@ -93,7 +93,7 @@ export default function HouseholdFamilyTable() {
     <>
       <DataTable
         title="My Family"
-        description="View the account owner who added you. Use the eye icon to open their details and shared medical records."
+        description="View the family account holder who added you. Use the eye icon to open their details and shared medical records."
         icon={<Users className="size-5" />}
         columns={columns}
         data={members}
@@ -106,7 +106,7 @@ export default function HouseholdFamilyTable() {
         onRetry={() => refetch()}
         isRetrying={isFetching && !isLoading}
         emptyMessage="No family account linked yet."
-        emptyDescription="When you are added to a family account, the account owner will appear here."
+        emptyDescription="When you are added to a family account, they will appear here."
       />
 
       <SharedMedicalRecordsDialog

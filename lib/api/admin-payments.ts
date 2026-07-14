@@ -5,6 +5,8 @@ export type AdminPayment = {
   invoiceNumber: string
   user: string
   email: string
+  phone: string | null
+  address: string | null
   plan: string
   amount: string
   status: PaymentStatus

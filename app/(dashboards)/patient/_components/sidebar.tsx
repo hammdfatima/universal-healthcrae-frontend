@@ -38,6 +38,11 @@ import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import { useSubscriptionPlan } from "@/hooks/use-subscription-plan"
 import {
+  FAMILY_MEMBERS_API,
+  FAMILY_MEMBERS_QUERY_KEYS,
+  type FamilyMembersListResponse,
+} from "@/lib/api/family-members"
+import {
   MEDICAL_RECORD_SHARES_API,
   MEDICAL_RECORD_SHARES_QUERY_KEYS,
   type SidebarFamilyResponse,
@@ -264,9 +269,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   })
   const { planName, supportsFamilyMembers, navLabel } = useSubscriptionPlan()
   const isAccountOwner = !user?.isFamilyMemberAccount
+
+  const { data: familyList } = useFetch<FamilyMembersListResponse>({
+    path: FAMILY_MEMBERS_API.list,
+    queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
+    enabled: Boolean(user) && isAccountOwner,
+  })
+
+  const hasPausedOrActiveFamily =
+    (familyList?.members.length ?? 0) > 0 ||
+    (familyList?.pausedPetCount ?? 0) > 0
+
   const showFamilyNav =
     (supportsFamilyMembers && isAccountOwner) ||
-    Boolean(user?.isFamilyMemberAccount)
+    Boolean(user?.isFamilyMemberAccount) ||
+    (isAccountOwner && hasPausedOrActiveFamily)
 
   const { data: sidebarFamily } = useFetch<SidebarFamilyResponse>({
     path: MEDICAL_RECORD_SHARES_API.sidebarFamily,

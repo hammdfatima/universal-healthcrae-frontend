@@ -4,6 +4,7 @@ import {
   type AdminPayment,
   formatPaymentStatus,
 } from "@/app/(dashboards)/admin/_lib/payments"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 
 const MARGIN = 16
 const LINE_HEIGHT = 6
@@ -102,7 +103,16 @@ export async function downloadPaymentInvoicePdf(payment: AdminPayment) {
   doc.text(payment.user, MARGIN, y)
   y += LINE_HEIGHT
   doc.text(payment.email, MARGIN, y)
-  y += LINE_HEIGHT + 8
+  y += LINE_HEIGHT
+  if (payment.phone) {
+    doc.text(payment.phone, MARGIN, y)
+    y += LINE_HEIGHT
+  }
+  if (payment.address) {
+    doc.text(payment.address, MARGIN, y)
+    y += LINE_HEIGHT
+  }
+  y += 8
 
   doc.setFont("helvetica", "bold")
   doc.text("Description", MARGIN, y)
@@ -113,14 +123,18 @@ export async function downloadPaymentInvoicePdf(payment: AdminPayment) {
 
   doc.setFont("helvetica", "normal")
   doc.text(`${payment.plan} (${payment.billingCycle})`, MARGIN, y)
-  doc.text(payment.amount, 210 - MARGIN, y, { align: "right" })
+  doc.text(ensureCurrencyPrice(payment.amount), 210 - MARGIN, y, {
+    align: "right",
+  })
   y += LINE_HEIGHT + 8
 
   doc.line(MARGIN, y, 210 - MARGIN, y)
   y += LINE_HEIGHT + 2
   doc.setFont("helvetica", "bold")
   doc.text("Total", MARGIN, y)
-  doc.text(payment.amount, 210 - MARGIN, y, { align: "right" })
+  doc.text(ensureCurrencyPrice(payment.amount), 210 - MARGIN, y, {
+    align: "right",
+  })
   y += LINE_HEIGHT + 10
 
   doc.setFont("helvetica", "normal")

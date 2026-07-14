@@ -34,6 +34,7 @@ import {
   SUBSCRIPTION_PLANS_API,
   SUBSCRIPTION_PLANS_QUERY_KEYS,
 } from "@/lib/api/subscription-plans"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 
 export default function SubscriptionPlansTable() {
   const queryClient = useQueryClient()
@@ -143,6 +144,7 @@ export default function SubscriptionPlansTable() {
       header: "Price",
       accessorKey: "price",
       className: "tabular-nums",
+      cell: (row) => ensureCurrencyPrice(row.price),
     },
     {
       id: "billingCycle",
@@ -153,6 +155,19 @@ export default function SubscriptionPlansTable() {
         </Badge>
       ),
       accessorKey: "billingCycle",
+    },
+    {
+      id: "memberLimit",
+      header: "Members",
+      accessorKey: "memberLimit",
+      className: "tabular-nums",
+      cell: (row) => String(row.memberLimit),
+    },
+    {
+      id: "allowsPets",
+      header: "Pets",
+      searchable: false,
+      cell: (row) => (row.allowsPets ? "Yes" : "No"),
     },
     {
       id: "features",

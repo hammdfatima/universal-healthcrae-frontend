@@ -40,7 +40,7 @@ const statCards: StatCardConfig[] = [
   {
     label: "Active Subscriptions",
     getValue: (counts) => counts.activeSubscriptions.toLocaleString(),
-    detail: "Paying members",
+    detail: "Active paying accounts",
     href: "/admin/subscription-plans" as Route,
     icon: Tags,
     accent:
@@ -50,7 +50,7 @@ const statCards: StatCardConfig[] = [
   {
     label: "Monthly Revenue",
     getValue: (counts) => counts.monthlyRevenue,
-    detail: "Current billing cycle",
+    detail: "From active subscriptions",
     href: "/admin/payments" as Route,
     icon: TrendingUp,
     accent:

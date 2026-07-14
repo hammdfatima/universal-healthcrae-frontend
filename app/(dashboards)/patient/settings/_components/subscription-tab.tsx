@@ -33,6 +33,7 @@ import {
   type SubscriptionMeResponse,
   type UserSubscription,
 } from "@/lib/api/subscriptions"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 import { buildRequestUrl } from "@/lib/utils"
 
 function formatBillingCycle(cycle: UserSubscription["plan"]["billingCycle"]) {
@@ -41,7 +42,7 @@ function formatBillingCycle(cycle: UserSubscription["plan"]["billingCycle"]) {
 
 function formatPrice(subscription: UserSubscription) {
   const suffix = subscription.plan.billingCycle === "yearly" ? "/yr" : "/mo"
-  return `${subscription.plan.price}${suffix}`
+  return `${ensureCurrencyPrice(subscription.plan.price)}${suffix}`
 }
 
 function formatNextBillingDate(value: string | null) {

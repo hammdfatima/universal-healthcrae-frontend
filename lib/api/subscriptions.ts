@@ -12,6 +12,8 @@ export type UserSubscriptionPlan = {
   price: string
   billingCycle: "monthly" | "yearly"
   features: string[]
+  memberLimit: number
+  allowsPets: boolean
 }
 
 export type UserSubscription = {

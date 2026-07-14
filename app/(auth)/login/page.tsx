@@ -228,8 +228,12 @@ function LoginPageContent() {
                   | string
                   | undefined
                 const isBlocked = message?.toLowerCase().includes("blocked")
+                const isFamilyAccessRevoked = message
+                  ?.toLowerCase()
+                  .includes("canceled or changed the subscription")
 
-                if (isBlocked) {
+                // useApi already toasts blocked / family-access messages.
+                if (isBlocked || isFamilyAccessRevoked) {
                   return
                 }
 

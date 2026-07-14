@@ -8,9 +8,11 @@ import {
   getFamilyMemberLimit,
   getFamilyNavLabel,
   getFamilyPageCopy,
-  getPlanTier,
+  getPlanTierFromCapabilities,
+  type PlanCapabilities,
   type PlanTier,
   supportsFamilyMembers,
+  supportsPets,
 } from "@/lib/subscription/plan-tier"
 
 export function useSubscriptionPlan() {
@@ -19,17 +21,25 @@ export function useSubscriptionPlan() {
     queryKey: SUBSCRIPTIONS_QUERY_KEYS.me,
   })
 
-  const planName = data?.subscription?.plan.planName ?? null
-  const tier: PlanTier | null = getPlanTier(planName)
+  const plan = data?.subscription?.plan ?? null
+  const capabilities: PlanCapabilities | null = plan
+    ? {
+        memberLimit: plan.memberLimit ?? 0,
+        allowsPets: plan.allowsPets ?? false,
+      }
+    : null
+
+  const tier: PlanTier | null = getPlanTierFromCapabilities(capabilities)
 
   return {
-    planName,
+    planName: plan?.planName ?? null,
     tier,
     isLoading,
     isError,
     isActive: data?.isActive ?? false,
-    supportsFamilyMembers: supportsFamilyMembers(tier),
-    memberLimit: getFamilyMemberLimit(tier),
+    memberLimit: getFamilyMemberLimit(capabilities),
+    supportsFamilyMembers: supportsFamilyMembers(capabilities),
+    supportsPets: supportsPets(capabilities),
     navLabel: getFamilyNavLabel(tier),
     pageCopy: getFamilyPageCopy(tier),
   }

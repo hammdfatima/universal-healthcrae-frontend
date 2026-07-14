@@ -14,6 +14,7 @@ import {
   SUBSCRIPTION_PLANS_API,
   SUBSCRIPTION_PLANS_QUERY_KEYS,
 } from "@/lib/api/subscription-plans"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 import { cn } from "@/lib/utils"
 
 type SubscriptionPlansPickerProps = {
@@ -112,7 +113,7 @@ export default function SubscriptionPlansPicker({
 
                 <div className="flex items-baseline gap-1">
                   <Typography as="span" variant="h2" className="text-4xl">
-                    {plan.price}
+                    {ensureCurrencyPrice(plan.price)}
                   </Typography>
                   <Typography variant="muted" className="text-base">
                     {formatBillingLabel(plan.billingCycle)}

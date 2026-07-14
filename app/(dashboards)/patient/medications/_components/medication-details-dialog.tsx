@@ -1,11 +1,19 @@
 "use client"
 
-import { Activity, Calendar, Pencil, Stethoscope, Trash2 } from "lucide-react"
+import {
+  Activity,
+  Calendar,
+  Clock,
+  Pencil,
+  Stethoscope,
+  Trash2,
+} from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 import {
   formatMedicationEndDate,
+  formatMedicationSchedule,
   isMedicationActive,
 } from "@/app/(dashboards)/patient/_lib/medications"
 import {
@@ -88,6 +96,11 @@ export default function MedicationDetailsDialog({
               icon={Activity}
               label="Dosage"
               value={medication.dosage}
+            />
+            <DetailRow
+              icon={Clock}
+              label="Schedule"
+              value={formatMedicationSchedule(medication)}
             />
             <DetailRow
               icon={Calendar}

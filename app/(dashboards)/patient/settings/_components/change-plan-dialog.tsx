@@ -27,6 +27,7 @@ import {
   type ChangePlanResponse,
   SUBSCRIPTIONS_API,
 } from "@/lib/api/subscriptions"
+import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 import { cn } from "@/lib/utils"
 
 type ChangePlanDialogProps = {
@@ -161,7 +162,7 @@ export default function ChangePlanDialog({
 
                       <div className="flex items-baseline gap-1">
                         <Typography as="span" variant="h3">
-                          {plan.price}
+                          {ensureCurrencyPrice(plan.price)}
                         </Typography>
                         <Typography variant="muted" className="text-sm">
                           {formatBillingLabel(plan.billingCycle)}

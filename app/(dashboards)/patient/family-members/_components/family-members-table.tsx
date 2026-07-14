@@ -31,12 +31,14 @@ import { PETS_QUERY_KEYS } from "@/lib/api/pets"
 
 type FamilyMembersTableProps = {
   canAdd: boolean
+  canManage: boolean
   limit: number
   usedSeats: number
 }
 
 export default function FamilyMembersTable({
   canAdd,
+  canManage,
   limit,
   usedSeats,
 }: FamilyMembersTableProps) {
@@ -99,6 +101,8 @@ export default function FamilyMembersTable({
   }
 
   function openSharedRecords(member: FamilyMember) {
+    if (!member.isAccessible) return
+
     setRecordsMember({
       userId: member.memberUserId,
       firstName: member.firstName,
@@ -112,6 +116,8 @@ export default function FamilyMembersTable({
   }
 
   function handleMarkEmergencyContact(member: FamilyMember) {
+    if (!member.isAccessible || !canManage) return
+
     updateFamilyMember({
       path: FAMILY_MEMBERS_API.update(member.id),
       data: {
@@ -182,6 +188,24 @@ export default function FamilyMembersTable({
       headerClassName: "hidden md:table-cell",
     },
     {
+      id: "status",
+      header: "Status",
+      searchable: false,
+      cell: (row) =>
+        row.isAccessible ? (
+          <Badge className="rounded-full bg-secondary/15 text-secondary hover:bg-secondary/15">
+            Active
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className="rounded-full text-muted-foreground"
+          >
+            Inactive
+          </Badge>
+        ),
+    },
+    {
       id: "emergency",
       header: "Emergency",
       cell: (row) =>
@@ -204,15 +228,17 @@ export default function FamilyMembersTable({
       searchable: false,
       cell: (row) => (
         <div className="flex justify-end gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            className="size-8 rounded-full"
-            aria-label={`View records for ${row.firstName} ${row.lastName}`}
-            onClick={() => openSharedRecords(row)}
-          >
-            <Eye className="size-4" aria-hidden />
-          </Button>
+          {row.isAccessible ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="size-8 rounded-full"
+              aria-label={`View records for ${row.firstName} ${row.lastName}`}
+              onClick={() => openSharedRecords(row)}
+            >
+              <Eye className="size-4" aria-hidden />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
@@ -293,11 +319,18 @@ export default function FamilyMembersTable({
         emptyAction={addMemberAction}
       />
 
-      {!canAdd ? (
+      {!canAdd && canManage ? (
         <Typography variant="muted" className="ml-6 text-sm">
           {isCouplePlan
-            ? "Your couple's plan includes one household profile. Remove the existing profile to add a different spouse or pet."
+            ? "Your couple's plan includes one spouse profile."
             : `Your family plan supports up to ${limit} household members including pets (${usedSeats}/${limit} used).`}
+        </Typography>
+      ) : null}
+
+      {!canManage ? (
+        <Typography variant="muted" className="ml-6 text-sm">
+          Family profiles are paused on your current plan. Upgrade to Couple or
+          Family to reactivate access.
         </Typography>
       ) : null}
 

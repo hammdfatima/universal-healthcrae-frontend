@@ -24,14 +24,16 @@ type PetsTableProps = {
   canAdd: boolean
   limit: number
   usedSeats: number
-  isCouplePlan: boolean
+  supportsPets: boolean
+  pausedPetCount: number
 }
 
 export default function PetsTable({
   canAdd,
   limit,
   usedSeats,
-  isCouplePlan,
+  supportsPets,
+  pausedPetCount,
 }: PetsTableProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -45,6 +47,7 @@ export default function PetsTable({
     })
 
   const pets = data?.pets ?? []
+  const effectivePausedCount = data?.pausedPetCount ?? pausedPetCount
 
   const { onRequest: deletePet, isPending: isDeleting } = useApi<
     Record<string, never>
@@ -72,6 +75,35 @@ export default function PetsTable({
     })
   }
 
+  if (!supportsPets) {
+    return (
+      <div className="mx-4 space-y-3 rounded-2xl border border-border/60 bg-card p-6 shadow-sm sm:mx-0">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-muted">
+            <PawPrint className="size-5 text-muted-foreground" aria-hidden />
+          </span>
+          <div>
+            <Typography variant="small" className="font-semibold">
+              Pets require a Family plan
+            </Typography>
+            <Typography variant="muted" className="text-sm">
+              {effectivePausedCount > 0
+                ? `${effectivePausedCount} pet profile${effectivePausedCount === 1 ? "" : "s"} saved and hidden. Upgrade to Family to view and manage them again.`
+                : "Pet profiles are only available on the Family plan."}
+            </Typography>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/patient/settings?tab=subscription")}
+        >
+          Upgrade to Family
+        </Button>
+      </div>
+    )
+  }
+
   const columns: DataTableColumn<Pet>[] = [
     {
       id: "name",
@@ -92,41 +124,26 @@ export default function PetsTable({
       id: "breed",
       header: "Breed",
       accessorKey: "breed",
-      className: "hidden md:table-cell",
-      headerClassName: "hidden md:table-cell",
       cell: (row) => row.breed ?? "—",
-    },
-    {
-      id: "clinic",
-      header: "Vet Clinic",
-      className: "hidden lg:table-cell",
-      headerClassName: "hidden lg:table-cell",
-      cell: (row) => row.veterinaryClinic ?? "—",
-    },
-    {
-      id: "emergency",
-      header: "Emergency Contact",
-      cell: (row) =>
-        row.emergencyContact
-          ? `${row.emergencyContact.firstName} ${row.emergencyContact.lastName}`
-          : "—",
     },
     {
       id: "actions",
       header: "",
-      className: "w-12 text-right",
-      headerClassName: "w-12 text-right",
+      className: "w-24 text-right",
+      headerClassName: "w-24 text-right",
       searchable: false,
       cell: (row) => (
-        <Button
-          type="button"
-          variant="ghost"
-          className="size-8 rounded-full"
-          aria-label={`View ${row.name}`}
-          onClick={() => openDetails(row)}
-        >
-          <Eye className="size-4" aria-hidden />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-8 rounded-full"
+            aria-label={`View ${row.name}`}
+            onClick={() => openDetails(row)}
+          >
+            <Eye className="size-4" aria-hidden />
+          </Button>
+        </div>
       ),
     },
   ]
@@ -144,7 +161,7 @@ export default function PetsTable({
     <>
       <DataTable
         title="Pets"
-        description="Store veterinary records, vaccinations, medications, allergies, and emergency contacts for your pets. Pets count toward your plan seats but do not get separate login accounts."
+        description="Manage pet profiles linked to your family health account."
         icon={<PawPrint className="size-5" />}
         columns={columns}
         data={pets}
@@ -165,9 +182,7 @@ export default function PetsTable({
 
       {!canAdd ? (
         <Typography variant="muted" className="ml-6 text-sm">
-          {isCouplePlan
-            ? "Your couple's plan allows only one household profile. Remove a profile to add a pet."
-            : `Your family plan supports up to ${limit} household members including pets (${usedSeats}/${limit} used).`}
+          {`Your family plan supports up to ${limit} household members including pets (${usedSeats}/${limit} used).`}
         </Typography>
       ) : null}
 

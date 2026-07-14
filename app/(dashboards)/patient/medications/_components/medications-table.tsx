@@ -3,11 +3,13 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { Activity, Eye, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   formatMedicationEndDate,
+  formatMedicationSchedule,
   getConditionFilterOptions,
+  getDueMedicationDoses,
   isMedicationActive,
   isMedicationEnded,
 } from "@/app/(dashboards)/patient/_lib/medications"
@@ -42,6 +44,17 @@ export default function MedicationsTable() {
     })
 
   const medications = data?.medications ?? []
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(intervalId)
+  }, [])
+
+  const dueDoses = useMemo(
+    () => getDueMedicationDoses(medications, now),
+    [medications, now]
+  )
 
   const conditionOptions = useMemo(
     () => getConditionFilterOptions(medications),
@@ -105,6 +118,18 @@ export default function MedicationsTable() {
       headerClassName: "hidden md:table-cell",
     },
     {
+      id: "schedule",
+      header: "Schedule",
+      cell: (row) => (
+        <Typography variant="muted" className="text-sm">
+          {formatMedicationSchedule(row)}
+        </Typography>
+      ),
+      searchable: false,
+      className: "hidden lg:table-cell",
+      headerClassName: "hidden lg:table-cell",
+    },
+    {
       id: "startDate",
       header: "Start Date",
       accessorKey: "startDate",
@@ -165,6 +190,22 @@ export default function MedicationsTable() {
 
   return (
     <>
+      {dueDoses.length > 0 ? (
+        <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <Typography variant="small" className="font-medium text-primary">
+            Medication reminder
+          </Typography>
+          <Typography variant="muted" className="mt-1 text-sm">
+            {dueDoses
+              .map(
+                (dose) =>
+                  `${dose.medication.medicineName} (${dose.medication.dosage}) at ${dose.label}`
+              )
+              .join(" · ")}
+          </Typography>
+        </div>
+      ) : null}
+
       <DataTable
         title="Medications"
         description={

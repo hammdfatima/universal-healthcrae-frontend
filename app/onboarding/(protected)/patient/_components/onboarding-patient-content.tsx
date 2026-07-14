@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { UserRound } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import PatientProfileForm from "@/app/(dashboards)/patient/_components/patient-profile-form"
 import type { ProfileFormValues } from "@/app/(dashboards)/patient/_lib/settings"
@@ -48,6 +48,9 @@ export default function OnboardingPatientContent() {
     getInitialFormValues(user)
   )
   const [formKey, setFormKey] = useState(0)
+  // Auth session refresh replaces the `user` object periodically; only hydrate
+  // the form once so in-progress edits are not wiped by a remount.
+  const hasHydratedFormRef = useRef(false)
 
   const {
     data: profile,
@@ -75,7 +78,9 @@ export default function OnboardingPatientContent() {
   }, [profile, router])
 
   useEffect(() => {
-    if (!profile) return
+    if (!profile || hasHydratedFormRef.current) return
+
+    hasHydratedFormRef.current = true
 
     if (
       profile.firstName ||

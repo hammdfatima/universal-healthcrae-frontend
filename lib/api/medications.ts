@@ -4,6 +4,8 @@ export type Medication = {
   condition: string
   prescribedBy: string
   dosage: string
+  timesPerDay: number
+  timesOfDay: string[]
   startDate: string
   endDate: string | null
   createdAt: string
@@ -19,6 +21,8 @@ export type CreateMedicationPayload = {
   condition: string
   prescribedBy: string
   dosage: string
+  timesPerDay: number
+  timesOfDay: string[]
   startDate: string
   endDate?: string
 }

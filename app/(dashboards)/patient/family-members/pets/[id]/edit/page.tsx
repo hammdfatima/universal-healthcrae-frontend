@@ -31,20 +31,19 @@ export default function EditPetPage() {
   const params = useParams<{ id: string }>()
   const petId = params.id
   const queryClient = useQueryClient()
-  const { isLoading: isPlanLoading, supportsFamilyMembers } =
-    useSubscriptionPlan()
+  const { isLoading: isPlanLoading, supportsPets } = useSubscriptionPlan()
 
   const { data: petsData, isLoading: isPetsLoading } =
     useFetch<PetsListResponse>({
       path: PETS_API.list,
       queryKey: PETS_QUERY_KEYS.list,
-      enabled: supportsFamilyMembers && !isPlanLoading,
+      enabled: supportsPets && !isPlanLoading,
     })
 
   const { data: membersData } = useFetch<FamilyMembersListResponse>({
     path: FAMILY_MEMBERS_API.list,
     queryKey: FAMILY_MEMBERS_QUERY_KEYS.list,
-    enabled: supportsFamilyMembers && !isPlanLoading,
+    enabled: supportsPets && !isPlanLoading,
   })
 
   const pet = useMemo(
@@ -59,14 +58,14 @@ export default function EditPetPage() {
 
   useEffect(() => {
     if (isPlanLoading || isPetsLoading) return
-    if (!supportsFamilyMembers) {
-      router.replace("/patient")
+    if (!supportsPets) {
+      router.replace("/patient/family-members?tab=pets")
       return
     }
     if (!pet) {
       router.replace("/patient/family-members?tab=pets")
     }
-  }, [isPetsLoading, isPlanLoading, pet, router, supportsFamilyMembers])
+  }, [isPetsLoading, isPlanLoading, pet, router, supportsPets])
 
   function handleSubmit(values: PetFormValues) {
     if (!pet) return
@@ -106,7 +105,7 @@ export default function EditPetPage() {
     })
   }
 
-  if (isPlanLoading || isPetsLoading || !pet) {
+  if (isPlanLoading || isPetsLoading || !supportsPets || !pet) {
     return <Loader variant="fetch" label="Loading pet..." />
   }
 
@@ -116,7 +115,9 @@ export default function EditPetPage() {
       description="Update veterinary records, medications, allergies, vaccinations, and emergency contact."
       submitLabel="Save Changes"
       isSubmitting={isPending}
-      familyMembers={membersData?.members ?? []}
+      familyMembers={(membersData?.members ?? []).filter(
+        (member) => member.isAccessible
+      )}
       defaultValues={petToFormValues(pet)}
       onSubmit={handleSubmit}
     />
