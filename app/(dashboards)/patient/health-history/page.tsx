@@ -1,5 +1,7 @@
-import HealthHistoryTable from "@/app/(dashboards)/patient/health-history/_components/health-history-table"
+import { redirect } from "next/navigation"
+
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 
 export default function HealthHistoryPage() {
-  return <HealthHistoryTable />
+  redirect(healthRecordHref("health-history"))
 }

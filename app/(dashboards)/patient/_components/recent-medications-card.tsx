@@ -3,7 +3,7 @@
 import { Activity } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   formatMedicationEndDate,
   isMedicationActive,
@@ -56,7 +56,7 @@ export default function RecentMedicationsCard() {
           className="rounded-full"
           asChild
         >
-          <Link href={"/patient/medications" as Route}>View all</Link>
+          <Link href={healthRecordHref("medications")}>View all</Link>
         </Button>
       </CardHeader>
       <CardContent className="px-0 pb-2 sm:px-6">

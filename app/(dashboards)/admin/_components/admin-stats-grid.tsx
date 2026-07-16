@@ -50,7 +50,7 @@ const statCards: StatCardConfig[] = [
   {
     label: "Monthly Revenue",
     getValue: (counts) => counts.monthlyRevenue,
-    detail: "From active subscriptions",
+    detail: "Collected this month",
     href: "/admin/payments" as Route,
     icon: TrendingUp,
     accent:

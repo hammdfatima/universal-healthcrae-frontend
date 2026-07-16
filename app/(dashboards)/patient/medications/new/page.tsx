@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
-
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   formValuesToPayload,
   type MedicationFormValues,
@@ -33,7 +33,7 @@ export default function NewMedicationPage() {
         queryClient.invalidateQueries({
           queryKey: MEDICATIONS_QUERY_KEYS.list,
         })
-        router.push("/patient/medications")
+        router.push(healthRecordHref("medications"))
       },
     })
   }

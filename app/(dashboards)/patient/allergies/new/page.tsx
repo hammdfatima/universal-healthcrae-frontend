@@ -7,6 +7,7 @@ import {
   type AllergyFormValues,
   formValuesToPayload,
 } from "@/app/(dashboards)/patient/_lib/allergies"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import AllergyForm from "@/app/(dashboards)/patient/allergies/_components/allergy-form"
 import useApi from "@/hooks/use-api"
 import {
@@ -32,7 +33,7 @@ export default function NewAllergyPage() {
         queryClient.invalidateQueries({
           queryKey: ALLERGIES_QUERY_KEYS.list,
         })
-        router.push("/patient/allergies")
+        router.push(healthRecordHref("allergies"))
       },
     })
   }

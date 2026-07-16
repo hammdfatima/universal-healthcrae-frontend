@@ -3,12 +3,12 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
 import { useMemo } from "react"
-
 import {
   type AllergyFormValues,
   allergyToFormValues,
   formValuesToPayload,
 } from "@/app/(dashboards)/patient/_lib/allergies"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import AllergyForm from "@/app/(dashboards)/patient/allergies/_components/allergy-form"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
@@ -51,7 +51,7 @@ export default function EditAllergyPage() {
         queryClient.invalidateQueries({
           queryKey: ALLERGIES_QUERY_KEYS.list,
         })
-        router.push("/patient/allergies")
+        router.push(healthRecordHref("allergies"))
       },
     })
   }

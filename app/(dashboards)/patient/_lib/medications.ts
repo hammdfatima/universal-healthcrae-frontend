@@ -15,8 +15,8 @@ export const medicationSchema = z
     condition: z.string().min(1, "Condition is required."),
     prescribedBy: z.string().min(1, "Prescribed by is required."),
     dosage: z.string().min(1, "Dosage is required."),
-    timesPerDay: z.coerce
-      .number()
+    timesPerDay: z
+      .number({ message: "Times per day is required." })
       .int()
       .min(1, "Times per day is required.")
       .max(6, "Maximum 6 doses per day."),
@@ -173,6 +173,10 @@ export type DueMedicationDose = {
   label: string
 }
 
+export type UpcomingMedicationDose = DueMedicationDose & {
+  fireAt: Date
+}
+
 export function getDueMedicationDoses(
   medications: Medication[],
   now = new Date(),
@@ -203,6 +207,93 @@ export function getDueMedicationDoses(
           label: formatDoseTimeLabel(time),
         })
       }
+    }
+  }
+
+  return due
+}
+
+export function getUpcomingMedicationDoses(
+  medications: Medication[],
+  now = new Date()
+): UpcomingMedicationDose[] {
+  const upcoming: UpcomingMedicationDose[] = []
+
+  for (const medication of medications) {
+    if (!isMedicationActive(medication.endDate)) continue
+
+    const startDate = parseMedicationDate(medication.startDate)
+    if (startDate && isAfter(startOfDay(startDate), startOfDay(now))) {
+      continue
+    }
+
+    const times =
+      medication.timesOfDay?.length > 0
+        ? medication.timesOfDay
+        : defaultTimesForPerDay(medication.timesPerDay || 1)
+
+    for (const time of times) {
+      const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time.trim())
+      if (!match) continue
+
+      const fireAt = new Date(now)
+      fireAt.setHours(Number(match[1]), Number(match[2]), 0, 0)
+
+      if (fireAt.getTime() <= now.getTime()) {
+        continue
+      }
+
+      upcoming.push({
+        medication,
+        time,
+        label: formatDoseTimeLabel(time),
+        fireAt,
+      })
+    }
+  }
+
+  return upcoming.sort((a, b) => a.fireAt.getTime() - b.fireAt.getTime())
+}
+
+/** Doses whose exact local time is within a short window around now. */
+export function getMedicationDosesDueNow(
+  medications: Medication[],
+  now = new Date(),
+  windowMs = 20_000
+): UpcomingMedicationDose[] {
+  const due: UpcomingMedicationDose[] = []
+
+  for (const medication of medications) {
+    if (!isMedicationActive(medication.endDate)) continue
+
+    const startDate = parseMedicationDate(medication.startDate)
+    if (startDate && isAfter(startOfDay(startDate), startOfDay(now))) {
+      continue
+    }
+
+    const times =
+      medication.timesOfDay?.length > 0
+        ? medication.timesOfDay
+        : defaultTimesForPerDay(medication.timesPerDay || 1)
+
+    for (const time of times) {
+      const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time.trim())
+      if (!match) continue
+
+      const fireAt = new Date(now)
+      fireAt.setHours(Number(match[1]), Number(match[2]), 0, 0)
+      const delta = now.getTime() - fireAt.getTime()
+
+      if (delta < 0 || delta > windowMs) {
+        continue
+      }
+
+      due.push({
+        medication,
+        time,
+        label: formatDoseTimeLabel(time),
+        fireAt,
+      })
     }
   }
 

@@ -1,5 +1,7 @@
-import VaccinationsTable from "@/app/(dashboards)/patient/vaccinations/_components/vaccinations-table"
+import { redirect } from "next/navigation"
+
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 
 export default function VaccinationsPage() {
-  return <VaccinationsTable />
+  redirect(healthRecordHref("immunizations"))
 }

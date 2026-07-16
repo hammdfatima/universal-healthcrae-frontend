@@ -119,13 +119,13 @@ export default function EmergencyAccessPage({
                 type={showPin ? "text" : "password"}
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                pattern="\d{4,8}"
-                maxLength={8}
-                placeholder="4–8 digit PIN"
+                pattern="\d{4}"
+                maxLength={4}
+                placeholder="4-digit PIN"
                 className="pr-11"
                 value={pin}
                 onChange={(event) =>
-                  setPin(event.target.value.replace(/\D/g, "").slice(0, 8))
+                  setPin(event.target.value.replace(/\D/g, "").slice(0, 4))
                 }
                 required
               />
@@ -146,7 +146,7 @@ export default function EmergencyAccessPage({
           <Button
             type="submit"
             className="w-full"
-            disabled={pin.length < 4 || unlockApi.isPending}
+            disabled={pin.length !== 4 || unlockApi.isPending}
           >
             {unlockApi.isPending ? "Unlocking..." : "Unlock records"}
           </Button>

@@ -2,6 +2,7 @@
 
 import { format, isValid, parse } from "date-fns"
 import { Clock } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -36,22 +37,29 @@ const HOURS = Array.from({ length: 12 }, (_, index) => String(index + 1))
 const MINUTES = Array.from({ length: 60 }, (_, index) =>
   String(index).padStart(2, "0")
 )
-const PERIODS = ["AM", "PM"] as const
 
 function parseTimeValue(value?: string): TimeParts | null {
   if (!value) return null
 
-  const parsed = parse(value, "HH:mm", new Date())
-  if (!isValid(parsed)) return null
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim())
+  if (!match) {
+    const parsed = parse(value, "HH:mm", new Date())
+    if (!isValid(parsed)) return null
+    const hours24 = parsed.getHours()
+    return {
+      hour: String(hours24 % 12 || 12),
+      minute: format(parsed, "mm"),
+      period: hours24 >= 12 ? "PM" : "AM",
+    }
+  }
 
-  const hours24 = parsed.getHours()
-  const period = hours24 >= 12 ? "PM" : "AM"
-  const hour12 = hours24 % 12 || 12
+  const hours24 = Number(match[1])
+  const minutes = match[2]
 
   return {
-    hour: String(hour12),
-    minute: format(parsed, "mm"),
-    period,
+    hour: String(hours24 % 12 || 12),
+    minute: minutes,
+    period: hours24 >= 12 ? "PM" : "AM",
   }
 }
 
@@ -68,16 +76,20 @@ function to24HourTime(
     hours24 += 12
   }
 
-  return `${String(hours24).padStart(2, "0")}:${minute}`
+  return `${String(hours24).padStart(2, "0")}:${minute.padStart(2, "0")}`
 }
 
 function formatDisplayTime(value?: string): string {
-  if (!value) return ""
+  const parts = parseTimeValue(value)
+  if (!parts) return value || ""
 
-  const parsed = parse(value, "HH:mm", new Date())
-  if (!isValid(parsed)) return value
+  return `${parts.hour.padStart(2, "0")}:${parts.minute} ${parts.period}`
+}
 
-  return format(parsed, "hh:mm a")
+const EMPTY_PARTS: TimeParts = {
+  hour: "8",
+  minute: "00",
+  period: "AM",
 }
 
 export default function TimePickerField({
@@ -87,17 +99,24 @@ export default function TimePickerField({
   disabled,
   id,
 }: TimePickerFieldProps) {
-  const parts = parseTimeValue(value)
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<TimeParts>(
+    () => parseTimeValue(value) ?? EMPTY_PARTS
+  )
 
-  function updatePart(update: Partial<TimeParts>) {
-    const hour = update.hour ?? parts?.hour ?? "12"
-    const minute = update.minute ?? parts?.minute ?? "00"
-    const period = update.period ?? parts?.period ?? "AM"
-    onChange(to24HourTime(hour, minute, period))
+  useEffect(() => {
+    if (!open) {
+      setDraft(parseTimeValue(value) ?? EMPTY_PARTS)
+    }
+  }, [value, open])
+
+  function commit(next: TimeParts) {
+    setDraft(next)
+    onChange(to24HourTime(next.hour, next.minute, next.period))
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           id={id}
@@ -113,59 +132,66 @@ export default function TimePickerField({
           {value ? formatDisplayTime(value) : placeholder}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" align="start">
-        <div className="flex items-center gap-2">
-          <Select
-            value={parts?.hour ?? ""}
-            onValueChange={(hour) => updatePart({ hour })}
-          >
-            <SelectTrigger className="w-[4.5rem]" aria-label="Hour">
-              <SelectValue placeholder="HH" />
-            </SelectTrigger>
-            <SelectContent>
-              {HOURS.map((hour) => (
-                <SelectItem key={hour} value={hour}>
-                  {hour}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <PopoverContent
+        className="w-auto p-3"
+        align="start"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Select
+              value={draft.hour}
+              onValueChange={(hour) => commit({ ...draft, hour })}
+            >
+              <SelectTrigger className="w-[4.5rem]" aria-label="Hour">
+                <SelectValue placeholder="HH" />
+              </SelectTrigger>
+              <SelectContent position="popper" className="z-[70]">
+                {HOURS.map((hour) => (
+                  <SelectItem key={hour} value={hour}>
+                    {hour}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <span className="text-muted-foreground">:</span>
+            <span className="text-muted-foreground">:</span>
 
-          <Select
-            value={parts?.minute ?? ""}
-            onValueChange={(minute) => updatePart({ minute })}
-          >
-            <SelectTrigger className="w-[4.5rem]" aria-label="Minute">
-              <SelectValue placeholder="MM" />
-            </SelectTrigger>
-            <SelectContent className="max-h-48">
-              {MINUTES.map((minute) => (
-                <SelectItem key={minute} value={minute}>
-                  {minute}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select
+              value={draft.minute}
+              onValueChange={(minute) => commit({ ...draft, minute })}
+            >
+              <SelectTrigger className="w-[4.5rem]" aria-label="Minute">
+                <SelectValue placeholder="MM" />
+              </SelectTrigger>
+              <SelectContent position="popper" className="z-[70] max-h-48">
+                {MINUTES.map((minute) => (
+                  <SelectItem key={minute} value={minute}>
+                    {minute}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Select
-            value={parts?.period ?? ""}
-            onValueChange={(period) =>
-              updatePart({ period: period as "AM" | "PM" })
-            }
-          >
-            <SelectTrigger className="w-[5rem]" aria-label="AM or PM">
-              <SelectValue placeholder="--" />
-            </SelectTrigger>
-            <SelectContent>
-              {PERIODS.map((period) => (
-                <SelectItem key={period} value={period}>
-                  {period}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={draft.period === "AM" ? "default" : "outline"}
+              onClick={() => commit({ ...draft, period: "AM" })}
+            >
+              AM
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={draft.period === "PM" ? "default" : "outline"}
+              onClick={() => commit({ ...draft, period: "PM" })}
+            >
+              PM
+            </Button>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRef } from "react"
-
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   type ImagingResultFormValues,
   imagingResultDefaultValues,
@@ -201,7 +201,7 @@ export default function ImagingResultForm({
 
                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/patient/imaging">Close</Link>
+                    <Link href={healthRecordHref("imaging")}>Close</Link>
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (

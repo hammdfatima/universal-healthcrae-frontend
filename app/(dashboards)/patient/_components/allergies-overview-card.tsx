@@ -8,6 +8,7 @@ import {
   formatSymptomsList,
   getNatureBadgeOutlineClass,
 } from "@/app/(dashboards)/patient/_lib/allergies"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import EmptyCard from "@/components/empty-card"
 import ErrorCard from "@/components/error-card"
 import { Badge } from "@/components/ui/badge"
@@ -47,7 +48,7 @@ export default function AllergiesOverviewCard() {
           className="rounded-full"
           asChild
         >
-          <Link href={"/patient/allergies" as Route}>View all</Link>
+          <Link href={healthRecordHref("allergies")}>View all</Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">

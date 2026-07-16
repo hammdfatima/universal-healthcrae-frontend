@@ -1,5 +1,7 @@
-import ImagingResultsTable from "@/app/(dashboards)/patient/imaging/_components/imaging-results-table"
+import { redirect } from "next/navigation"
+
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 
 export default function ImagingPage() {
-  return <ImagingResultsTable />
+  redirect(healthRecordHref("imaging"))
 }

@@ -95,7 +95,7 @@ export async function downloadPaymentInvoicePdf(payment: AdminPayment) {
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(11)
-  doc.text("Bill To", MARGIN, y)
+  doc.text("Customer", MARGIN, y)
   y += LINE_HEIGHT + 2
 
   doc.setFont("helvetica", "normal")

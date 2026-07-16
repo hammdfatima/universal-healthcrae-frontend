@@ -2,38 +2,22 @@
 
 import type { LucideIcon } from "lucide-react"
 import {
-  Activity,
-  AlertTriangle,
-  ChevronDown,
-  FlaskConical,
-  History,
   LayoutDashboard,
   LogOut,
   QrCode,
-  ScanLine,
   Settings,
   Shield,
-  Syringe,
   UserRound,
   Users,
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
 
-import {
-  type MedicalVaultCounts,
-  useMedicalVaultCounts,
-} from "@/app/(dashboards)/patient/_lib/use-medical-vault-counts"
+import { isHealthRecordPath } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import { useSubscriptionPlan } from "@/hooks/use-subscription-plan"
@@ -61,6 +45,7 @@ type NavItem = {
   href: Route
   icon: LucideIcon
   badge?: string
+  matchHealthRecord?: boolean
 }
 
 type NavGroup = {
@@ -68,72 +53,27 @@ type NavGroup = {
   items: NavItem[]
 }
 
-type VaultItem = NavItem
-
 const navItemBase =
   "flex items-center gap-3 rounded-full text-sm font-medium transition-colors"
 const navItemActive = "bg-secondary text-secondary-foreground shadow-sm"
 const navItemIdle =
   "text-foreground/75 hover:bg-secondary hover:text-secondary-foreground"
 
-type VaultItemConfig = {
-  countKey: keyof MedicalVaultCounts
-  label: string
-  href: Route
-  icon: LucideIcon
-}
-
-const medicalVaultItemConfig: VaultItemConfig[] = [
-  {
-    countKey: "medications",
-    label: "Medications",
-    href: "/patient/medications" as Route,
-    icon: Activity,
-  },
-  {
-    countKey: "allergies",
-    label: "Known Allergies",
-    href: "/patient/allergies" as Route,
-    icon: AlertTriangle,
-  },
-  {
-    countKey: "healthHistory",
-    label: "Health History",
-    href: "/patient/health-history" as Route,
-    icon: History,
-  },
-  {
-    countKey: "vaccinations",
-    label: "Immunizations",
-    href: "/patient/vaccinations" as Route,
-    icon: Syringe,
-  },
-  {
-    countKey: "labResults",
-    label: "Laboratory",
-    href: "/patient/lab" as Route,
-    icon: FlaskConical,
-  },
-  {
-    countKey: "imagingResults",
-    label: "Imaging",
-    href: "/patient/imaging" as Route,
-    icon: ScanLine,
-  },
-]
-
-function buildMedicalVaultItems(counts: MedicalVaultCounts): VaultItem[] {
-  return medicalVaultItemConfig.map((item) => ({
-    label: item.label,
-    href: item.href,
-    icon: item.icon,
-    badge: String(counts[item.countKey]),
-  }))
-}
-
 const overviewNavBase: NavGroup = {
   label: "Main",
   items: [{ label: "Overview", href: "/patient", icon: LayoutDashboard }],
+}
+
+const myHealthNav: NavGroup = {
+  label: "My Health",
+  items: [
+    {
+      label: "Health Record",
+      href: "/patient/health-record" as Route,
+      icon: Shield,
+      matchHealthRecord: true,
+    },
+  ],
 }
 
 const careTeamNav: NavGroup = {
@@ -160,21 +100,18 @@ const accountNav: NavItem[] = [
   },
 ]
 
-const vaultPaths = medicalVaultItemConfig.map((item) => item.href)
-
 function NavLink({
   item,
   onNavigate,
-  nested = false,
 }: {
   item: NavItem
   onNavigate?: () => void
-  nested?: boolean
 }) {
   const pathname = usePathname()
-  const isActive =
-    pathname === item.href ||
-    (item.href !== "/patient" && pathname.startsWith(item.href))
+  const isActive = item.matchHealthRecord
+    ? isHealthRecordPath(pathname)
+    : pathname === item.href ||
+      (item.href !== "/patient" && pathname.startsWith(item.href))
   const Icon = item.icon
 
   return (
@@ -183,7 +120,7 @@ function NavLink({
       onClick={onNavigate}
       className={cn(
         navItemBase,
-        nested ? "px-3 py-2" : "px-3 py-2.5",
+        "px-3 py-2.5",
         isActive ? navItemActive : navItemIdle
       )}
     >
@@ -205,64 +142,8 @@ function NavLink({
   )
 }
 
-function MedicalVaultNav({
-  counts,
-  onNavigate,
-}: {
-  counts: MedicalVaultCounts
-  onNavigate?: () => void
-}) {
-  const pathname = usePathname()
-  const medicalVaultItems = useMemo(
-    () => buildMedicalVaultItems(counts),
-    [counts]
-  )
-  const isVaultActive = vaultPaths.some(
-    (path) => pathname === path || pathname.startsWith(path)
-  )
-  const [open, setOpen] = useState(isVaultActive)
-
-  useEffect(() => {
-    if (isVaultActive) {
-      setOpen(true)
-    }
-  }, [isVaultActive])
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger
-        className={cn(
-          navItemBase,
-          "w-full px-3 py-2.5",
-          isVaultActive ? navItemActive : navItemIdle
-        )}
-      >
-        <Shield className="size-4 shrink-0" aria-hidden />
-        <span className="flex-1 text-left">Medical Vault</span>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 transition-transform duration-200",
-            open && "rotate-180"
-          )}
-          aria-hidden
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-1 space-y-0.5 pl-2">
-        <ul className="space-y-0.5 border-l border-border pl-2">
-          {medicalVaultItems.map((item) => (
-            <li key={item.href}>
-              <NavLink item={item} onNavigate={onNavigate} nested />
-            </li>
-          ))}
-        </ul>
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
-
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
-  const { counts: medicalVaultCounts } = useMedicalVaultCounts()
   const { data: profile } = useFetch<PatientProfileResponse>({
     path: PATIENT_PROFILE_API.get,
     queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
@@ -365,12 +246,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         <div>
           <p className="mb-2 px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-            My Health
+            {myHealthNav.label}
           </p>
-          <MedicalVaultNav
-            counts={medicalVaultCounts}
-            onNavigate={onNavigate}
-          />
+          <ul className="space-y-0.5">
+            {myHealthNav.items.map((item) => (
+              <li key={item.href}>
+                <NavLink item={item} onNavigate={onNavigate} />
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div>

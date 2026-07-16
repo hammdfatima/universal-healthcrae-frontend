@@ -7,6 +7,7 @@ import {
   formValuesToPayload,
   type HealthHistoryFormValues,
 } from "@/app/(dashboards)/patient/_lib/health-history"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import HealthHistoryForm from "@/app/(dashboards)/patient/health-history/_components/health-history-form"
 import useApi from "@/hooks/use-api"
 import {
@@ -33,7 +34,7 @@ export default function NewHealthHistoryPage() {
         queryClient.invalidateQueries({
           queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
         })
-        router.push("/patient/health-history")
+        router.push(healthRecordHref("health-history"))
       },
     })
   }

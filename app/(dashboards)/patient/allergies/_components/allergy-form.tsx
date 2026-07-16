@@ -15,6 +15,7 @@ import {
   natureOptions,
   symptomOptions,
 } from "@/app/(dashboards)/patient/_lib/allergies"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { FormFieldProps } from "@/components/ui/form-modified"
@@ -186,7 +187,7 @@ function AllergyFormFields({
 
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" asChild>
-          <Link href="/patient/allergies">Close</Link>
+          <Link href={healthRecordHref("allergies")}>Close</Link>
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? (

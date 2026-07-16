@@ -248,6 +248,18 @@ export default function SubscriptionTab() {
           </Typography>
         ) : null}
 
+        {subscription.scheduledPlan ? (
+          <Typography variant="muted" className="mt-4 text-sm">
+            Switching to {subscription.scheduledPlan.planName} on{" "}
+            {formatNextBillingDate(
+              subscription.scheduledPlanChangeAt ??
+                subscription.currentPeriodEnd
+            )}
+            . Your current plan stays active until then. No additional charge
+            today.
+          </Typography>
+        ) : null}
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Button type="button" onClick={() => setPlanDialogOpen(true)}>
             Change Plan
@@ -305,6 +317,8 @@ export default function SubscriptionTab() {
         open={planDialogOpen}
         onOpenChange={setPlanDialogOpen}
         currentPlanId={subscription.plan.id}
+        cancelAtPeriodEnd={subscription.cancelAtPeriodEnd}
+        scheduledPlanId={subscription.scheduledPlan?.id ?? null}
         onPlanChanged={() => refetch()}
       />
     </>

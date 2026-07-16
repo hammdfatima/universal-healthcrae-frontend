@@ -123,7 +123,7 @@ export default function PaymentInvoiceView({
                 variant="muted"
                 className="text-xs font-semibold tracking-wider uppercase"
               >
-                Bill To
+                Customer
               </Typography>
               <Typography variant="small" className="mt-2 font-semibold">
                 {payment.user}

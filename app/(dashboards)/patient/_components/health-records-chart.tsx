@@ -34,7 +34,7 @@ export default function HealthRecordsChart() {
     return (
       <Card className={cardClassName}>
         <CardHeader className="pb-2">
-          <CardTitle>Medical Vault Overview</CardTitle>
+          <CardTitle>Health Record Overview</CardTitle>
           <Typography variant="muted" className="text-sm">
             Distribution of your health records
           </Typography>
@@ -52,7 +52,7 @@ export default function HealthRecordsChart() {
     return (
       <Card className={cardClassName}>
         <CardHeader className="pb-2">
-          <CardTitle>Medical Vault Overview</CardTitle>
+          <CardTitle>Health Record Overview</CardTitle>
         </CardHeader>
         <CardContent className={contentClassName}>
           <div className="flex flex-1 flex-col">
@@ -73,7 +73,7 @@ export default function HealthRecordsChart() {
     return (
       <Card className={cardClassName}>
         <CardHeader className="pb-2">
-          <CardTitle>Medical Vault Overview</CardTitle>
+          <CardTitle>Health Record Overview</CardTitle>
         </CardHeader>
         <CardContent className={contentClassName}>
           <EmptyCard
@@ -94,7 +94,7 @@ export default function HealthRecordsChart() {
     return (
       <Card className={cardClassName}>
         <CardHeader className="pb-2">
-          <CardTitle>Medical Vault Overview</CardTitle>
+          <CardTitle>Health Record Overview</CardTitle>
           <Typography variant="muted" className="text-sm">
             Distribution of your health records
           </Typography>
@@ -114,7 +114,7 @@ export default function HealthRecordsChart() {
   return (
     <Card className={cardClassName}>
       <CardHeader className="pb-2">
-        <CardTitle>Medical Vault Overview</CardTitle>
+        <CardTitle>Health Record Overview</CardTitle>
         <Typography variant="muted" className="text-sm">
           Distribution of your health records
         </Typography>

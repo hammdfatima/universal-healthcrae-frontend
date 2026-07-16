@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useEffect } from "react"
 import type { UseFormReturn } from "react-hook-form"
-
+import { useWatch } from "react-hook-form"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   defaultTimesForPerDay,
   type MedicationFormValues,
@@ -47,8 +48,9 @@ function syncDoseTimes(
   methods: UseFormReturn<MedicationFormValues>,
   timesPerDay: number
 ) {
+  const count = Math.min(6, Math.max(1, timesPerDay))
   const current = methods.getValues("timesOfDay") ?? []
-  const next = defaultTimesForPerDay(timesPerDay).map(
+  const next = defaultTimesForPerDay(count).map(
     (fallback, index) => current[index] || fallback
   )
 
@@ -70,17 +72,26 @@ function ScheduleFields({
 }: {
   methods: UseFormReturn<MedicationFormValues>
 }) {
-  const timesPerDay = Number(methods.watch("timesPerDay") || 1)
-  const timesOfDay = methods.watch("timesOfDay") ?? []
-  const doseSlots = Array.from({ length: timesPerDay }, (_, slot) => ({
-    id: `dose-${slot + 1}`,
-    label: `Dose ${slot + 1}`,
-    slot,
-  }))
+  const timesPerDayRaw = useWatch({
+    control: methods.control,
+    name: "timesPerDay",
+  })
+  const timesOfDay =
+    useWatch({
+      control: methods.control,
+      name: "timesOfDay",
+    }) ?? []
+
+  const timesPerDay = Math.min(
+    6,
+    Math.max(1, Number(timesPerDayRaw) || timesOfDay.length || 1)
+  )
 
   useEffect(() => {
     syncDoseTimes(methods, timesPerDay)
   }, [timesPerDay, methods])
+
+  const doseCount = Math.max(timesPerDay, timesOfDay.length || 0)
 
   return (
     <div className="space-y-5">
@@ -132,24 +143,29 @@ function ScheduleFields({
         >
           Dose times
         </Typography>
-        <div className="grid gap-5 sm:grid-cols-2">
-          {doseSlots.map(({ id, label, slot }) => (
-            <div key={id} className="space-y-2">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: doseCount }, (_, slot) => (
+            <div key={`dose-${slot + 1}`} className="space-y-2">
               <Typography variant="small" className="text-muted-foreground">
-                {label}
+                Dose {slot + 1}
               </Typography>
               <TimePickerField
                 value={timesOfDay[slot] || ""}
                 onChange={(time) => {
                   const next = [...(methods.getValues("timesOfDay") ?? [])]
+                  const defaults = defaultTimesForPerDay(timesPerDay)
                   while (next.length < timesPerDay) {
-                    next.push("")
+                    next.push(defaults[next.length] || "08:00")
                   }
                   next[slot] = time
-                  methods.setValue("timesOfDay", next.slice(0, timesPerDay), {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
+                  methods.setValue(
+                    "timesOfDay",
+                    next.slice(0, Math.max(timesPerDay, slot + 1)),
+                    {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    }
+                  )
                 }}
                 placeholder="Select time"
               />
@@ -248,7 +264,7 @@ export default function MedicationForm({
 
                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/patient/medications">Close</Link>
+                    <Link href={healthRecordHref("medications")}>Close</Link>
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (

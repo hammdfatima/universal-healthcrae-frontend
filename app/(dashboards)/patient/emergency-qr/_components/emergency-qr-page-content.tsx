@@ -93,8 +93,8 @@ export default function EmergencyQrPageContent() {
   }
 
   function handleGenerate() {
-    if (!/^\d{4,8}$/.test(pin)) {
-      toastError("PIN must be 4 to 8 digits.")
+    if (!/^\d{4}$/.test(pin)) {
+      toastError("PIN must be exactly 4 digits.")
       return
     }
 
@@ -254,8 +254,8 @@ export default function EmergencyQrPageContent() {
                     aria-hidden
                   />
                   <Typography variant="muted" className="text-sm">
-                    Set a 4–8 digit PIN, then generate a QR code. First
-                    responders will need both the link and your PIN.
+                    Set a 4-digit PIN, then generate a QR code. First responders
+                    will need both the link and your PIN.
                   </Typography>
                   <PinFields
                     pin={pin}
@@ -324,13 +324,13 @@ function PinFields({
           type={showPin ? "text" : "password"}
           inputMode="numeric"
           autoComplete="new-password"
-          pattern="\d{4,8}"
-          maxLength={8}
-          placeholder="Create 4–8 digit PIN"
+          pattern="\d{4}"
+          maxLength={4}
+          placeholder="Create 4-digit PIN"
           className="pr-11"
           value={pin}
           onChange={(event) =>
-            onPinChange(event.target.value.replace(/\D/g, "").slice(0, 8))
+            onPinChange(event.target.value.replace(/\D/g, "").slice(0, 4))
           }
         />
         <button
@@ -351,14 +351,14 @@ function PinFields({
           type={showConfirmPin ? "text" : "password"}
           inputMode="numeric"
           autoComplete="new-password"
-          pattern="\d{4,8}"
-          maxLength={8}
-          placeholder="Confirm PIN"
+          pattern="\d{4}"
+          maxLength={4}
+          placeholder="Confirm 4-digit PIN"
           className="pr-11"
           value={confirmPin}
           onChange={(event) =>
             onConfirmPinChange(
-              event.target.value.replace(/\D/g, "").slice(0, 8)
+              event.target.value.replace(/\D/g, "").slice(0, 4)
             )
           }
         />

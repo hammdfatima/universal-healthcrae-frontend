@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react"
 import { Activity, AlertTriangle, FolderOpen, Syringe } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import EmptyCard from "@/components/empty-card"
 import ErrorCard from "@/components/error-card"
 import { Card, CardContent } from "@/components/ui/card"
@@ -32,7 +33,7 @@ const statCards: StatCard[] = [
     label: "Medications",
     countKey: "medications",
     detail: "Active prescriptions",
-    href: "/patient/medications" as Route,
+    href: healthRecordHref("medications"),
     icon: Activity,
     accent: "from-primary/20 to-primary/5",
     iconBg: "bg-primary/15 text-primary",
@@ -41,7 +42,7 @@ const statCards: StatCard[] = [
     label: "Allergies",
     countKey: "allergies",
     detail: "Known sensitivities",
-    href: "/patient/allergies" as Route,
+    href: healthRecordHref("allergies"),
     icon: AlertTriangle,
     accent: "from-destructive/15 to-destructive/5",
     iconBg: "bg-destructive/10 text-destructive",
@@ -50,7 +51,7 @@ const statCards: StatCard[] = [
     label: "Vaccinations",
     countKey: "vaccinations",
     detail: "Immunization records",
-    href: "/patient/vaccinations" as Route,
+    href: healthRecordHref("immunizations"),
     icon: Syringe,
     accent: "from-secondary/20 to-secondary/5",
     iconBg: "bg-secondary/15 text-secondary",
@@ -59,7 +60,7 @@ const statCards: StatCard[] = [
     label: "Documents",
     countKey: "documents",
     detail: "Lab & imaging files",
-    href: "/patient/lab" as Route,
+    href: healthRecordHref("laboratory"),
     icon: FolderOpen,
     accent: "from-blue-500/15 to-blue-500/5",
     iconBg: "bg-blue-100 text-blue-700",

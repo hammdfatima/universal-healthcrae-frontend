@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   type VaccinationFormValues,
   vaccinationDefaultValues,
@@ -101,7 +101,7 @@ export default function VaccinationForm({
 
                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/patient/vaccinations">Close</Link>
+                    <Link href={healthRecordHref("immunizations")}>Close</Link>
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (

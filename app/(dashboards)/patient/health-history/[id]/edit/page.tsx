@@ -3,12 +3,12 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
 import { useMemo } from "react"
-
 import {
   formValuesToPayload,
   type HealthHistoryFormValues,
   healthHistoryToFormValues,
 } from "@/app/(dashboards)/patient/_lib/health-history"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import HealthHistoryForm from "@/app/(dashboards)/patient/health-history/_components/health-history-form"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
@@ -52,7 +52,7 @@ export default function EditHealthHistoryPage() {
         queryClient.invalidateQueries({
           queryKey: HEALTH_HISTORY_QUERY_KEYS.list,
         })
-        router.push("/patient/health-history")
+        router.push(healthRecordHref("health-history"))
       },
     })
   }

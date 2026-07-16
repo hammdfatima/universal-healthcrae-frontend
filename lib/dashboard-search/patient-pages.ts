@@ -44,9 +44,17 @@ export const PATIENT_SEARCH_PAGES: PortalSearchResult[] = [
     ["dashboard", "home"]
   ),
   pageResult(
+    "page-health-record",
+    "Health Record",
+    "/patient/health-record" as Route,
+    "Pages",
+    Shield,
+    ["medical vault", "records", "health data"]
+  ),
+  pageResult(
     "page-medications",
     "Medications",
-    "/patient/medications",
+    "/patient/health-record?tab=medications" as Route,
     "Pages",
     Activity,
     ["prescriptions", "medicine", "drugs"]
@@ -54,7 +62,7 @@ export const PATIENT_SEARCH_PAGES: PortalSearchResult[] = [
   pageResult(
     "page-allergies",
     "Known Allergies",
-    "/patient/allergies",
+    "/patient/health-record?tab=allergies" as Route,
     "Pages",
     AlertTriangle,
     ["allergy", "reactions"]
@@ -62,7 +70,7 @@ export const PATIENT_SEARCH_PAGES: PortalSearchResult[] = [
   pageResult(
     "page-health-history",
     "Health History",
-    "/patient/health-history",
+    "/patient/health-record?tab=health-history" as Route,
     "Pages",
     History,
     ["conditions", "illness", "diagnosis"]
@@ -70,31 +78,26 @@ export const PATIENT_SEARCH_PAGES: PortalSearchResult[] = [
   pageResult(
     "page-vaccinations",
     "Immunizations",
-    "/patient/vaccinations",
+    "/patient/health-record?tab=immunizations" as Route,
     "Pages",
     Syringe,
     ["vaccines", "shots"]
   ),
-  pageResult("page-lab", "Laboratory", "/patient/lab", "Pages", FlaskConical, [
-    "lab results",
-    "tests",
-    "reports",
-    "documents",
-  ]),
-  pageResult("page-imaging", "Imaging", "/patient/imaging", "Pages", ScanLine, [
-    "scans",
-    "x-ray",
-    "ct",
-    "mri",
-    "documents",
-  ]),
   pageResult(
-    "page-medical-vault",
-    "Medical Vault",
-    "/patient/medications",
+    "page-lab",
+    "Laboratory",
+    "/patient/health-record?tab=laboratory" as Route,
     "Pages",
-    Shield,
-    ["records", "health data"]
+    FlaskConical,
+    ["lab results", "tests", "reports", "documents"]
+  ),
+  pageResult(
+    "page-imaging",
+    "Imaging",
+    "/patient/health-record?tab=imaging" as Route,
+    "Pages",
+    ScanLine,
+    ["scans", "x-ray", "ct", "mri", "documents"]
   ),
   pageResult(
     "page-care-providers",

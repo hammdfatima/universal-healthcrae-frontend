@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   formValuesToPayload,
   getUploadErrorMessage,
@@ -65,7 +66,7 @@ export default function EditImagingPage() {
           queryClient.invalidateQueries({
             queryKey: IMAGING_RESULTS_QUERY_KEYS.list,
           })
-          router.push("/patient/imaging")
+          router.push(healthRecordHref("imaging"))
         },
       })
     } catch (error) {

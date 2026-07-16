@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import {
   formValuesToPayload,
   getUploadErrorMessage,
@@ -47,7 +47,7 @@ export default function NewLabResultPage() {
           queryClient.invalidateQueries({
             queryKey: LAB_RESULTS_QUERY_KEYS.list,
           })
-          router.push("/patient/lab")
+          router.push(healthRecordHref("laboratory"))
         },
       })
     } catch (error) {

@@ -4,7 +4,6 @@ import {
   CreditCard,
   KeyRound,
   Settings,
-  Share2,
   ShieldCheck,
   UserRound,
 } from "lucide-react"
@@ -15,7 +14,6 @@ import AccountTab from "@/app/(dashboards)/patient/settings/_components/account-
 import AuthenticatorMfaTab from "@/app/(dashboards)/patient/settings/_components/authenticator-mfa-tab"
 import ChangePasswordTab from "@/app/(dashboards)/patient/settings/_components/change-password-tab"
 import ProfileTab from "@/app/(dashboards)/patient/settings/_components/profile-tab"
-import RecordSharingTab from "@/app/(dashboards)/patient/settings/_components/record-sharing-tab"
 import SubscriptionTab from "@/app/(dashboards)/patient/settings/_components/subscription-tab"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Typography } from "@/components/ui/typography"
@@ -30,7 +28,6 @@ const validTabs = [
   "profile",
   "subscription",
   "account",
-  "sharing",
   "password",
   "mfa",
 ] as const
@@ -52,8 +49,11 @@ export default function SettingsPageContent() {
   useEffect(() => {
     if (isSettingsTab(tabParam)) {
       setActiveTab(tabParam)
+    } else if (tabParam === "sharing") {
+      setActiveTab("profile")
+      router.replace("/patient/settings?tab=profile")
     }
-  }, [tabParam])
+  }, [tabParam, router])
 
   function handleTabChange(value: string) {
     if (!isSettingsTab(value)) return
@@ -75,7 +75,7 @@ export default function SettingsPageContent() {
             Settings
           </Typography>
           <Typography variant="muted" className="mt-1">
-            Manage your profile, subscription, sharing, account, and security.
+            Manage your profile, subscription, account, and security.
           </Typography>
         </div>
       </div>
@@ -98,10 +98,6 @@ export default function SettingsPageContent() {
             <Settings className="size-4" aria-hidden />
             Manage Account
           </TabsTrigger>
-          <TabsTrigger value="sharing" className={tabTriggerClass}>
-            <Share2 className="size-4" aria-hidden />
-            Record Sharing
-          </TabsTrigger>
           <TabsTrigger value="password" className={tabTriggerClass}>
             <KeyRound className="size-4" aria-hidden />
             Change Password
@@ -120,9 +116,6 @@ export default function SettingsPageContent() {
         </TabsContent>
         <TabsContent value="account">
           <AccountTab />
-        </TabsContent>
-        <TabsContent value="sharing">
-          <RecordSharingTab />
         </TabsContent>
         <TabsContent value="password">
           <ChangePasswordTab />

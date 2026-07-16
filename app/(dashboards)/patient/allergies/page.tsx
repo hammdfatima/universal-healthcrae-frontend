@@ -1,5 +1,7 @@
-import AllergiesTable from "@/app/(dashboards)/patient/allergies/_components/allergies-table"
+import { redirect } from "next/navigation"
+
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 
 export default function AllergiesPage() {
-  return <AllergiesTable />
+  redirect(healthRecordHref("allergies"))
 }

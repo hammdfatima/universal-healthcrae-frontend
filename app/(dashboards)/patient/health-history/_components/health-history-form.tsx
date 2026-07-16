@@ -7,6 +7,7 @@ import {
   healthHistoryDefaultValues,
   healthHistorySchema,
 } from "@/app/(dashboards)/patient/_lib/health-history"
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
@@ -84,7 +85,7 @@ export default function HealthHistoryForm({
 
                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/patient/health-history">Close</Link>
+                    <Link href={healthRecordHref("health-history")}>Close</Link>
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (

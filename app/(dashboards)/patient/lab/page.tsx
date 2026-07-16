@@ -1,5 +1,7 @@
-import LabResultsTable from "@/app/(dashboards)/patient/lab/_components/lab-results-table"
+import { redirect } from "next/navigation"
+
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 
 export default function LabPage() {
-  return <LabResultsTable />
+  redirect(healthRecordHref("laboratory"))
 }

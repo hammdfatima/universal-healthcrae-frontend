@@ -56,7 +56,7 @@ export default function NotificationDropdown() {
   const { data, isLoading, refetch } = useFetch<NotificationsListResponse>({
     path: notificationsListPath(),
     queryKey: NOTIFICATIONS_QUERY_KEYS.list,
-    refetchInterval: 60_000,
+    refetchInterval: 30_000,
   })
 
   useEffect(() => {

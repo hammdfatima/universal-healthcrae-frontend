@@ -26,7 +26,20 @@ import {
 } from "@/lib/api/admin-dashboard"
 
 function formatRevenue(value: number) {
-  return `$${value.toLocaleString()}`
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  }).format(value)
+}
+
+function formatAxisRevenue(value: number) {
+  if (value >= 1000) {
+    const thousands = value / 1000
+    return `$${thousands.toFixed(thousands >= 10 ? 0 : 1)}k`
+  }
+
+  return formatRevenue(value)
 }
 
 export default function PaymentsChart() {
@@ -102,7 +115,7 @@ export default function PaymentsChart() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => `$${value / 1000}k`}
+                  tickFormatter={formatAxisRevenue}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted) / 0.4)" }}

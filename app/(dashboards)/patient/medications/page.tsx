@@ -1,5 +1,7 @@
-import MedicationsTable from "@/app/(dashboards)/patient/medications/_components/medications-table"
+import { redirect } from "next/navigation"
+
+import { healthRecordHref } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 
 export default function MedicationsPage() {
-  return <MedicationsTable />
+  redirect(healthRecordHref("medications"))
 }
