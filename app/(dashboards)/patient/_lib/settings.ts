@@ -1,18 +1,6 @@
-import {
-  format,
-  isBefore,
-  isValid,
-  parse,
-  parseISO,
-  startOfDay,
-} from "date-fns"
 import { z } from "zod"
 
 import { strongPasswordSchema } from "@/lib/auth/password"
-
-function isDateOfBirthInPast(date: Date): boolean {
-  return isBefore(startOfDay(date), startOfDay(new Date()))
-}
 
 export const bloodGroupOptions = [
   { label: "A+", value: "A+" },
@@ -39,7 +27,6 @@ export type PatientProfile = {
   email: string
   phone: string
   profileImage: string
-  dateOfBirth: string
   bloodGroup: string
   gender: string
   address: string
@@ -64,11 +51,6 @@ export const profileSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   phone: z.string().min(1, "Phone number is required."),
   profileImage: z.string(),
-  dateOfBirth: z
-    .date({ message: "Date of birth is required." })
-    .refine(isDateOfBirthInPast, {
-      message: "Date of birth must be in the past.",
-    }),
   bloodGroup: z.string().min(1, "Blood group is required."),
   gender: z.string(),
   address: z.string(),
@@ -99,26 +81,9 @@ export const initialProfile: PatientProfile = {
   email: "john.smith@email.com",
   phone: "(555) 123-4567",
   profileImage: "",
-  dateOfBirth: "03/15/1985",
   bloodGroup: "O+",
   gender: "Male",
   address: "123 Wellness Street, Health City",
-}
-
-export function formatProfileDate(date: Date): string {
-  return format(date, "MM/dd/yyyy")
-}
-
-export function parseProfileDate(
-  value: string | null | undefined
-): Date | undefined {
-  if (!value) return undefined
-
-  const isoParsed = parseISO(value)
-  if (isValid(isoParsed)) return isoParsed
-
-  const parsed = parse(value, "MM/dd/yyyy", new Date())
-  return isValid(parsed) ? parsed : undefined
 }
 
 export function profileToFormValues(
@@ -130,7 +95,6 @@ export function profileToFormValues(
     email: profile.email,
     phone: profile.phone,
     profileImage: profile.profileImage,
-    dateOfBirth: parseProfileDate(profile.dateOfBirth) as Date,
     bloodGroup: profile.bloodGroup,
     gender: profile.gender,
     address: profile.address,
@@ -144,7 +108,6 @@ export function formValuesToProfile(values: ProfileFormValues): PatientProfile {
     email: values.email.trim(),
     phone: values.phone.trim(),
     profileImage: values.profileImage,
-    dateOfBirth: formatProfileDate(values.dateOfBirth),
     bloodGroup: values.bloodGroup,
     gender: values.gender,
     address: values.address.trim(),
@@ -180,7 +143,6 @@ export function createProfileFromSignup(data: {
     email: data.email.trim(),
     phone: "",
     profileImage: "",
-    dateOfBirth: "",
     bloodGroup: "",
     gender: "",
     address: "",
@@ -211,7 +173,12 @@ export function getProfileFromStorage(): PatientProfile {
   try {
     const stored = localStorage.getItem(PROFILE_STORAGE_KEY)
     if (!stored) return initialProfile
-    return { ...initialProfile, ...(JSON.parse(stored) as PatientProfile) }
+    const parsed = JSON.parse(stored) as PatientProfile & {
+      dateOfBirth?: unknown
+    }
+    delete parsed.dateOfBirth
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(parsed))
+    return { ...initialProfile, ...parsed }
   } catch {
     return initialProfile
   }

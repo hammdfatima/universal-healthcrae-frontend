@@ -18,6 +18,24 @@ type IUseFetch<T> = {
   queryKey: readonly unknown[]
 } & Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">
 
+function isRequestCanceled(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false
+  }
+
+  if (axios.isCancel(error)) {
+    return true
+  }
+
+  const err = error as { code?: string; name?: string; message?: string }
+  return (
+    err.code === "ERR_CANCELED" ||
+    err.name === "CanceledError" ||
+    err.name === "AbortError" ||
+    err.message?.toLowerCase().includes("canceled") === true
+  )
+}
+
 export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
   if (!queryKey) {
     throw new Error("queryKey is required")
@@ -27,34 +45,52 @@ export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
   }
   const REQUEST_URL = buildRequestUrl(env.NEXT_PUBLIC_API_URL, path)
 
-  const fetchData = async (): Promise<T> => {
+  const fetchData = async ({
+    signal,
+  }: {
+    signal?: AbortSignal
+  }): Promise<T> => {
     try {
       const response = await axios.get(REQUEST_URL, {
         withCredentials: true,
+        signal,
       })
       if (response.data.data) {
         return response.data.data
       }
       return response.data
     } catch (error: any) {
+      // Let React Query treat cancellations as non-errors (unmount / key change).
+      if (isRequestCanceled(error)) {
+        throw error
+      }
+
       if (!error.response) {
         throw new Error("Network error, please check your internet connection.")
       }
       const message = error.response.data?.message as string | undefined
       const status = error.response.status
       const isPublicEmergency = path.includes("/emergency-access/public/")
+      const normalizedMessage = message?.toLowerCase() ?? ""
       // Cookie session is invalid — clear local user. Skip guests and public emergency unlock.
       const shouldEndSession =
         !isPublicEmergency &&
         Boolean(getAuthUser()) &&
         (status === 401 ||
-          (status === 403 && message?.toLowerCase().includes("blocked")))
+          (status === 403 &&
+            (normalizedMessage.includes("blocked") ||
+              normalizedMessage.includes(
+                "canceled or changed the subscription"
+              ))))
 
       if (shouldEndSession) {
         handleSessionEnd(
-          status === 403 && message?.toLowerCase().includes("blocked")
-            ? "blocked"
-            : "revoked"
+          status === 403 &&
+            normalizedMessage.includes("canceled or changed the subscription")
+            ? "family_access"
+            : status === 403 && normalizedMessage.includes("blocked")
+              ? "blocked"
+              : "revoked"
         )
       }
       throw error

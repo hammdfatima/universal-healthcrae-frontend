@@ -23,7 +23,7 @@ export default function ErrorPageShell({
       <div className="w-full max-w-lg text-center">
         <Link href="/" className="mb-8 inline-block">
           <Image
-            src="/logo.jpeg"
+            src="/logo.png"
             alt="Universal Health Charts"
             width={240}
             height={60}

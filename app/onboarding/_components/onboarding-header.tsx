@@ -45,7 +45,7 @@ export default function OnboardingHeader() {
       <div className="flex items-center justify-between gap-4">
         <Link href="/" className="shrink-0">
           <Image
-            src="/logo.jpeg"
+            src="/logo.png"
             alt="Universal Health Charts"
             width={200}
             height={50}

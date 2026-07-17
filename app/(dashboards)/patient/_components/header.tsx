@@ -52,7 +52,7 @@ function LinkLogo({ className }: { className?: string }) {
   return (
     <Link href={"/" as Route} className={cn("shrink-0", className)}>
       <Image
-        src="/logo.jpeg"
+        src="/logo.png"
         alt="Universal Health Charts"
         width={200}
         height={50}

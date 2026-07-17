@@ -173,11 +173,6 @@ export default function ReviewRecordsDialog({
                         Blood: {profile.bloodGroup}
                       </Badge>
                     ) : null}
-                    {profile.dateOfBirth ? (
-                      <Badge variant="outline" className="rounded-full">
-                        DOB: {profile.dateOfBirth}
-                      </Badge>
-                    ) : null}
                     {profile.gender ? (
                       <Badge variant="outline" className="rounded-full">
                         {profile.gender}

@@ -1,12 +1,13 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { Eye, PawPrint, Plus } from "lucide-react"
+import { Eye, PawPrint, Plus, Share2 } from "lucide-react"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import PetDetailsDialog from "@/app/(dashboards)/patient/family-members/_components/pet-details-dialog"
+import PetSharingDialog from "@/app/(dashboards)/patient/family-members/_components/pet-sharing-dialog"
 import { DataTable, type DataTableColumn } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
 import { Typography } from "@/components/ui/typography"
@@ -39,6 +40,8 @@ export default function PetsTable({
   const queryClient = useQueryClient()
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [sharingPet, setSharingPet] = useState<Pet | null>(null)
+  const [sharingOpen, setSharingOpen] = useState(false)
 
   const { data, isLoading, isError, error, isFetching, refetch } =
     useFetch<PetsListResponse>({
@@ -138,6 +141,18 @@ export default function PetsTable({
             type="button"
             variant="ghost"
             className="size-8 rounded-full"
+            aria-label={`Share ${row.name}`}
+            onClick={() => {
+              setSharingPet(row)
+              setSharingOpen(true)
+            }}
+          >
+            <Share2 className="size-4" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-8 rounded-full"
             aria-label={`View ${row.name}`}
             onClick={() => openDetails(row)}
           >
@@ -192,6 +207,11 @@ export default function PetsTable({
         onOpenChange={setDetailsOpen}
         onDelete={handleDelete}
         isDeleting={isDeleting}
+      />
+      <PetSharingDialog
+        pet={sharingPet}
+        open={sharingOpen}
+        onOpenChange={setSharingOpen}
       />
     </>
   )

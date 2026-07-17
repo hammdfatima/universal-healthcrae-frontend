@@ -1,5 +1,4 @@
 import type { PatientProfile } from "@/app/(dashboards)/patient/_lib/settings"
-import { parseProfileDate } from "@/app/(dashboards)/patient/_lib/settings"
 
 export type PatientProfileResponse = {
   id: string
@@ -8,7 +7,6 @@ export type PatientProfileResponse = {
   email: string
   phone: string | null
   profileImage: string | null
-  dateOfBirth: string | null
   bloodGroup: string | null
   gender: string | null
   address: string | null
@@ -22,7 +20,6 @@ export type CompleteOnboardingPayload = {
   lastName: string
   phone: string
   profileImage?: string
-  dateOfBirth: string
   bloodGroup: string
   gender: string
   address: string
@@ -46,7 +43,6 @@ export function apiProfileToPatientProfile(
     email: profile.email,
     phone: profile.phone ?? "",
     profileImage: profile.profileImage ?? "",
-    dateOfBirth: profile.dateOfBirth ?? "",
     bloodGroup: profile.bloodGroup ?? "",
     gender: profile.gender ?? "",
     address: profile.address ?? "",
@@ -58,7 +54,6 @@ export function formValuesToOnboardingPayload(values: {
   lastName: string
   phone: string
   profileImage: string
-  dateOfBirth: Date
   bloodGroup: string
   gender: string
   address: string
@@ -68,7 +63,6 @@ export function formValuesToOnboardingPayload(values: {
     lastName: values.lastName.trim(),
     phone: values.phone.trim(),
     profileImage: values.profileImage.trim() || undefined,
-    dateOfBirth: values.dateOfBirth.toISOString(),
     bloodGroup: values.bloodGroup,
     gender: values.gender,
     address: values.address.trim(),
@@ -82,8 +76,6 @@ export function profileResponseToFormValues(profile: PatientProfileResponse) {
     email: profile.email,
     phone: profile.phone ?? "",
     profileImage: profile.profileImage ?? "",
-    dateOfBirth:
-      parseProfileDate(profile.dateOfBirth) ?? (undefined as unknown as Date),
     bloodGroup: profile.bloodGroup ?? "",
     gender: profile.gender ?? "",
     address: profile.address ?? "",

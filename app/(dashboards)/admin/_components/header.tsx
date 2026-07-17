@@ -30,7 +30,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           ) : null}
 
           <Image
-            src="/logo.jpeg"
+            src="/logo.png"
             alt="Universal Health Charts"
             width={200}
             height={50}

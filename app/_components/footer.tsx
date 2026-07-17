@@ -38,7 +38,7 @@ export default function Footer() {
               className="inline-flex rounded-xl bg-white px-3 py-2"
             >
               <Image
-                src="/logo.jpeg"
+                src="/logo.png"
                 alt="Universal Health Charts"
                 width={320}
                 height={80}

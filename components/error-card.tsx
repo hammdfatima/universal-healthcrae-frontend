@@ -62,6 +62,9 @@ export default function ErrorCard({
     if (axios.isAxiosError(err)) {
       return !err.response && err.code === "ERR_NETWORK"
     }
+    if (err instanceof Error) {
+      return err.message.toLowerCase().includes("network error")
+    }
 
     return false
   }, [])

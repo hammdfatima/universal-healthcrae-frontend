@@ -34,7 +34,7 @@ export default function Header() {
           onClick={() => setMobileOpen(false)}
         >
           <Image
-            src="/logo.jpeg"
+            src="/logo.png"
             alt="Universal Health Charts"
             width={320}
             height={80}

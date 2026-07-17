@@ -6,6 +6,7 @@ import {
   FlaskConical,
   History,
   Lock,
+  PawPrint,
   ScanLine,
   Syringe,
 } from "lucide-react"
@@ -13,6 +14,7 @@ import { useState } from "react"
 
 import { getImagingResultFileSource } from "@/app/(dashboards)/patient/_lib/imaging"
 import { getLabResultFileSource } from "@/app/(dashboards)/patient/_lib/lab"
+import PetDetailsDialog from "@/app/(dashboards)/patient/family-members/_components/pet-details-dialog"
 import EmptyCard from "@/components/empty-card"
 import FilePreviewCard from "@/components/file-preview-card"
 import FilePreviewDialog from "@/components/file-preview-dialog"
@@ -56,6 +58,12 @@ import {
   type MedicationsListResponse,
 } from "@/lib/api/medications"
 import {
+  PETS_API,
+  PETS_QUERY_KEYS,
+  type Pet,
+  type SharedPetsResponse,
+} from "@/lib/api/pets"
+import {
   VACCINATIONS_API,
   VACCINATIONS_QUERY_KEYS,
   type VaccinationsListResponse,
@@ -83,21 +91,24 @@ export default function SharedMedicalRecordsDialog({
   open,
   onOpenChange,
 }: SharedMedicalRecordsDialogProps) {
-  const enabled =
+  const medicalEnabled =
     open && Boolean(member?.hasSharedRecordsWithMe && member.userId)
+  const petsEnabled = open && Boolean(member?.sharedPetCount && member.userId)
   const patientUserId = member?.userId ?? ""
   const [preview, setPreview] = useState<PreviewFile | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null)
+  const [petDetailsOpen, setPetDetailsOpen] = useState(false)
 
   const medicationsQuery = useFetch<MedicationsListResponse>({
     path: withPatient(MEDICATIONS_API.list, patientUserId),
     queryKey: [...MEDICATIONS_QUERY_KEYS.list, "shared-modal", patientUserId],
-    enabled,
+    enabled: medicalEnabled,
   })
   const allergiesQuery = useFetch<AllergiesListResponse>({
     path: withPatient(ALLERGIES_API.list, patientUserId),
     queryKey: [...ALLERGIES_QUERY_KEYS.list, "shared-modal", patientUserId],
-    enabled,
+    enabled: medicalEnabled,
   })
   const healthHistoryQuery = useFetch<HealthHistoryListResponse>({
     path: withPatient(HEALTH_HISTORY_API.list, patientUserId),
@@ -106,17 +117,17 @@ export default function SharedMedicalRecordsDialog({
       "shared-modal",
       patientUserId,
     ],
-    enabled,
+    enabled: medicalEnabled,
   })
   const vaccinationsQuery = useFetch<VaccinationsListResponse>({
     path: withPatient(VACCINATIONS_API.list, patientUserId),
     queryKey: [...VACCINATIONS_QUERY_KEYS.list, "shared-modal", patientUserId],
-    enabled,
+    enabled: medicalEnabled,
   })
   const labQuery = useFetch<LabResultsListResponse>({
     path: withPatient(LAB_RESULTS_API.list, patientUserId),
     queryKey: [...LAB_RESULTS_QUERY_KEYS.list, "shared-modal", patientUserId],
-    enabled,
+    enabled: medicalEnabled,
   })
   const imagingQuery = useFetch<ImagingResultsListResponse>({
     path: withPatient(IMAGING_RESULTS_API.list, patientUserId),
@@ -125,11 +136,16 @@ export default function SharedMedicalRecordsDialog({
       "shared-modal",
       patientUserId,
     ],
-    enabled,
+    enabled: medicalEnabled,
+  })
+  const petsQuery = useFetch<SharedPetsResponse>({
+    path: PETS_API.shared(patientUserId),
+    queryKey: PETS_QUERY_KEYS.shared(patientUserId),
+    enabled: petsEnabled,
   })
 
   const isLoading =
-    enabled &&
+    medicalEnabled &&
     (medicationsQuery.isLoading ||
       allergiesQuery.isLoading ||
       healthHistoryQuery.isLoading ||
@@ -170,7 +186,9 @@ export default function SharedMedicalRecordsDialog({
               {member.relationship}
               {member.hasSharedRecordsWithMe
                 ? " · Shared medical records"
-                : " · Medical records not shared with you"}
+                : member.sharedPetCount > 0
+                  ? ` · ${member.sharedPetCount} shared pet profile${member.sharedPetCount === 1 ? "" : "s"}`
+                  : " · Nothing shared with you"}
             </DialogDescription>
           </DialogHeader>
 
@@ -291,6 +309,59 @@ export default function SharedMedicalRecordsDialog({
                 </div>
               )}
             </div>
+
+            <div>
+              <Typography as="h3" variant="h5" className="mb-3">
+                Shared pets
+              </Typography>
+              {member.sharedPetCount === 0 ? (
+                <EmptyCard
+                  icon={PawPrint}
+                  title="No shared pet profiles"
+                  description={`${displayName} has not shared any pet profiles with you.`}
+                  className="bg-muted/20"
+                />
+              ) : petsQuery.isLoading ? (
+                <Loader variant="fetch" label="Loading shared pets..." />
+              ) : petsQuery.isError ? (
+                <EmptyCard
+                  icon={AlertTriangle}
+                  title="Could not load shared pets"
+                  description={
+                    (petsQuery.error as Error)?.message ??
+                    "Please close this dialog and try again."
+                  }
+                  className="bg-muted/20"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {(petsQuery.data?.pets ?? []).map((pet) => (
+                    <button
+                      key={pet.id}
+                      type="button"
+                      className="flex w-full items-center gap-3 rounded-xl border border-border/60 px-4 py-3 text-left transition-colors hover:bg-muted/30"
+                      onClick={() => {
+                        setSelectedPet(pet)
+                        setPetDetailsOpen(true)
+                      }}
+                    >
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <PawPrint className="size-4" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <Typography variant="small" className="font-medium">
+                          {pet.name}
+                        </Typography>
+                        <Typography variant="muted" className="text-xs">
+                          {pet.species}
+                          {pet.breed ? ` · ${pet.breed}` : ""}
+                        </Typography>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -306,6 +377,12 @@ export default function SharedMedicalRecordsDialog({
         fileName={preview?.fileName ?? ""}
         fileMimeType={preview?.fileMimeType ?? ""}
         fileSource={preview?.fileSource ?? null}
+      />
+      <PetDetailsDialog
+        pet={selectedPet}
+        open={petDetailsOpen}
+        onOpenChange={setPetDetailsOpen}
+        readOnly
       />
     </>
   )

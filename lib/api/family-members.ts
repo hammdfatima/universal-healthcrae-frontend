@@ -6,7 +6,6 @@ export type FamilyMember = {
   email: string
   phone: string | null
   relationship: string
-  dateOfBirth: string | null
   isEmergencyContact: boolean
   isAccessible: boolean
   createdAt: string
@@ -29,7 +28,6 @@ export type CreateFamilyMemberPayload = {
   email: string
   phone: string
   relationship: string
-  dateOfBirth: string
   password: string
   isEmergencyContact: boolean
 }
@@ -39,7 +37,6 @@ export type UpdateFamilyMemberPayload = {
   lastName: string
   phone: string
   relationship: string
-  dateOfBirth: string
   isEmergencyContact: boolean
 }
 

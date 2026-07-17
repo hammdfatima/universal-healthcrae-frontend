@@ -6,7 +6,6 @@ import { useEffect, useMemo } from "react"
 
 import {
   type FamilyMemberFormValues,
-  formatFamilyMemberDate,
   memberToFormValues,
 } from "@/app/(dashboards)/patient/_lib/family-members"
 import FamilyMemberForm from "@/app/(dashboards)/patient/family-members/_components/family-member-form"
@@ -73,7 +72,6 @@ export default function EditFamilyMemberPage() {
         lastName: values.lastName,
         phone: values.phone,
         relationship: isCouplePlan ? "Spouse" : values.relationship,
-        dateOfBirth: formatFamilyMemberDate(values.dateOfBirth),
         isEmergencyContact: values.isEmergencyContact,
       },
       onSuccess: () => {

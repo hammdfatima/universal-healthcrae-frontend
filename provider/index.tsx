@@ -8,7 +8,7 @@ import { useState } from "react"
 import { Toaster } from "react-hot-toast"
 import { AuthProvider } from "@/provider/auth-provider"
 
-const MAX_RETRIES = 2
+const MAX_RETRIES = 1
 
 const HTTP_STATUS_TO_NOT_RETRY = [400, 401, 403, 404]
 export default function Provider({ children }: { children: React.ReactNode }) {
@@ -18,9 +18,22 @@ export default function Provider({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             retry(failureCount, error) {
+              if (axios.isCancel(error)) {
+                return false
+              }
+
+              const err = error as { code?: string; name?: string }
+              if (
+                err.code === "ERR_CANCELED" ||
+                err.name === "CanceledError" ||
+                err.name === "AbortError"
+              ) {
+                return false
+              }
+
               console.error("Query failed, retrying...", error)
 
-              if (failureCount > MAX_RETRIES) {
+              if (failureCount >= MAX_RETRIES) {
                 return false
               }
 
@@ -34,6 +47,8 @@ export default function Provider({ children }: { children: React.ReactNode }) {
 
               return true
             },
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+            staleTime: 30_000,
           },
         },
       })

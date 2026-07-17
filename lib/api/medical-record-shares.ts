@@ -22,6 +22,7 @@ export type SidebarFamilyMember = {
   relationship: string
   isAccountOwner: boolean
   hasSharedRecordsWithMe: boolean
+  sharedPetCount: number
 }
 
 export type SidebarFamilyResponse = {

@@ -4,10 +4,9 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-import {
-  type FamilyMemberCreateFormValues,
-  type FamilyMemberFormValues,
-  formatFamilyMemberDate,
+import type {
+  FamilyMemberCreateFormValues,
+  FamilyMemberFormValues,
 } from "@/app/(dashboards)/patient/_lib/family-members"
 import FamilyMemberForm from "@/app/(dashboards)/patient/family-members/_components/family-member-form"
 import useApi from "@/hooks/use-api"
@@ -56,7 +55,6 @@ export default function NewFamilyMemberPage() {
         email: values.email,
         phone: values.phone,
         relationship: isCouplePlan ? "Spouse" : values.relationship,
-        dateOfBirth: formatFamilyMemberDate(values.dateOfBirth),
         password: values.password,
         isEmergencyContact: values.isEmergencyContact,
       },
@@ -86,7 +84,6 @@ export default function NewFamilyMemberPage() {
         firstName: "",
         lastName: "",
         relationship: isCouplePlan ? "Spouse" : "",
-        dateOfBirth: undefined as unknown as Date,
         phone: "",
         email: "",
         password: generateTemporaryPassword(),

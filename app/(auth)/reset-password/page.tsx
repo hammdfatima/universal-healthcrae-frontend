@@ -66,7 +66,7 @@ export default function ResetPasswordPage() {
     <div className="w-full">
       <Link href="/" className="mb-8 inline-block">
         <Image
-          src="/logo.jpeg"
+          src="/logo.png"
           alt="Universal Health Charts"
           width={320}
           height={80}

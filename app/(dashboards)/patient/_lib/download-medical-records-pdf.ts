@@ -117,7 +117,6 @@ export async function downloadMedicalRecordsPdf(
 
   y = writeSectionTitle(doc, "Profile", y)
   y = writeLine(doc, `Name: ${displayName}`, y)
-  y = writeLine(doc, `Date of Birth: ${profile.dateOfBirth || "—"}`, y)
   y = writeLine(doc, `Blood Group: ${profile.bloodGroup || "—"}`, y)
   y = writeLine(doc, `Gender: ${profile.gender || "—"}`, y)
   y = writeLine(doc, `Phone: ${profile.phone}`, y)

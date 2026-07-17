@@ -104,11 +104,6 @@ export default function EmergencyRecordsView({
                 Blood: {getProfileValue(records.profile, "bloodGroup")}
               </Badge>
             ) : null}
-            {getProfileValue(records.profile, "dateOfBirth") ? (
-              <Badge variant="outline" className="rounded-full">
-                DOB: {getProfileValue(records.profile, "dateOfBirth")}
-              </Badge>
-            ) : null}
             {getProfileValue(records.profile, "gender") ? (
               <Badge variant="outline" className="rounded-full">
                 {getProfileValue(records.profile, "gender")}

@@ -56,6 +56,30 @@ export type PetsListResponse = {
   supportsPets: boolean
 }
 
+export type PetSharingMember = {
+  userId: string
+  firstName: string
+  lastName: string
+  email: string
+  relationship: string
+  isAccountOwner: boolean
+  isSharedWith: boolean
+}
+
+export type PetSharingSettings = {
+  petId: string
+  petName: string
+  members: PetSharingMember[]
+}
+
+export type UpdatePetSharingPayload = {
+  granteeUserIds: string[]
+}
+
+export type SharedPetsResponse = {
+  pets: Pet[]
+}
+
 export type CreatePetPayload = {
   name: string
   species: string
@@ -78,10 +102,15 @@ export type UpdatePetPayload = CreatePetPayload
 export const PETS_API = {
   list: "/pets",
   create: "/pets",
+  shared: (ownerUserId: string) =>
+    `/pets/shared?ownerUserId=${encodeURIComponent(ownerUserId)}`,
+  sharingSettings: (id: string) => `/pets/${id}/sharing-settings`,
   update: (id: string) => `/pets/${id}`,
   delete: (id: string) => `/pets/${id}`,
 } as const
 
 export const PETS_QUERY_KEYS = {
   list: ["pets", "list"] as const,
+  sharingSettings: (id: string) => ["pets", id, "sharing-settings"] as const,
+  shared: (ownerUserId: string) => ["pets", "shared", ownerUserId] as const,
 }

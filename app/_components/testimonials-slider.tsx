@@ -119,7 +119,7 @@ export default function TestimonialsSlider() {
                   <Typography
                     as="p"
                     variant="small"
-                    className="mt-1 font-medium text-sky-500"
+                    className="mt-1 font-medium text-primary"
                   >
                     {testimonial.role}
                   </Typography>
@@ -139,8 +139,8 @@ export default function TestimonialsSlider() {
               className={cn(
                 "size-2.5 rounded-full transition-all duration-300",
                 current === index
-                  ? "scale-110 bg-sky-500"
-                  : "bg-sky-200 hover:bg-sky-300"
+                  ? "scale-110 bg-primary"
+                  : "bg-primary/20 hover:bg-primary/40"
               )}
               onClick={() => api?.scrollTo(index)}
             />

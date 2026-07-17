@@ -11,7 +11,6 @@ import {
   familyMemberSchema,
   relationshipOptions,
 } from "@/app/(dashboards)/patient/_lib/family-members"
-import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import FormModified from "@/components/ui/form-modified"
@@ -88,16 +87,6 @@ function FamilyMemberFields({
               ))}
             </SelectContent>
           </Select>
-        )}
-      </Field>
-
-      <Field name="dateOfBirth" label="Date of Birth">
-        {(field: { value: unknown; onChange: (value: unknown) => void }) => (
-          <DatePickerField
-            value={field.value as Date | undefined}
-            onChange={field.onChange}
-            placeholder="MM/DD/YYYY"
-          />
         )}
       </Field>
 

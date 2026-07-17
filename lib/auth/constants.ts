@@ -34,4 +34,9 @@ export const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000
 /** Sign out after this period with no user interaction. */
 export const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000
 
-export type SessionEndReason = "expired" | "inactive" | "blocked" | "revoked"
+export type SessionEndReason =
+  | "expired"
+  | "inactive"
+  | "blocked"
+  | "revoked"
+  | "family_access"

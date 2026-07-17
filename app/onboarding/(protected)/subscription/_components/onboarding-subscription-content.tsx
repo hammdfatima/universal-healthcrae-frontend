@@ -9,6 +9,7 @@ import SubscriptionPlansPicker from "@/components/subscription-plans-picker"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
+import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import {
   PATIENT_PROFILE_API,
@@ -24,19 +25,23 @@ import {
 export default function OnboardingSubscriptionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   const [selectingPlanId, setSelectingPlanId] = useState<string | null>(null)
   const cancelled = searchParams.get("cancelled") === "true"
+  const isFamilyMember = Boolean(user?.isFamilyMemberAccount)
 
   const { data: profile, isLoading: isProfileLoading } =
     useFetch<PatientProfileResponse>({
       path: PATIENT_PROFILE_API.get,
       queryKey: PATIENT_PROFILE_QUERY_KEYS.profile,
+      enabled: !isFamilyMember,
     })
 
   const { data: subscription, isLoading: isSubscriptionLoading } =
     useFetch<SubscriptionMeResponse>({
       path: SUBSCRIPTIONS_API.me,
       queryKey: SUBSCRIPTIONS_QUERY_KEYS.me,
+      enabled: !isFamilyMember,
     })
 
   const { onRequest: createCheckout } = useApi<{ planId: string }>({
@@ -46,20 +51,29 @@ export default function OnboardingSubscriptionContent() {
   })
 
   useEffect(() => {
-    if (isProfileLoading) return
-
-    if (!profile?.onboardingCompleted) {
-      router.replace("/onboarding/patient")
-    }
-  }, [profile, isProfileLoading, router])
-
-  useEffect(() => {
-    if (isSubscriptionLoading) return
-
-    if (subscription?.isActive) {
+    if (isFamilyMember) {
       router.replace("/patient")
     }
-  }, [subscription, isSubscriptionLoading, router])
+  }, [isFamilyMember, router])
+
+  useEffect(() => {
+    if (isFamilyMember || isProfileLoading) return
+    // Avoid redirect loops when profile fails to load (treat missing data as unknown, not incomplete).
+    if (!profile) return
+
+    if (!profile.onboardingCompleted) {
+      router.replace("/onboarding/patient")
+    }
+  }, [profile, isProfileLoading, isFamilyMember, router])
+
+  useEffect(() => {
+    if (isFamilyMember || isSubscriptionLoading) return
+    if (!subscription) return
+
+    if (subscription.isActive) {
+      router.replace("/patient")
+    }
+  }, [subscription, isSubscriptionLoading, isFamilyMember, router])
 
   function handleSelectPlan(plan: SubscriptionPlan) {
     setSelectingPlanId(plan.id)
@@ -74,6 +88,10 @@ export default function OnboardingSubscriptionContent() {
         setSelectingPlanId(null)
       },
     })
+  }
+
+  if (isFamilyMember) {
+    return <Loader variant="fetch" label="Loading..." className="py-24" />
   }
 
   if (isProfileLoading || isSubscriptionLoading) {

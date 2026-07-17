@@ -1,13 +1,7 @@
 "use client"
 
-import {
-  AlertTriangle,
-  Mail,
-  Pencil,
-  Phone,
-  Trash2,
-  UserRound,
-} from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { AlertTriangle, Mail, Pencil, Phone, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import {
@@ -98,11 +92,6 @@ export default function FamilyMemberDetailsDialog({
           </DialogHeader>
 
           <div className="space-y-4 px-6 py-5">
-            <DetailRow
-              icon={UserRound}
-              label="Date of Birth"
-              value={member.dateOfBirth ?? "—"}
-            />
             <DetailRow icon={Phone} label="Phone" value={member.phone ?? "—"} />
             <DetailRow icon={Mail} label="Email" value={member.email} />
           </div>
@@ -206,7 +195,7 @@ function DetailRow({
   label,
   value,
 }: {
-  icon: typeof UserRound
+  icon: LucideIcon
   label: string
   value: string
 }) {

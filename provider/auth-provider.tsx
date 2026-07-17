@@ -182,8 +182,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!isPublicEmergency) {
             const status = error.response?.status
             const message = error.response?.data?.message as string | undefined
+            const normalizedMessage = message?.toLowerCase() ?? ""
             const isBlocked =
-              status === 403 && message?.toLowerCase().includes("blocked")
+              status === 403 && normalizedMessage.includes("blocked")
+            const isFamilyAccessRevoked =
+              status === 403 &&
+              normalizedMessage.includes("canceled or changed the subscription")
             const isSessionExpired = status === 401
 
             if (isBlocked) {
@@ -191,6 +195,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 toastError(message)
               }
               endSession("blocked")
+            } else if (isFamilyAccessRevoked) {
+              if (message) {
+                toastError(message)
+              }
+              endSession("family_access")
             } else if (isSessionExpired) {
               endSession("revoked")
             }

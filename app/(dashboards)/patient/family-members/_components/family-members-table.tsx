@@ -111,6 +111,7 @@ export default function FamilyMembersTable({
       relationship: member.relationship,
       isAccountOwner: false,
       hasSharedRecordsWithMe: shareByUserId.get(member.memberUserId) ?? false,
+      sharedPetCount: 0,
     })
     setRecordsOpen(true)
   }
@@ -125,7 +126,6 @@ export default function FamilyMembersTable({
         lastName: member.lastName,
         phone: member.phone ?? "",
         relationship: member.relationship,
-        dateOfBirth: member.dateOfBirth ?? "",
         isEmergencyContact: !member.isEmergencyContact,
       },
       onSuccess: () => {

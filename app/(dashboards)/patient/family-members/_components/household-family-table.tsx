@@ -55,9 +55,13 @@ export default function HouseholdFamilyTable() {
       id: "shared",
       header: "Shared with you",
       cell: (row) =>
-        row.hasSharedRecordsWithMe ? (
+        row.hasSharedRecordsWithMe || row.sharedPetCount > 0 ? (
           <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">
-            Yes
+            {row.hasSharedRecordsWithMe && row.sharedPetCount > 0
+              ? `Records + ${row.sharedPetCount} pet${row.sharedPetCount === 1 ? "" : "s"}`
+              : row.hasSharedRecordsWithMe
+                ? "Medical records"
+                : `${row.sharedPetCount} pet${row.sharedPetCount === 1 ? "" : "s"}`}
           </Badge>
         ) : (
           <Typography variant="muted" className="text-sm">

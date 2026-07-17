@@ -15,7 +15,7 @@ export const testimonials: Testimonial[] = [
     name: "Emily Richardson",
     role: "Caregiver",
     initials: "ER",
-    avatarColor: "bg-sky-100 text-sky-700",
+    avatarColor: "bg-primary/15 text-primary",
   },
   {
     id: "james",
@@ -24,7 +24,7 @@ export const testimonials: Testimonial[] = [
     name: "James Thompson",
     role: "Spouse",
     initials: "JT",
-    avatarColor: "bg-emerald-100 text-emerald-700",
+    avatarColor: "bg-primary/15 text-primary",
   },
   {
     id: "maria",
@@ -33,7 +33,7 @@ export const testimonials: Testimonial[] = [
     name: "Maria Lopez",
     role: "Parent",
     initials: "ML",
-    avatarColor: "bg-violet-100 text-violet-700",
+    avatarColor: "bg-primary/15 text-primary",
   },
   {
     id: "robert",
@@ -42,6 +42,6 @@ export const testimonials: Testimonial[] = [
     name: "Robert Kim",
     role: "Member",
     initials: "RK",
-    avatarColor: "bg-amber-100 text-amber-700",
+    avatarColor: "bg-primary/15 text-primary",
   },
 ]

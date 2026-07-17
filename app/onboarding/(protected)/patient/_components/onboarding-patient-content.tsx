@@ -33,7 +33,6 @@ function getInitialFormValues(
     email: user?.email ?? "",
     phone: "",
     profileImage: "",
-    dateOfBirth: undefined as unknown as Date,
     bloodGroup: "",
     gender: "",
     address: "",
@@ -72,10 +71,12 @@ export default function OnboardingPatientContent() {
     })
 
   useEffect(() => {
-    if (profile?.onboardingCompleted) {
+    // Only redirect on a successful profile load. Cached data during an error
+    // must not bounce back to /patient (that caused a redirect loop).
+    if (!isLoading && !isError && profile?.onboardingCompleted) {
       router.replace("/patient")
     }
-  }, [profile, router])
+  }, [profile, isLoading, isError, router])
 
   useEffect(() => {
     if (!profile || hasHydratedFormRef.current) return
@@ -86,8 +87,7 @@ export default function OnboardingPatientContent() {
       profile.firstName ||
       profile.lastName ||
       profile.phone ||
-      profile.profileImage ||
-      profile.dateOfBirth
+      profile.profileImage
     ) {
       setDefaultValues(profileResponseToFormValues(profile))
     } else if (user) {

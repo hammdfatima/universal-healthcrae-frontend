@@ -1,7 +1,5 @@
 "use client"
 
-import { startOfDay, subDays } from "date-fns"
-
 import {
   bloodGroupOptions,
   genderOptions,
@@ -9,7 +7,6 @@ import {
   profileSchema,
 } from "@/app/(dashboards)/patient/_lib/settings"
 import ProfileImageField from "@/app/(dashboards)/patient/settings/_components/profile-image-field"
-import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
 import { Loader } from "@/components/ui/loader"
@@ -116,17 +113,6 @@ export default function PatientProfileForm({
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field name="dateOfBirth" label="Date of Birth">
-                {(field) => (
-                  <DatePickerField
-                    value={field.value as Date | undefined}
-                    onChange={field.onChange}
-                    placeholder="MM/DD/YYYY"
-                    maxDate={subDays(startOfDay(new Date()), 1)}
-                  />
-                )}
-              </Field>
-
               <Field name="bloodGroup" label="Blood Group">
                 {(field) => (
                   <Select
@@ -146,13 +132,13 @@ export default function PatientProfileForm({
                   </Select>
                 )}
               </Field>
-            </div>
 
-            <FormInput
-              name="address"
-              label="Address"
-              placeholder="Street address, city, state"
-            />
+              <FormInput
+                name="address"
+                label="Address"
+                placeholder="Street address, city, state"
+              />
+            </div>
 
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={isSubmitting}>

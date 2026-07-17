@@ -37,6 +37,12 @@ const SESSION_END_COPY: Record<
     description: "Your session has expired. Please sign in again to continue.",
     action: "Login again",
   },
+  family_access: {
+    title: "Family access ended",
+    description:
+      "Your family member canceled or changed the subscription. Upgrade to get your account back, or contact the account holder.",
+    action: "Back to login",
+  },
 }
 
 type SessionExpiredModalProps = {

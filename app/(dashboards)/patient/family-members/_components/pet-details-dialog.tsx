@@ -30,8 +30,9 @@ type PetDetailsDialogProps = {
   pet: Pet | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDelete: (pet: Pet) => void
+  onDelete?: (pet: Pet) => void
   isDeleting?: boolean
+  readOnly?: boolean
 }
 
 function DetailList({
@@ -73,6 +74,7 @@ export default function PetDetailsDialog({
   onOpenChange,
   onDelete,
   isDeleting = false,
+  readOnly = false,
 }: PetDetailsDialogProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
@@ -212,25 +214,27 @@ export default function PetDetailsDialog({
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-2 border-t border-border/60 px-6 py-4 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="size-4" aria-hidden />
-              Delete Pet
-            </Button>
-            <Button type="button" asChild>
-              <Link
-                href={`/patient/family-members/pets/${pet.id}/edit` as Route}
+          {!readOnly ? (
+            <div className="flex flex-col-reverse gap-2 border-t border-border/60 px-6 py-4 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteOpen(true)}
               >
-                <Pencil className="size-4" aria-hidden />
-                Edit Pet
-              </Link>
-            </Button>
-          </div>
+                <Trash2 className="size-4" aria-hidden />
+                Delete Pet
+              </Button>
+              <Button type="button" asChild>
+                <Link
+                  href={`/patient/family-members/pets/${pet.id}/edit` as Route}
+                >
+                  <Pencil className="size-4" aria-hidden />
+                  Edit Pet
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -251,7 +255,7 @@ export default function PetDetailsDialog({
             <AlertDialogAction
               disabled={isDeleting}
               onClick={() => {
-                onDelete(pet)
+                onDelete?.(pet)
                 setDeleteOpen(false)
                 onOpenChange(false)
               }}

@@ -28,7 +28,6 @@ export default function ProfileTab() {
     email: "",
     phone: "",
     profileImage: "",
-    dateOfBirth: undefined as unknown as Date,
     bloodGroup: "",
     gender: "",
     address: "",
