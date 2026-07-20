@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Share2, Users } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
+import { SHARED_MEDICAL_VAULT_SECTIONS_TEXT } from "@/app/(dashboards)/patient/_lib/medical-vault-includes"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -125,6 +126,10 @@ export default function ShareRecordsDialog({
         </DialogHeader>
 
         <div className="max-h-[min(28rem,60vh)] space-y-5 overflow-y-auto px-6 py-5">
+          <Typography variant="muted" className="text-sm">
+            Shared records include your full medical vault:{" "}
+            {SHARED_MEDICAL_VAULT_SECTIONS_TEXT}.
+          </Typography>
           {isLoading ? (
             <Loader variant="fetch" label="Loading family members..." />
           ) : isError ? (

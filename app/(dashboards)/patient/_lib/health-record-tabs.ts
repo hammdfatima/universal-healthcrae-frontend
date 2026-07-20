@@ -4,8 +4,10 @@ import {
   AlertTriangle,
   FlaskConical,
   History,
+  Pill,
   ScanLine,
   Syringe,
+  Users,
 } from "lucide-react"
 import type { Route } from "next"
 
@@ -48,6 +50,18 @@ export const HEALTH_RECORD_TABS = [
     icon: ScanLine,
     countKey: "imagingResults",
   },
+  {
+    id: "pharmacy",
+    label: "Pharmacy",
+    icon: Pill,
+    countKey: "pharmacies",
+  },
+  {
+    id: "family-lifestyle",
+    label: "Family & Lifestyle",
+    icon: Users,
+    countKey: "familyLifestyleHistory",
+  },
 ] as const satisfies ReadonlyArray<{
   id: string
   label: string
@@ -67,6 +81,8 @@ export const HEALTH_RECORD_RELATED_PATHS = [
   "/patient/vaccinations",
   "/patient/lab",
   "/patient/imaging",
+  "/patient/pharmacy",
+  "/patient/family-lifestyle-history",
 ] as const
 
 export function isHealthRecordTab(

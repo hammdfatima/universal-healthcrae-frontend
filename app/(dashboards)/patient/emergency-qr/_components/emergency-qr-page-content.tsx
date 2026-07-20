@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import QRCode from "qrcode"
 import { useEffect, useState } from "react"
+import { SHARED_MEDICAL_VAULT_SECTIONS } from "@/app/(dashboards)/patient/_lib/medical-vault-includes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -288,6 +289,18 @@ export default function EmergencyQrPageContent() {
                 Regenerating creates a new link and PIN requirement and
                 invalidates the previous QR code.
               </Typography>
+              <Typography variant="small" className="font-semibold">
+                Unlocked records include
+              </Typography>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {SHARED_MEDICAL_VAULT_SECTIONS.map((section) => (
+                  <li key={section}>
+                    <Badge variant="secondary" className="rounded-full">
+                      {section}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
               {access?.isActive ? (
                 <PreviewHint accessUrl={access.accessUrl} />
               ) : (

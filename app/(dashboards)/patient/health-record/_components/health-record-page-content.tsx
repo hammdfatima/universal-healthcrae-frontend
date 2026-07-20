@@ -14,11 +14,13 @@ import {
 } from "@/app/(dashboards)/patient/_lib/health-record-tabs"
 import { useMedicalVaultCounts } from "@/app/(dashboards)/patient/_lib/use-medical-vault-counts"
 import AllergiesTable from "@/app/(dashboards)/patient/allergies/_components/allergies-table"
+import FamilyLifestyleHistoryPanel from "@/app/(dashboards)/patient/family-lifestyle-history/_components/family-lifestyle-history-panel"
 import HealthHistoryTable from "@/app/(dashboards)/patient/health-history/_components/health-history-table"
 import ShareRecordsDialog from "@/app/(dashboards)/patient/health-record/_components/share-records-dialog"
 import ImagingResultsTable from "@/app/(dashboards)/patient/imaging/_components/imaging-results-table"
 import LabResultsTable from "@/app/(dashboards)/patient/lab/_components/lab-results-table"
 import MedicationsTable from "@/app/(dashboards)/patient/medications/_components/medications-table"
+import PharmaciesTable from "@/app/(dashboards)/patient/pharmacy/_components/pharmacies-table"
 import VaccinationsTable from "@/app/(dashboards)/patient/vaccinations/_components/vaccinations-table"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -69,8 +71,8 @@ function HealthRecordTabs() {
                 Health Record
               </Typography>
               <Typography variant="muted" className="mt-1">
-                View and manage medications, allergies, history, and test
-                results in one place.
+                View and manage medications, allergies, history, lifestyle, test
+                results, and preferred pharmacies in one place.
               </Typography>
             </div>
           </div>
@@ -139,6 +141,12 @@ function HealthRecordTabs() {
           </TabsContent>
           <TabsContent value="imaging" className="mt-0">
             <ImagingResultsTable />
+          </TabsContent>
+          <TabsContent value="pharmacy" className="mt-0">
+            <PharmaciesTable />
+          </TabsContent>
+          <TabsContent value="family-lifestyle" className="mt-0">
+            <FamilyLifestyleHistoryPanel />
           </TabsContent>
         </Tabs>
       </div>

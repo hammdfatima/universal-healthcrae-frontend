@@ -39,6 +39,11 @@ import {
   type MedicationsListResponse,
 } from "@/lib/api/medications"
 import {
+  PHARMACIES_API,
+  PHARMACIES_QUERY_KEYS,
+  type PharmaciesListResponse,
+} from "@/lib/api/pharmacies"
+import {
   VACCINATIONS_API,
   VACCINATIONS_QUERY_KEYS,
   type VaccinationsListResponse,
@@ -102,6 +107,11 @@ export function usePatientPortalSearch(enabled: boolean) {
   const careProvidersQuery = useFetch<CareProvidersListResponse>({
     path: CARE_PROVIDERS_API.list,
     queryKey: CARE_PROVIDERS_QUERY_KEYS.list,
+    enabled,
+  })
+  const pharmaciesQuery = useFetch<PharmaciesListResponse>({
+    path: PHARMACIES_API.list,
+    queryKey: PHARMACIES_QUERY_KEYS.list,
     enabled,
   })
   const familyMembersQuery = useFetch<FamilyMembersListResponse>({
@@ -205,6 +215,19 @@ export function usePatientPortalSearch(enabled: boolean) {
       )
     }
 
+    for (const pharmacy of pharmaciesQuery.data?.pharmacies ?? []) {
+      results.push(
+        recordResult(
+          `pharmacy-${pharmacy.id}`,
+          pharmacy.name,
+          `/patient/pharmacy/${pharmacy.id}/edit` as Route,
+          "Pharmacy",
+          pharmacy.address ?? pharmacy.phone,
+          [pharmacy.phone, pharmacy.address ?? "", pharmacy.notes ?? ""]
+        )
+      )
+    }
+
     for (const member of familyMembersQuery.data?.members ?? []) {
       results.push(
         recordResult(
@@ -227,6 +250,7 @@ export function usePatientPortalSearch(enabled: boolean) {
     imagingResultsQuery.data?.imagingResults,
     labResultsQuery.data?.labResults,
     medicationsQuery.data?.medications,
+    pharmaciesQuery.data?.pharmacies,
     vaccinationsQuery.data?.vaccinations,
   ])
 
@@ -238,6 +262,7 @@ export function usePatientPortalSearch(enabled: boolean) {
     labResultsQuery.isLoading ||
     imagingResultsQuery.isLoading ||
     careProvidersQuery.isLoading ||
+    pharmaciesQuery.isLoading ||
     familyMembersQuery.isLoading
 
   return {

@@ -32,6 +32,8 @@ export type PatientDataExport = {
   labResults: Record<string, unknown>[]
   imagingResults: Record<string, unknown>[]
   careProviders: Record<string, unknown>[]
+  pharmacies: Record<string, unknown>[]
+  familyLifestyleHistory: Record<string, unknown>
   familyMembers: Record<string, unknown>[]
 }
 

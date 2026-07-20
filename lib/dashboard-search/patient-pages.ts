@@ -4,6 +4,7 @@ import {
   FlaskConical,
   History,
   LayoutDashboard,
+  Pill,
   QrCode,
   ScanLine,
   Settings,
@@ -98,6 +99,22 @@ export const PATIENT_SEARCH_PAGES: PortalSearchResult[] = [
     "Pages",
     ScanLine,
     ["scans", "x-ray", "ct", "mri", "documents"]
+  ),
+  pageResult(
+    "page-pharmacy",
+    "Pharmacy",
+    "/patient/health-record?tab=pharmacy" as Route,
+    "Pages",
+    Pill,
+    ["preferred pharmacy", "prescriptions", "refills", "drugstore"]
+  ),
+  pageResult(
+    "page-family-lifestyle",
+    "Family & Lifestyle History",
+    "/patient/health-record?tab=family-lifestyle" as Route,
+    "Pages",
+    Users,
+    ["substance use", "family history", "social history", "hereditary"]
   ),
   pageResult(
     "page-care-providers",

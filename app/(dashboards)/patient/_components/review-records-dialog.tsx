@@ -5,12 +5,21 @@ import {
   AlertTriangle,
   Download,
   History,
+  Pill,
   Stethoscope,
   Syringe,
+  Users,
 } from "lucide-react"
 import { type ComponentType, type ReactNode, useMemo } from "react"
 
 import { downloadMedicalRecordsPdf } from "@/app/(dashboards)/patient/_lib/download-medical-records-pdf"
+import {
+  FAMILY_CONDITION_LABELS,
+  formatFamilyConditionSummary,
+  formatSubstanceSummary,
+  isSubstanceEntryFilled,
+  SUBSTANCE_LABELS,
+} from "@/app/(dashboards)/patient/_lib/family-lifestyle-history"
 import {
   getMedicalRecordsSummary,
   type MedicalRecordsSummary,
@@ -42,6 +51,11 @@ import {
   type CareProvidersListResponse,
 } from "@/lib/api/care-providers"
 import {
+  FAMILY_LIFESTYLE_HISTORY_API,
+  FAMILY_LIFESTYLE_HISTORY_QUERY_KEYS,
+  type FamilyLifestyleHistoryResponse,
+} from "@/lib/api/family-lifestyle-history"
+import {
   HEALTH_HISTORY_API,
   HEALTH_HISTORY_QUERY_KEYS,
   type HealthHistoryListResponse,
@@ -57,6 +71,11 @@ import {
   PATIENT_PROFILE_QUERY_KEYS,
   type PatientProfileResponse,
 } from "@/lib/api/patient-profile"
+import {
+  PHARMACIES_API,
+  PHARMACIES_QUERY_KEYS,
+  type PharmaciesListResponse,
+} from "@/lib/api/pharmacies"
 import {
   VACCINATIONS_API,
   VACCINATIONS_QUERY_KEYS,
@@ -103,6 +122,16 @@ export default function ReviewRecordsDialog({
     queryKey: VACCINATIONS_QUERY_KEYS.list,
     enabled: open,
   })
+  const pharmaciesQuery = useFetch<PharmaciesListResponse>({
+    path: PHARMACIES_API.list,
+    queryKey: PHARMACIES_QUERY_KEYS.list,
+    enabled: open,
+  })
+  const familyLifestyleHistoryQuery = useFetch<FamilyLifestyleHistoryResponse>({
+    path: FAMILY_LIFESTYLE_HISTORY_API.get,
+    queryKey: FAMILY_LIFESTYLE_HISTORY_QUERY_KEYS.detail,
+    enabled: open,
+  })
 
   const isLoading =
     profileQuery.isLoading ||
@@ -110,7 +139,9 @@ export default function ReviewRecordsDialog({
     medicationsQuery.isLoading ||
     allergiesQuery.isLoading ||
     healthHistoryQuery.isLoading ||
-    vaccinationsQuery.isLoading
+    vaccinationsQuery.isLoading ||
+    pharmaciesQuery.isLoading ||
+    familyLifestyleHistoryQuery.isLoading
 
   const summary = useMemo<MedicalRecordsSummary | null>(() => {
     if (!open || isLoading || !profileQuery.data) {
@@ -123,15 +154,19 @@ export default function ReviewRecordsDialog({
       medicationsQuery.data?.medications ?? [],
       allergiesQuery.data?.allergies ?? [],
       healthHistoryQuery.data?.entries ?? [],
-      vaccinationsQuery.data?.vaccinations ?? []
+      vaccinationsQuery.data?.vaccinations ?? [],
+      pharmaciesQuery.data?.pharmacies ?? [],
+      familyLifestyleHistoryQuery.data?.familyLifestyleHistory
     )
   }, [
     allergiesQuery.data?.allergies,
     careProvidersQuery.data?.providers,
+    familyLifestyleHistoryQuery.data?.familyLifestyleHistory,
     healthHistoryQuery.data?.entries,
     isLoading,
     medicationsQuery.data?.medications,
     open,
+    pharmaciesQuery.data?.pharmacies,
     profileQuery.data,
     vaccinationsQuery.data?.vaccinations,
   ])
@@ -279,6 +314,57 @@ export default function ReviewRecordsDialog({
                       .join(" · ")}
                   />
                 ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={Pill}
+                title="Preferred Pharmacies"
+                emptyText="No preferred pharmacies recorded."
+              >
+                {summary.pharmacies.map((pharmacy) => (
+                  <RecordItem
+                    key={pharmacy.id}
+                    title={pharmacy.name}
+                    description={pharmacy.address || undefined}
+                    meta={[pharmacy.phone, pharmacy.notes]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  />
+                ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={Users}
+                title="Substance Use"
+                emptyText="No substance use recorded."
+              >
+                {summary.familyLifestyleHistory.substances
+                  .filter(isSubstanceEntryFilled)
+                  .map((entry) => (
+                    <RecordItem
+                      key={entry.id}
+                      title={SUBSTANCE_LABELS[entry.id]}
+                      description={formatSubstanceSummary(entry)}
+                    />
+                  ))}
+              </RecordSection>
+
+              <RecordSection
+                icon={Users}
+                title="Family History"
+                emptyText="No family history recorded."
+              >
+                {summary.familyLifestyleHistory.familyHistory
+                  .filter(
+                    (entry) => formatFamilyConditionSummary(entry) !== "—"
+                  )
+                  .map((entry) => (
+                    <RecordItem
+                      key={entry.id}
+                      title={FAMILY_CONDITION_LABELS[entry.id]}
+                      description={formatFamilyConditionSummary(entry)}
+                    />
+                  ))}
               </RecordSection>
             </div>
 

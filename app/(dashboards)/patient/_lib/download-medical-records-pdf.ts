@@ -1,5 +1,12 @@
 import { jsPDF } from "jspdf"
 
+import {
+  FAMILY_CONDITION_LABELS,
+  formatFamilyConditionSummary,
+  formatSubstanceSummary,
+  isSubstanceEntryFilled,
+  SUBSTANCE_LABELS,
+} from "@/app/(dashboards)/patient/_lib/family-lifestyle-history"
 import type { MedicalRecordsSummary } from "@/app/(dashboards)/patient/_lib/medical-records-summary"
 import { getProfileDisplayName } from "@/app/(dashboards)/patient/_lib/settings"
 
@@ -192,6 +199,57 @@ export async function downloadMedicalRecordsPdf(
       y = writeLine(
         doc,
         `• ${provider.name} — ${provider.phone}${provider.clinicDetails ? ` · ${provider.clinicDetails}` : ""}`,
+        y
+      )
+    }
+  }
+  y += 4
+
+  y = writeSectionTitle(doc, "Preferred Pharmacies", y)
+  if (summary.pharmacies.length === 0) {
+    y = writeLine(doc, "No preferred pharmacies recorded.", y)
+  } else {
+    for (const pharmacy of summary.pharmacies) {
+      const address = pharmacy.address ? ` · ${pharmacy.address}` : ""
+      const notes = pharmacy.notes ? ` · ${pharmacy.notes}` : ""
+      y = writeLine(
+        doc,
+        `• ${pharmacy.name} — ${pharmacy.phone}${address}${notes}`,
+        y
+      )
+    }
+  }
+  y += 4
+
+  y = writeSectionTitle(doc, "Substance Use", y)
+  const filledSubstances = summary.familyLifestyleHistory.substances.filter(
+    isSubstanceEntryFilled
+  )
+  if (filledSubstances.length === 0) {
+    y = writeLine(doc, "No substance use recorded.", y)
+  } else {
+    for (const entry of filledSubstances) {
+      y = writeLine(
+        doc,
+        `• ${SUBSTANCE_LABELS[entry.id]} — ${formatSubstanceSummary(entry)}`,
+        y
+      )
+    }
+  }
+  y += 4
+
+  y = writeSectionTitle(doc, "Family History", y)
+  const filledFamilyHistory =
+    summary.familyLifestyleHistory.familyHistory.filter(
+      (entry) => formatFamilyConditionSummary(entry) !== "—"
+    )
+  if (filledFamilyHistory.length === 0) {
+    y = writeLine(doc, "No family history recorded.", y)
+  } else {
+    for (const entry of filledFamilyHistory) {
+      y = writeLine(
+        doc,
+        `• ${FAMILY_CONDITION_LABELS[entry.id]} — ${formatFamilyConditionSummary(entry)}`,
         y
       )
     }

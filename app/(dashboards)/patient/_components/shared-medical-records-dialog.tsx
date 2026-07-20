@@ -7,11 +7,21 @@ import {
   History,
   Lock,
   PawPrint,
+  Pill,
   ScanLine,
+  Stethoscope,
   Syringe,
+  Users,
 } from "lucide-react"
 import { useState } from "react"
 
+import {
+  FAMILY_CONDITION_LABELS,
+  formatFamilyConditionSummary,
+  formatSubstanceSummary,
+  isSubstanceEntryFilled,
+  SUBSTANCE_LABELS,
+} from "@/app/(dashboards)/patient/_lib/family-lifestyle-history"
 import { getImagingResultFileSource } from "@/app/(dashboards)/patient/_lib/imaging"
 import { getLabResultFileSource } from "@/app/(dashboards)/patient/_lib/lab"
 import PetDetailsDialog from "@/app/(dashboards)/patient/family-members/_components/pet-details-dialog"
@@ -34,6 +44,16 @@ import {
   ALLERGIES_QUERY_KEYS,
   type AllergiesListResponse,
 } from "@/lib/api/allergies"
+import {
+  CARE_PROVIDERS_API,
+  CARE_PROVIDERS_QUERY_KEYS,
+  type CareProvidersListResponse,
+} from "@/lib/api/care-providers"
+import {
+  FAMILY_LIFESTYLE_HISTORY_API,
+  FAMILY_LIFESTYLE_HISTORY_QUERY_KEYS,
+  type FamilyLifestyleHistoryResponse,
+} from "@/lib/api/family-lifestyle-history"
 import {
   HEALTH_HISTORY_API,
   HEALTH_HISTORY_QUERY_KEYS,
@@ -63,6 +83,11 @@ import {
   type Pet,
   type SharedPetsResponse,
 } from "@/lib/api/pets"
+import {
+  PHARMACIES_API,
+  PHARMACIES_QUERY_KEYS,
+  type PharmaciesListResponse,
+} from "@/lib/api/pharmacies"
 import {
   VACCINATIONS_API,
   VACCINATIONS_QUERY_KEYS,
@@ -138,6 +163,29 @@ export default function SharedMedicalRecordsDialog({
     ],
     enabled: medicalEnabled,
   })
+  const careProvidersQuery = useFetch<CareProvidersListResponse>({
+    path: withPatient(CARE_PROVIDERS_API.list, patientUserId),
+    queryKey: [
+      ...CARE_PROVIDERS_QUERY_KEYS.list,
+      "shared-modal",
+      patientUserId,
+    ],
+    enabled: medicalEnabled,
+  })
+  const pharmaciesQuery = useFetch<PharmaciesListResponse>({
+    path: withPatient(PHARMACIES_API.list, patientUserId),
+    queryKey: [...PHARMACIES_QUERY_KEYS.list, "shared-modal", patientUserId],
+    enabled: medicalEnabled,
+  })
+  const familyLifestyleHistoryQuery = useFetch<FamilyLifestyleHistoryResponse>({
+    path: withPatient(FAMILY_LIFESTYLE_HISTORY_API.get, patientUserId),
+    queryKey: [
+      ...FAMILY_LIFESTYLE_HISTORY_QUERY_KEYS.detail,
+      "shared-modal",
+      patientUserId,
+    ],
+    enabled: medicalEnabled,
+  })
   const petsQuery = useFetch<SharedPetsResponse>({
     path: PETS_API.shared(patientUserId),
     queryKey: PETS_QUERY_KEYS.shared(patientUserId),
@@ -151,7 +199,13 @@ export default function SharedMedicalRecordsDialog({
       healthHistoryQuery.isLoading ||
       vaccinationsQuery.isLoading ||
       labQuery.isLoading ||
-      imagingQuery.isLoading)
+      imagingQuery.isLoading ||
+      careProvidersQuery.isLoading ||
+      pharmaciesQuery.isLoading ||
+      familyLifestyleHistoryQuery.isLoading)
+
+  const familyLifestyleHistory =
+    familyLifestyleHistoryQuery.data?.familyLifestyleHistory
 
   if (!member) return null
 
@@ -306,6 +360,48 @@ export default function SharedMedicalRecordsDialog({
                       </div>
                     ))}
                   </FileRecordSection>
+                  <RecordSection
+                    icon={Stethoscope}
+                    title="Care Providers"
+                    empty="No care providers."
+                    items={(careProvidersQuery.data?.providers ?? []).map(
+                      (item) =>
+                        `${item.name} · ${item.phone}${item.clinicDetails ? ` · ${item.clinicDetails}` : ""}`
+                    )}
+                  />
+                  <RecordSection
+                    icon={Pill}
+                    title="Preferred Pharmacies"
+                    empty="No preferred pharmacies."
+                    items={(pharmaciesQuery.data?.pharmacies ?? []).map(
+                      (item) =>
+                        `${item.name} · ${item.phone}${item.address ? ` · ${item.address}` : ""}${item.notes ? ` · ${item.notes}` : ""}`
+                    )}
+                  />
+                  <RecordSection
+                    icon={Users}
+                    title="Substance Use"
+                    empty="No substance use."
+                    items={(familyLifestyleHistory?.substances ?? [])
+                      .filter(isSubstanceEntryFilled)
+                      .map(
+                        (item) =>
+                          `${SUBSTANCE_LABELS[item.id]} · ${formatSubstanceSummary(item)}`
+                      )}
+                  />
+                  <RecordSection
+                    icon={Users}
+                    title="Family History"
+                    empty="No family history."
+                    items={(familyLifestyleHistory?.familyHistory ?? [])
+                      .filter(
+                        (item) => formatFamilyConditionSummary(item) !== "—"
+                      )
+                      .map(
+                        (item) =>
+                          `${FAMILY_CONDITION_LABELS[item.id]} · ${formatFamilyConditionSummary(item)}`
+                      )}
+                  />
                 </div>
               )}
             </div>

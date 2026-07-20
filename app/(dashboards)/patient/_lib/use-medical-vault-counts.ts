@@ -1,11 +1,17 @@
 "use client"
 
+import { countFamilyLifestyleHistoryEntries } from "@/app/(dashboards)/patient/_lib/family-lifestyle-history"
 import { useFetch } from "@/hooks/use-fetch"
 import {
   ALLERGIES_API,
   ALLERGIES_QUERY_KEYS,
   type AllergiesListResponse,
 } from "@/lib/api/allergies"
+import {
+  FAMILY_LIFESTYLE_HISTORY_API,
+  FAMILY_LIFESTYLE_HISTORY_QUERY_KEYS,
+  type FamilyLifestyleHistoryResponse,
+} from "@/lib/api/family-lifestyle-history"
 import {
   HEALTH_HISTORY_API,
   HEALTH_HISTORY_QUERY_KEYS,
@@ -27,6 +33,11 @@ import {
   type MedicationsListResponse,
 } from "@/lib/api/medications"
 import {
+  PHARMACIES_API,
+  PHARMACIES_QUERY_KEYS,
+  type PharmaciesListResponse,
+} from "@/lib/api/pharmacies"
+import {
   VACCINATIONS_API,
   VACCINATIONS_QUERY_KEYS,
   type VaccinationsListResponse,
@@ -40,6 +51,8 @@ export type MedicalVaultCounts = {
   vaccinations: number
   labResults: number
   imagingResults: number
+  pharmacies: number
+  familyLifestyleHistory: number
 }
 
 export function useMedicalVaultCounts() {
@@ -69,6 +82,14 @@ export function useMedicalVaultCounts() {
     path: withPatientQuery(IMAGING_RESULTS_API.list),
     queryKey: vaultQueryKey(IMAGING_RESULTS_QUERY_KEYS.list),
   })
+  const pharmaciesQuery = useFetch<PharmaciesListResponse>({
+    path: withPatientQuery(PHARMACIES_API.list),
+    queryKey: vaultQueryKey(PHARMACIES_QUERY_KEYS.list),
+  })
+  const familyLifestyleHistoryQuery = useFetch<FamilyLifestyleHistoryResponse>({
+    path: withPatientQuery(FAMILY_LIFESTYLE_HISTORY_API.get),
+    queryKey: vaultQueryKey(FAMILY_LIFESTYLE_HISTORY_QUERY_KEYS.detail),
+  })
 
   const counts: MedicalVaultCounts = {
     medications: medicationsQuery.data?.medications.length ?? 0,
@@ -77,6 +98,13 @@ export function useMedicalVaultCounts() {
     vaccinations: vaccinationsQuery.data?.vaccinations.length ?? 0,
     labResults: labResultsQuery.data?.labResults.length ?? 0,
     imagingResults: imagingResultsQuery.data?.imagingResults.length ?? 0,
+    pharmacies: pharmaciesQuery.data?.pharmacies.length ?? 0,
+    familyLifestyleHistory: familyLifestyleHistoryQuery.data
+      ?.familyLifestyleHistory
+      ? countFamilyLifestyleHistoryEntries(
+          familyLifestyleHistoryQuery.data.familyLifestyleHistory
+        )
+      : 0,
   }
 
   const isLoading =
@@ -85,7 +113,9 @@ export function useMedicalVaultCounts() {
     healthHistoryQuery.isLoading ||
     vaccinationsQuery.isLoading ||
     labResultsQuery.isLoading ||
-    imagingResultsQuery.isLoading
+    imagingResultsQuery.isLoading ||
+    pharmaciesQuery.isLoading ||
+    familyLifestyleHistoryQuery.isLoading
 
   return { counts, isLoading }
 }

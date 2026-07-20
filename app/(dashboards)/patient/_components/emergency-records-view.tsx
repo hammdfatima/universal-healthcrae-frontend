@@ -7,13 +7,21 @@ import {
   FileText,
   FlaskConical,
   History,
+  Pill,
   ScanLine,
   Stethoscope,
   Syringe,
   Users,
 } from "lucide-react"
 import { type ComponentType, type ReactNode, useState } from "react"
-
+import {
+  FAMILY_CONDITION_LABELS,
+  formatFamilyConditionSummary,
+  formatSubstanceSummary,
+  isSubstanceEntryFilled,
+  parseFamilyLifestyleHistoryFromExport,
+  SUBSTANCE_LABELS,
+} from "@/app/(dashboards)/patient/_lib/family-lifestyle-history"
 import { getProviderInitials } from "@/app/(dashboards)/patient/_lib/providers"
 import FilePreviewDialog from "@/components/file-preview-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -69,6 +77,10 @@ export default function EmergencyRecordsView({
   const displayName = getDisplayName(records)
   const initials = getProviderInitials(displayName)
   const profileImage = getProfileValue(records.profile, "profileImage")
+  const familyLifestyleHistory = parseFamilyLifestyleHistoryFromExport(
+    records.familyLifestyleHistory
+  )
+  const pharmacies = Array.isArray(records.pharmacies) ? records.pharmacies : []
 
   return (
     <div className="space-y-5 pb-6 sm:space-y-6 sm:pb-0">
@@ -257,6 +269,55 @@ export default function EmergencyRecordsView({
               .join(" · ")}
           />
         ))}
+      </RecordSection>
+
+      <RecordSection
+        icon={Pill}
+        title="Preferred Pharmacies"
+        emptyText="No preferred pharmacies recorded."
+      >
+        {pharmacies.map((pharmacy) => (
+          <RecordItem
+            key={String(pharmacy.id)}
+            title={String(pharmacy.name ?? "Pharmacy")}
+            description={String(pharmacy.address ?? "") || undefined}
+            meta={[pharmacy.phone, pharmacy.notes]
+              .filter((value) => typeof value === "string" && value)
+              .join(" · ")}
+          />
+        ))}
+      </RecordSection>
+
+      <RecordSection
+        icon={Users}
+        title="Substance Use"
+        emptyText="No substance use recorded."
+      >
+        {familyLifestyleHistory.substances
+          .filter(isSubstanceEntryFilled)
+          .map((entry) => (
+            <RecordItem
+              key={entry.id}
+              title={SUBSTANCE_LABELS[entry.id]}
+              description={formatSubstanceSummary(entry)}
+            />
+          ))}
+      </RecordSection>
+
+      <RecordSection
+        icon={Users}
+        title="Family History"
+        emptyText="No family history recorded."
+      >
+        {familyLifestyleHistory.familyHistory
+          .filter((entry) => formatFamilyConditionSummary(entry) !== "—")
+          .map((entry) => (
+            <RecordItem
+              key={entry.id}
+              title={FAMILY_CONDITION_LABELS[entry.id]}
+              description={formatFamilyConditionSummary(entry)}
+            />
+          ))}
       </RecordSection>
 
       <RecordSection
