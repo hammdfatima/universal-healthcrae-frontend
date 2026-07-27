@@ -435,6 +435,18 @@ function PetFormFields({
         )}
       />
 
+      <FormSection
+        title="Additional Notes"
+        description="Anything else responders or caregivers should know about this pet."
+      >
+        <FormTextarea
+          name="additionalNotes"
+          label="Notes"
+          placeholder="Temperament, special care instructions, or other important details..."
+          rows={4}
+        />
+      </FormSection>
+
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" asChild>
           <Link href={cancelHref}>Cancel</Link>

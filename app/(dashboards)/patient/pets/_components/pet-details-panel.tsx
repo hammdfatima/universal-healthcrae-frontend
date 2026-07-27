@@ -176,6 +176,20 @@ export default function PetDetailsPanel({ pet }: { pet: Pet }) {
         </div>
       ) : null}
 
+      {pet.additionalNotes?.trim() ? (
+        <div>
+          <Typography variant="small" className="font-medium">
+            Additional Notes
+          </Typography>
+          <Typography
+            variant="muted"
+            className="mt-1 whitespace-pre-wrap text-sm"
+          >
+            {pet.additionalNotes}
+          </Typography>
+        </div>
+      ) : null}
+
       <DetailList
         title="Medical Conditions"
         empty="No medical conditions recorded."

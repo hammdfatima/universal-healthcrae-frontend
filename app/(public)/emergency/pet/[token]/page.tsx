@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
+  FileText,
   HeartPulse,
   Mail,
   PawPrint,
@@ -371,6 +372,18 @@ function PetEmergencyProfileView({
           }))}
         />
       </Section>
+
+      {records.additionalNotes?.trim() ? (
+        <Section
+          title="Additional Notes"
+          description="Extra details shared for emergency care."
+          icon={FileText}
+        >
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+            {records.additionalNotes}
+          </p>
+        </Section>
+      ) : null}
     </div>
   )
 }

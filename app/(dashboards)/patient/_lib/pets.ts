@@ -35,6 +35,7 @@ export const petSchema = z.object({
   veterinaryClinic: z.string().optional(),
   veterinaryPhone: z.string().optional(),
   veterinaryRecords: z.string().optional(),
+  additionalNotes: z.string().optional(),
   medicalConditions: z.array(
     z.object({
       name: z.string().min(1, "Condition name is required."),
@@ -84,6 +85,7 @@ export const petDefaultValues: PetFormValues = {
   veterinaryClinic: "",
   veterinaryPhone: "",
   veterinaryRecords: "",
+  additionalNotes: "",
   medicalConditions: [],
   medications: [],
   allergies: [],
@@ -153,6 +155,7 @@ export function petFormValuesToPayload(
     veterinaryClinic: values.veterinaryClinic ?? "",
     veterinaryPhone: values.veterinaryPhone ?? "",
     veterinaryRecords: values.veterinaryRecords ?? "",
+    additionalNotes: values.additionalNotes ?? "",
     medicalConditions: values.medicalConditions,
     medications: values.medications,
     allergies: values.allergies,
@@ -182,6 +185,7 @@ export function petToFormValues(pet: {
   veterinaryClinic: string | null
   veterinaryPhone: string | null
   veterinaryRecords: string | null
+  additionalNotes?: string | null
   medicalConditions?: { name: string; notes?: string }[]
   medications: { name: string; dosage?: string; notes?: string }[]
   allergies: { name: string; reaction?: string; notes?: string }[]
@@ -209,6 +213,7 @@ export function petToFormValues(pet: {
     veterinaryClinic: pet.veterinaryClinic ?? "",
     veterinaryPhone: pet.veterinaryPhone ?? "",
     veterinaryRecords: pet.veterinaryRecords ?? "",
+    additionalNotes: pet.additionalNotes ?? "",
     medicalConditions: (pet.medicalConditions ?? []).map((item) => ({
       name: item.name,
       notes: item.notes ?? "",
