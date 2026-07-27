@@ -163,7 +163,7 @@ export default function PetEmergencyQrPanel({
             Save or print this code for emergency pet access.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 overflow-hidden">
           {statusQuery.isLoading ? (
             <Loader variant="fetch" label="Loading pet QR access..." />
           ) : access?.isActive && qrDataUrl ? (
@@ -173,19 +173,28 @@ export default function PetEmergencyQrPanel({
                 <img
                   src={qrDataUrl}
                   alt={`${petName} emergency QR code`}
-                  className="size-[240px]"
+                  className="h-auto w-full max-w-[240px]"
                 />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="rounded-full">
+                <Badge
+                  variant="outline"
+                  className="max-w-full rounded-full text-center leading-tight whitespace-normal"
+                >
                   Active
                 </Badge>
-                <Badge variant="secondary" className="rounded-full">
+                <Badge
+                  variant="secondary"
+                  className="max-w-full rounded-full text-center leading-tight whitespace-normal"
+                >
                   Expires {new Date(access.expiresAt).toLocaleString()}
                 </Badge>
                 {access.lastAccessedAt ? (
-                  <Badge variant="secondary" className="rounded-full">
+                  <Badge
+                    variant="secondary"
+                    className="max-w-full rounded-full text-center leading-tight whitespace-normal"
+                  >
                     Last unlocked{" "}
                     {new Date(access.lastAccessedAt).toLocaleDateString()}
                   </Badge>
@@ -297,14 +306,17 @@ export default function PetEmergencyQrPanel({
               "Vaccinations",
             ].map((section) => (
               <li key={section}>
-                <Badge variant="secondary" className="rounded-full">
+                <Badge
+                  variant="secondary"
+                  className="max-w-full rounded-full text-center leading-tight whitespace-normal"
+                >
                   {section}
                 </Badge>
               </li>
             ))}
           </ul>
           {access?.isActive ? (
-            <Typography variant="muted" className="text-sm">
+            <Typography variant="muted" className="text-sm break-all">
               Preview link: {access.accessUrl}
             </Typography>
           ) : (
