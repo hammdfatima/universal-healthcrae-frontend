@@ -1,3 +1,8 @@
+export type PetMedicalConditionItem = {
+  name: string
+  notes?: string
+}
+
 export type PetMedicationItem = {
   name: string
   dosage?: string
@@ -28,16 +33,22 @@ export type PetEmergencyContact = {
 
 export type Pet = {
   id: string
+  profileImage: string | null
   name: string
   species: string
   breed: string | null
   sex: string | null
   color: string | null
   dateOfBirth: string | null
+  weight: string | null
   microchipId: string | null
+  ownerName: string | null
+  ownerPhone: string | null
+  ownerEmail: string | null
   veterinaryClinic: string | null
   veterinaryPhone: string | null
   veterinaryRecords: string | null
+  medicalConditions: PetMedicalConditionItem[]
   medications: PetMedicationItem[]
   allergies: PetAllergyItem[]
   vaccinations: PetVaccinationItem[]
@@ -81,16 +92,22 @@ export type SharedPetsResponse = {
 }
 
 export type CreatePetPayload = {
+  profileImage?: string
   name: string
   species: string
   breed?: string
   sex?: string
   color?: string
   dateOfBirth?: string
+  weight?: string
   microchipId?: string
+  ownerName?: string
+  ownerPhone?: string
+  ownerEmail?: string
   veterinaryClinic?: string
   veterinaryPhone?: string
   veterinaryRecords?: string
+  medicalConditions?: PetMedicalConditionItem[]
   medications?: PetMedicationItem[]
   allergies?: PetAllergyItem[]
   vaccinations?: PetVaccinationItem[]

@@ -4,6 +4,7 @@ import {
   FlaskConical,
   History,
   LayoutDashboard,
+  PawPrint,
   Pill,
   QrCode,
   ScanLine,
@@ -132,6 +133,12 @@ export const PATIENT_SEARCH_PAGES: PortalSearchResult[] = [
     Users,
     ["family", "spouse", "emergency contact"]
   ),
+  pageResult("page-pets", "Pets", "/patient/pets" as Route, "Pages", PawPrint, [
+    "pet",
+    "pets",
+    "veterinary",
+    "animal",
+  ]),
   pageResult(
     "page-emergency-qr",
     "Emergency QR",

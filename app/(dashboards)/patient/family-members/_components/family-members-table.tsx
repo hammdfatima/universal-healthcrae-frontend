@@ -323,7 +323,7 @@ export default function FamilyMembersTable({
         <Typography variant="muted" className="ml-6 text-sm">
           {isCouplePlan
             ? "Your couple's plan includes one spouse profile."
-            : `Your family plan supports up to ${limit} household members including pets (${usedSeats}/${limit} used).`}
+            : `Your family plan supports up to ${limit} family members (${usedSeats}/${limit} used).`}
         </Typography>
       ) : null}
 

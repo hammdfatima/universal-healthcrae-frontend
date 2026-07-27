@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react"
 import {
   LayoutDashboard,
   LogOut,
+  PawPrint,
   QrCode,
   Settings,
   Shield,
@@ -36,6 +37,11 @@ import {
   PATIENT_PROFILE_QUERY_KEYS,
   type PatientProfileResponse,
 } from "@/lib/api/patient-profile"
+import {
+  PETS_API,
+  PETS_QUERY_KEYS,
+  type PetsListResponse,
+} from "@/lib/api/pets"
 import { getRoleLabel } from "@/lib/auth/roles"
 import { getUserDisplayName, getUserInitials } from "@/lib/auth/utils"
 import { cn } from "@/lib/utils"
@@ -157,9 +163,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     enabled: Boolean(user) && isAccountOwner,
   })
 
-  const hasPausedOrActiveFamily =
-    (familyList?.members.length ?? 0) > 0 ||
-    (familyList?.pausedPetCount ?? 0) > 0
+  const { data: petsList } = useFetch<PetsListResponse>({
+    path: PETS_API.list,
+    queryKey: PETS_QUERY_KEYS.list,
+    enabled: Boolean(user) && isAccountOwner,
+  })
+
+  const hasPausedOrActiveFamily = (familyList?.members.length ?? 0) > 0
 
   const showFamilyNav =
     (supportsFamilyMembers && isAccountOwner) ||
@@ -188,6 +198,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       href: "/patient/family-members" as Route,
       icon: Users,
       badge: familyCount > 0 ? String(familyCount) : undefined,
+    })
+  }
+
+  if (isAccountOwner) {
+    const petCount = petsList?.pets.length ?? 0
+    overviewItems.push({
+      label: "Pets",
+      href: "/patient/pets" as Route,
+      icon: PawPrint,
+      badge: petCount > 0 ? String(petCount) : undefined,
     })
   }
 

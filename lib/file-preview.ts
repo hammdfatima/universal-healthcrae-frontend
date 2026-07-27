@@ -2,6 +2,39 @@ export function isImageMimeType(mimeType: string): boolean {
   return mimeType.startsWith("image/")
 }
 
+/**
+ * Request a sharp, retina-friendly Cloudinary delivery URL for large profile heroes.
+ * Leaves non-Cloudinary URLs unchanged.
+ */
+export function getSharpImageUrl(
+  url: string,
+  options?: { width?: number; height?: number }
+): string {
+  if (!url.includes("cloudinary.com") || !url.includes("/upload/")) {
+    return url
+  }
+
+  const width = options?.width ?? 800
+  const height = options?.height ?? width
+  const transform = `f_auto,q_auto:best,dpr_2.0,w_${width},h_${height},c_fill,g_auto`
+
+  const marker = "/upload/"
+  const index = url.indexOf(marker)
+  if (index === -1) {
+    return url
+  }
+
+  const afterUpload = url.slice(index + marker.length)
+  if (
+    afterUpload.startsWith(transform) ||
+    afterUpload.includes("q_auto:best")
+  ) {
+    return url
+  }
+
+  return `${url.slice(0, index + marker.length)}${transform}/${afterUpload}`
+}
+
 export function isPdfMimeType(mimeType: string, fileName?: string): boolean {
   if (mimeType.startsWith("image/")) {
     return false

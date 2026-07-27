@@ -8,12 +8,14 @@ import type { UseFormReturn } from "react-hook-form"
 import { Controller, useFieldArray } from "react-hook-form"
 
 import {
+  getPetAgeLabel,
   type PetFormValues,
   petDefaultValues,
   petSchema,
   sexOptions,
   speciesOptions,
 } from "@/app/(dashboards)/patient/_lib/pets"
+import PetPhotoField from "@/app/(dashboards)/patient/pets/_components/pet-photo-field"
 import DatePickerField from "@/components/date-picker-field"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
@@ -50,6 +52,32 @@ type PetFormFieldsProps = {
   cancelHref: Route
 }
 
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: ReactNode
+}) {
+  return (
+    <section className="space-y-4 rounded-xl border border-border/60 bg-muted/20 p-4">
+      <div>
+        <Typography as="h2" variant="h5">
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="muted" className="mt-1 text-sm">
+            {description}
+          </Typography>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 function PetFormFields({
   components,
   methods,
@@ -59,7 +87,14 @@ function PetFormFields({
   cancelHref,
 }: PetFormFieldsProps) {
   const { Input: FormInput, Textarea: FormTextarea, Field } = components
+  const dateOfBirth = methods.watch("dateOfBirth")
+  const petName = methods.watch("name")
+  const ageLabel = getPetAgeLabel(dateOfBirth)
 
+  const medicalConditionsArray = useFieldArray({
+    control: methods.control,
+    name: "medicalConditions",
+  })
   const medicationsArray = useFieldArray({
     control: methods.control,
     name: "medications",
@@ -75,126 +110,222 @@ function PetFormFields({
 
   return (
     <>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormInput name="name" label="Pet Name" placeholder="Buddy" />
-        <Field name="species" label="Species">
-          {(field: { value: unknown; onChange: (value: unknown) => void }) => (
-            <Select
-              value={(field.value as string) || ""}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select species" />
-              </SelectTrigger>
-              <SelectContent>
-                {speciesOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </Field>
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-3">
-        <FormInput name="breed" label="Breed" placeholder="Breed" />
-        <Field name="sex" label="Sex">
-          {(field: { value: unknown; onChange: (value: unknown) => void }) => (
-            <Select
-              value={(field.value as string) || ""}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select sex" />
-              </SelectTrigger>
-              <SelectContent>
-                {sexOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </Field>
-        <FormInput name="color" label="Color / Markings" placeholder="Color" />
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field name="dateOfBirth" label="Date of Birth (optional)">
-          {(field: { value: unknown; onChange: (value: unknown) => void }) => (
-            <DatePickerField
-              value={(field.value as Date | null) ?? undefined}
+      <FormSection title="Pet Photo">
+        <Controller
+          control={methods.control}
+          name="profileImage"
+          render={({ field }) => (
+            <PetPhotoField
+              image={field.value}
+              petName={petName}
               onChange={field.onChange}
-              placeholder="MM/DD/YYYY"
             />
           )}
-        </Field>
-        <FormInput
-          name="microchipId"
-          label="Microchip ID"
-          placeholder="Microchip ID"
         />
-      </div>
+      </FormSection>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <FormInput
-          name="veterinaryClinic"
-          label="Veterinary Clinic"
-          placeholder="Clinic name"
-        />
-        <FormInput
-          name="veterinaryPhone"
-          label="Veterinary Phone"
-          placeholder="(555) 000-0000"
-        />
-      </div>
-
-      <FormTextarea
-        name="veterinaryRecords"
-        label="Veterinary Records"
-        placeholder="Notes from visits, surgeries, chronic conditions..."
-        rows={4}
-      />
-
-      <Field
-        name="emergencyContactFamilyMemberId"
-        label="Emergency Contact (family member)"
-        description="Choose someone from your family members to contact for this pet."
+      <FormSection
+        title="Basic Information"
+        description="Name, breed, age, weight, and identification details."
       >
-        {(field: { value: unknown; onChange: (value: unknown) => void }) => (
-          <Select
-            value={(field.value as string | null) ?? "none"}
-            onValueChange={(value) =>
-              field.onChange(value === "none" ? null : value)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select family member" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {familyMembers.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.firstName} {member.lastName} ({member.relationship})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </Field>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormInput name="name" label="Pet Name" placeholder="Buddy" />
+          <Field name="species" label="Species">
+            {(field: {
+              value: unknown
+              onChange: (value: unknown) => void
+            }) => (
+              <Select
+                value={(field.value as string) || ""}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select species" />
+                </SelectTrigger>
+                <SelectContent>
+                  {speciesOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+        </div>
 
-      {familyMembers.length === 0 ? (
-        <Typography variant="muted" className="text-sm">
-          Add a family member first if you want to assign an emergency contact
-          for this pet.
-        </Typography>
-      ) : null}
+        <div className="grid gap-5 sm:grid-cols-3">
+          <FormInput
+            name="breed"
+            label="Breed"
+            placeholder="Golden Retriever"
+          />
+          <Field name="sex" label="Sex">
+            {(field: {
+              value: unknown
+              onChange: (value: unknown) => void
+            }) => (
+              <Select
+                value={(field.value as string) || ""}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select sex" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sexOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+          <FormInput name="weight" label="Weight" placeholder="e.g. 45 lbs" />
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-3">
+          <Field name="dateOfBirth" label="Date of Birth">
+            {(field: {
+              value: unknown
+              onChange: (value: unknown) => void
+            }) => (
+              <div className="space-y-1">
+                <DatePickerField
+                  value={(field.value as Date | null) ?? undefined}
+                  onChange={field.onChange}
+                  placeholder="MM/DD/YYYY"
+                />
+                {ageLabel ? (
+                  <Typography variant="muted" className="text-xs">
+                    Age: {ageLabel}
+                  </Typography>
+                ) : null}
+              </div>
+            )}
+          </Field>
+          <FormInput
+            name="color"
+            label="Color / Markings"
+            placeholder="Color or markings"
+          />
+          <FormInput
+            name="microchipId"
+            label="Microchip Number"
+            placeholder="Microchip ID"
+          />
+        </div>
+      </FormSection>
+
+      <FormSection
+        title="Owner Contact"
+        description="Primary owner details shown on your pet's emergency profile."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormInput
+            name="ownerName"
+            label="Owner Name"
+            placeholder="Your name"
+          />
+          <FormInput
+            name="ownerPhone"
+            label="Owner Phone"
+            placeholder="(555) 000-0000"
+          />
+        </div>
+        <FormInput
+          name="ownerEmail"
+          label="Owner Email"
+          placeholder="you@example.com"
+        />
+      </FormSection>
+
+      <FormSection
+        title="Emergency Contact"
+        description="Optional family member to contact for this pet."
+      >
+        <Field
+          name="emergencyContactFamilyMemberId"
+          label="Emergency Contact (family member)"
+        >
+          {(field: { value: unknown; onChange: (value: unknown) => void }) => (
+            <Select
+              value={(field.value as string | null) ?? "none"}
+              onValueChange={(value) =>
+                field.onChange(value === "none" ? null : value)
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select family member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {familyMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.firstName} {member.lastName} ({member.relationship})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </Field>
+
+        {familyMembers.length === 0 ? (
+          <Typography variant="muted" className="text-sm">
+            Add a family member first if you want to assign an emergency contact
+            for this pet.
+          </Typography>
+        ) : null}
+      </FormSection>
+
+      <FormSection
+        title="Primary Veterinarian"
+        description="Your pet's main veterinary clinic and contact number."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormInput
+            name="veterinaryClinic"
+            label="Veterinary Clinic"
+            placeholder="Clinic name"
+          />
+          <FormInput
+            name="veterinaryPhone"
+            label="Veterinary Phone"
+            placeholder="(555) 000-0000"
+          />
+        </div>
+        <FormTextarea
+          name="veterinaryRecords"
+          label="Additional Veterinary Notes"
+          placeholder="Visit notes, surgeries, or other veterinary history..."
+          rows={3}
+        />
+      </FormSection>
 
       <DynamicListSection
-        title="Medications"
+        title="Medical Conditions"
+        emptyLabel="No medical conditions added yet."
+        addLabel="Add Condition"
+        fields={medicalConditionsArray.fields}
+        onAdd={() => medicalConditionsArray.append({ name: "", notes: "" })}
+        onRemove={medicalConditionsArray.remove}
+        renderRow={(index) => (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              placeholder="Condition name"
+              {...methods.register(`medicalConditions.${index}.name`)}
+            />
+            <Input
+              placeholder="Notes"
+              {...methods.register(`medicalConditions.${index}.notes`)}
+            />
+          </div>
+        )}
+      />
+
+      <DynamicListSection
+        title="Current Medications"
         emptyLabel="No medications added yet."
         addLabel="Add Medication"
         fields={medicationsArray.fields}
@@ -248,7 +379,7 @@ function PetFormFields({
       />
 
       <DynamicListSection
-        title="Vaccinations"
+        title="Vaccination Status"
         emptyLabel="No vaccinations added yet."
         addLabel="Add Vaccination"
         fields={vaccinationsArray.fields}
@@ -328,7 +459,7 @@ export default function PetForm({
   submitLabel,
   isSubmitting = false,
   familyMembers,
-  cancelHref = "/patient/family-members?tab=pets" as Route,
+  cancelHref = "/patient/pets" as Route,
 }: PetFormProps) {
   return (
     <div className="mx-auto max-w-7xl p-4">

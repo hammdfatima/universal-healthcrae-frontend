@@ -34,10 +34,9 @@ export function supportsFamilyMembers(
   return Boolean(capabilities && capabilities.memberLimit > 0)
 }
 
-export function supportsPets(
-  capabilities: PlanCapabilities | null | undefined
-): boolean {
-  return Boolean(capabilities?.allowsPets)
+/** Pets are available on every plan and do not consume family seats. */
+export function supportsPets(_capabilities?: PlanCapabilities | null): boolean {
+  return true
 }
 
 export function getFamilyMemberLimit(
@@ -72,11 +71,11 @@ export function getFamilyPageCopy(tier: PlanTier | null) {
   return {
     title: "My Family",
     description:
-      "Manage family members and pets linked to your health records and emergency contacts.",
+      "Manage family members linked to your health records and emergency contacts.",
     addButton: "Add Family Member",
     addTitle: "Add Family Member",
     addDescription:
-      "Add a family member to your health profile and optionally mark them as an emergency contact. Add pets from the Pets tab.",
+      "Add a family member to your health profile and optionally mark them as an emergency contact.",
     saveLabel: "Save Member",
     searchPlaceholder: "Search family members...",
     emptyMessage:

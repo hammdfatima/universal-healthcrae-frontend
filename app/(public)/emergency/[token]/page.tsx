@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, Eye, EyeOff } from "lucide-react"
+import { AlertTriangle, Eye, EyeOff, Shield } from "lucide-react"
 import { use, useState } from "react"
 
 import EmergencyRecordsView from "@/app/(dashboards)/patient/_components/emergency-records-view"
@@ -57,12 +57,6 @@ export default function EmergencyAccessPage({
   if (records) {
     return (
       <div className="mx-auto max-w-4xl px-5 pb-24 pt-8 sm:px-6 sm:pb-10 sm:pt-10">
-        <div className="mb-8">
-          <Typography variant="h2">Emergency Medical Records</Typography>
-          <Typography variant="muted" className="mt-2">
-            Authorized emergency access for {records.patientName}.
-          </Typography>
-        </div>
         <EmergencyRecordsView records={records} />
       </div>
     )
@@ -71,6 +65,9 @@ export default function EmergencyAccessPage({
   return (
     <div className="mx-auto max-w-md px-5 pb-24 pt-8 sm:px-6 sm:pb-10 sm:pt-10">
       <div className="mb-8 text-center">
+        <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Shield className="size-7" aria-hidden />
+        </span>
         <Typography variant="h2">Emergency Access</Typography>
         {challengeQuery.isLoading ? null : challengeQuery.isError ||
           !challengeQuery.data ? (
@@ -93,21 +90,19 @@ export default function EmergencyAccessPage({
           className="min-h-[40vh] py-16"
         />
       ) : challengeQuery.isError || !challengeQuery.data ? (
-        <div className="rounded-2xl border border-border/60 bg-muted/20 px-6 py-12 text-center">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-destructive/10">
-            <AlertTriangle className="size-7 text-destructive" aria-hidden />
-          </div>
-          <Typography variant="h3" className="mt-6">
-            Emergency access unavailable
-          </Typography>
-          <Typography variant="muted" className="mt-2">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+          <Typography
+            variant="small"
+            className="inline-flex items-center gap-2 font-medium text-destructive"
+          >
+            <AlertTriangle className="size-4" aria-hidden />
             This link is invalid, expired, or has been revoked by the patient.
           </Typography>
         </div>
       ) : (
         <form
           onSubmit={handleUnlock}
-          className="space-y-4 rounded-2xl border border-border/60 bg-muted/10 p-6"
+          className="space-y-4 rounded-2xl border border-border/60 bg-card p-6 shadow-sm"
         >
           <div className="space-y-2">
             <label htmlFor="emergency-pin" className="text-sm font-medium">
@@ -148,7 +143,7 @@ export default function EmergencyAccessPage({
             className="w-full"
             disabled={pin.length !== 4 || unlockApi.isPending}
           >
-            {unlockApi.isPending ? "Unlocking..." : "Unlock records"}
+            {unlockApi.isPending ? "Unlocking..." : "Unlock Records"}
           </Button>
         </form>
       )}
