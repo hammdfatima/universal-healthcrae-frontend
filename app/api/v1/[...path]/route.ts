@@ -120,7 +120,15 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
   const responseHeaders = new Headers()
   upstream.headers.forEach((value, key) => {
     const lower = key.toLowerCase()
-    if (lower === "transfer-encoding" || lower === "set-cookie") {
+    // Node/Next may hand us a decoded response body. Forwarding the upstream
+    // content metadata can then advertise the wrong byte length/encoding and
+    // cause browsers to treat JSON payloads as truncated.
+    if (
+      lower === "transfer-encoding" ||
+      lower === "set-cookie" ||
+      lower === "content-length" ||
+      lower === "content-encoding"
+    ) {
       return
     }
     responseHeaders.set(key, value)
