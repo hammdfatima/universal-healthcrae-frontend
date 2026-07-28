@@ -21,7 +21,6 @@ import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
 import { useFetch } from "@/hooks/use-fetch"
 import {
-  normalizeSubscriptionPlans,
   SUBSCRIPTION_PLANS_API,
   SUBSCRIPTION_PLANS_QUERY_KEYS,
 } from "@/lib/api/subscription-plans"
@@ -82,7 +81,7 @@ export default function ChangePlanDialog({
   const [confirming, setConfirming] = useState(false)
 
   const {
-    data: rawPlans,
+    data: plans = [],
     isLoading,
     isError,
     error,
@@ -93,7 +92,6 @@ export default function ChangePlanDialog({
     queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.public,
     enabled: open,
   })
-  const plans = normalizeSubscriptionPlans(rawPlans)
 
   const { onRequest: previewPlanChange } = useApi<{ planId: string }>({
     key: "preview-subscription-plan",

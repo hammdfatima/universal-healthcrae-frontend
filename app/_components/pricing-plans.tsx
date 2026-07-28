@@ -12,7 +12,6 @@ import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
 import { useFetch } from "@/hooks/use-fetch"
 import {
-  normalizeSubscriptionPlans,
   SUBSCRIPTION_PLANS_API,
   SUBSCRIPTION_PLANS_QUERY_KEYS,
 } from "@/lib/api/subscription-plans"
@@ -27,7 +26,7 @@ export default function PricingPlans() {
   const router = useRouter()
 
   const {
-    data: rawPlans,
+    data: plans = [],
     isLoading,
     isError,
     error,
@@ -37,7 +36,6 @@ export default function PricingPlans() {
     path: SUBSCRIPTION_PLANS_API.public.list,
     queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.public,
   })
-  const plans = normalizeSubscriptionPlans(rawPlans)
 
   if (isLoading) {
     return (

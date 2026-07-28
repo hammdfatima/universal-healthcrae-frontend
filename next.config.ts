@@ -1,24 +1,5 @@
 import type { NextConfig } from "next";
 
-function getApiOrigin() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
-  if (!apiUrl) {
-    return null;
-  }
-
-  try {
-    return new URL(apiUrl).origin;
-  } catch {
-    return null;
-  }
-}
-
-const connectSrc = ["'self'"];
-const apiOrigin = getApiOrigin();
-if (apiOrigin) {
-  connectSrc.push(apiOrigin);
-}
-
 // HIPAA §2.6 transport & browser hardening. Kept permissive enough for
 // Next.js inline runtime scripts / styles rather than a strict nonce-based
 // CSP, which would require broader app changes to avoid breaking the app.
@@ -31,7 +12,7 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com",
   "font-src 'self' data:",
-  `connect-src ${connectSrc.join(" ")}`,
+  "connect-src 'self'",
   "upgrade-insecure-requests",
 ].join("; ");
 

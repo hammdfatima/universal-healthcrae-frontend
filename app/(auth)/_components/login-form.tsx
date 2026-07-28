@@ -212,15 +212,6 @@ function LoginFormContent({ onSwitchToSignup, compact }: LoginFormProps) {
                 password: values.password,
               },
               onSuccess: (data: LoginResponse) => {
-                if (
-                  !data ||
-                  typeof data !== "object" ||
-                  !("mfaRequired" in data)
-                ) {
-                  toastError("Unexpected login response. Please try again.")
-                  return
-                }
-
                 if (data.mfaRequired) {
                   setMfaToken(data.mfaToken)
                   setMfaCode("")

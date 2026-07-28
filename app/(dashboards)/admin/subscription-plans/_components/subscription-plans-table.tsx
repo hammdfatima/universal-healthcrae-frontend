@@ -31,7 +31,6 @@ import { Typography } from "@/components/ui/typography"
 import useApi from "@/hooks/use-api"
 import { useFetch } from "@/hooks/use-fetch"
 import {
-  normalizeSubscriptionPlans,
   SUBSCRIPTION_PLANS_API,
   SUBSCRIPTION_PLANS_QUERY_KEYS,
 } from "@/lib/api/subscription-plans"
@@ -44,7 +43,7 @@ export default function SubscriptionPlansTable() {
   const [deletePlan, setDeletePlan] = useState<SubscriptionPlan | null>(null)
 
   const {
-    data: rawPlans,
+    data: plans = [],
     isLoading,
     isError,
     error,
@@ -54,7 +53,6 @@ export default function SubscriptionPlansTable() {
     path: SUBSCRIPTION_PLANS_API.admin.list,
     queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.admin,
   })
-  const plans = normalizeSubscriptionPlans(rawPlans)
 
   const { onRequest: createPlan, isPending: isCreating } =
     useApi<SubscriptionPlanPayload>({
