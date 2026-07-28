@@ -1,7 +1,7 @@
 "use client"
 
 import type { Route } from "next"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 import { Loader } from "@/components/ui/loader"
@@ -35,7 +35,6 @@ export default function AuthGuard({
 }: AuthGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const { toastError } = useToast()
   const { isAuthenticated, isReady, user, hasRole } = useAuth()
 
@@ -50,9 +49,15 @@ export default function AuthGuard({
     }
 
     if (!isAuthenticated || !user) {
+      // Read search client-side only — useSearchParams requires Suspense and
+      // breaks static prerender of every AuthGuard-wrapped dashboard route.
+      const search =
+        typeof window !== "undefined"
+          ? window.location.search.replace(/^\?/, "")
+          : ""
       const target =
         redirectTo === "/login"
-          ? buildLoginRedirect(pathname, searchParams.toString())
+          ? buildLoginRedirect(pathname, search)
           : redirectTo
       router.replace(target)
       return
@@ -70,7 +75,6 @@ export default function AuthGuard({
     pathname,
     redirectTo,
     router,
-    searchParams,
     toastError,
     user,
   ])
