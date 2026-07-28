@@ -3,6 +3,11 @@ import { type NextRequest, NextResponse } from "next/server"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+/** Render free / Neon cold starts can take 30–60s before the API accepts traffic. */
+const UPSTREAM_TIMEOUT_MS = 55_000
+const UPSTREAM_RETRY_ATTEMPTS = 3
+const UPSTREAM_RETRY_DELAY_MS = 1_500
+
 const HOP_BY_HOP_HEADERS = new Set([
   "connection",
   "content-length",
@@ -73,6 +78,35 @@ function resolveClientIp(request: NextRequest): string | null {
   return null
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function fetchUpstream(targetUrl: string, init: RequestInit) {
+  let lastError: unknown
+
+  for (let attempt = 1; attempt <= UPSTREAM_RETRY_ATTEMPTS; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS)
+
+    try {
+      return await fetch(targetUrl, {
+        ...init,
+        signal: controller.signal,
+      })
+    } catch (error) {
+      lastError = error
+      if (attempt < UPSTREAM_RETRY_ATTEMPTS) {
+        await sleep(UPSTREAM_RETRY_DELAY_MS * attempt)
+      }
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+  throw lastError
+}
+
 async function proxyRequest(request: NextRequest, context: RouteContext) {
   const { path } = await context.params
   const targetUrl = `${getBackendBaseUrl()}/${path.join("/")}${request.nextUrl.search}`
@@ -106,12 +140,13 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
 
   let upstream: Response
   try {
-    upstream = await fetch(targetUrl, init)
+    upstream = await fetchUpstream(targetUrl, init)
   } catch {
     return NextResponse.json(
       {
         success: false,
-        message: "Unable to reach the API server. Please try again.",
+        message:
+          "Unable to reach the API server. It may be waking from sleep — please try again in a moment.",
       },
       { status: 502 }
     )
