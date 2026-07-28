@@ -100,7 +100,11 @@ const useApi = <T,>({
       {
         onSuccess: (response) => {
           showSuccessToast && toastSuccess(response.data.message)
-          onSuccess(response.data.data)
+          const payload =
+            response.data?.data !== undefined
+              ? response.data.data
+              : response.data
+          onSuccess(payload)
         },
 
         onError: (error: any) => {

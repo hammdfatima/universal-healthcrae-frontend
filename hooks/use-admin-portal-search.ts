@@ -11,6 +11,7 @@ import {
   type AdminPaymentsListResponse,
 } from "@/lib/api/admin-payments"
 import {
+  normalizeSubscriptionPlans,
   SUBSCRIPTION_PLANS_API,
   SUBSCRIPTION_PLANS_QUERY_KEYS,
 } from "@/lib/api/subscription-plans"
@@ -66,6 +67,7 @@ export function useAdminPortalSearch(enabled: boolean) {
     queryKey: SUBSCRIPTION_PLANS_QUERY_KEYS.admin,
     enabled,
   })
+  const plans = normalizeSubscriptionPlans(plansQuery.data)
 
   const recordResults = useMemo(() => {
     const results: PortalSearchResult[] = []
@@ -109,7 +111,7 @@ export function useAdminPortalSearch(enabled: boolean) {
       )
     }
 
-    for (const plan of plansQuery.data ?? []) {
+    for (const plan of plans) {
       results.push(
         recordResult(
           `plan-${plan.id}`,
@@ -125,7 +127,7 @@ export function useAdminPortalSearch(enabled: boolean) {
     return results
   }, [
     paymentsQuery.data?.payments,
-    plansQuery.data,
+    plans,
     queriesQuery.data?.queries,
     usersQuery.data,
   ])
