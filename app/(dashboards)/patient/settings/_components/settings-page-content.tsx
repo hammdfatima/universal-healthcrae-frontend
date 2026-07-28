@@ -17,6 +17,7 @@ import ProfileTab from "@/app/(dashboards)/patient/settings/_components/profile-
 import SubscriptionTab from "@/app/(dashboards)/patient/settings/_components/subscription-tab"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Typography } from "@/components/ui/typography"
+import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 
 const tabTriggerClass = cn(
@@ -41,22 +42,35 @@ function isSettingsTab(value: string | null): value is SettingsTab {
 export default function SettingsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
+  const mfaSetupRequired = Boolean(user?.mfaSetupRequired)
   const tabParam = searchParams.get("tab")
-  const [activeTab, setActiveTab] = useState<SettingsTab>(
-    isSettingsTab(tabParam) ? tabParam : "profile"
-  )
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    if (mfaSetupRequired) return "mfa"
+    return isSettingsTab(tabParam) ? tabParam : "profile"
+  })
 
   useEffect(() => {
+    if (mfaSetupRequired) {
+      setActiveTab("mfa")
+      if (tabParam !== "mfa") {
+        router.replace("/patient/settings?tab=mfa")
+      }
+      return
+    }
+
     if (isSettingsTab(tabParam)) {
       setActiveTab(tabParam)
     } else if (tabParam === "sharing") {
       setActiveTab("profile")
       router.replace("/patient/settings?tab=profile")
     }
-  }, [tabParam, router])
+  }, [tabParam, router, mfaSetupRequired])
 
   function handleTabChange(value: string) {
     if (!isSettingsTab(value)) return
+    // Other settings tabs call patient APIs that stay blocked until MFA is on.
+    if (mfaSetupRequired && value !== "mfa") return
 
     setActiveTab(value)
     const params = new URLSearchParams(searchParams.toString())
@@ -86,19 +100,35 @@ export default function SettingsPageContent() {
         className="mt-8 gap-6"
       >
         <TabsList className="thin-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl border border-border/60 bg-muted/40 p-1.5 sm:w-fit">
-          <TabsTrigger value="profile" className={tabTriggerClass}>
+          <TabsTrigger
+            value="profile"
+            className={tabTriggerClass}
+            disabled={mfaSetupRequired}
+          >
             <UserRound className="size-4" aria-hidden />
             Profile
           </TabsTrigger>
-          <TabsTrigger value="subscription" className={tabTriggerClass}>
+          <TabsTrigger
+            value="subscription"
+            className={tabTriggerClass}
+            disabled={mfaSetupRequired}
+          >
             <CreditCard className="size-4" aria-hidden />
             Manage Subscription
           </TabsTrigger>
-          <TabsTrigger value="account" className={tabTriggerClass}>
+          <TabsTrigger
+            value="account"
+            className={tabTriggerClass}
+            disabled={mfaSetupRequired}
+          >
             <Settings className="size-4" aria-hidden />
             Manage Account
           </TabsTrigger>
-          <TabsTrigger value="password" className={tabTriggerClass}>
+          <TabsTrigger
+            value="password"
+            className={tabTriggerClass}
+            disabled={mfaSetupRequired}
+          >
             <KeyRound className="size-4" aria-hidden />
             Change Password
           </TabsTrigger>
@@ -108,18 +138,22 @@ export default function SettingsPageContent() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile">
-          <ProfileTab />
-        </TabsContent>
-        <TabsContent value="subscription">
-          <SubscriptionTab />
-        </TabsContent>
-        <TabsContent value="account">
-          <AccountTab />
-        </TabsContent>
-        <TabsContent value="password">
-          <ChangePasswordTab />
-        </TabsContent>
+        {!mfaSetupRequired ? (
+          <>
+            <TabsContent value="profile">
+              <ProfileTab />
+            </TabsContent>
+            <TabsContent value="subscription">
+              <SubscriptionTab />
+            </TabsContent>
+            <TabsContent value="account">
+              <AccountTab />
+            </TabsContent>
+            <TabsContent value="password">
+              <ChangePasswordTab />
+            </TabsContent>
+          </>
+        ) : null}
         <TabsContent value="mfa">
           <AuthenticatorMfaTab />
         </TabsContent>

@@ -80,9 +80,10 @@ function LoginFormContent({ onSwitchToSignup, compact }: LoginFormProps) {
     setMfaToken(null)
     setMfaCode("")
 
-    const redirectPath = nextPath?.startsWith("/")
-      ? (nextPath as Route)
-      : getPostAuthRedirect(result.user)
+    const redirectPath =
+      nextPath?.startsWith("/") && !nextPath.startsWith("//")
+        ? (nextPath as Route)
+        : getPostAuthRedirect(result.user)
 
     router.push(redirectPath)
   }

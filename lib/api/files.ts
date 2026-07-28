@@ -52,7 +52,7 @@ type ApiResponse<T> = {
 
 export async function uploadFile(file: File): Promise<UploadedFile> {
   const { default: axios, isAxiosError } = await import("axios")
-  const { env } = await import("@/env")
+  const { getApiBaseUrl } = await import("@/lib/api-base")
   const { buildRequestUrl } = await import("@/lib/utils")
 
   const formData = new FormData()
@@ -60,7 +60,7 @@ export async function uploadFile(file: File): Promise<UploadedFile> {
 
   try {
     const response = await axios.post<ApiResponse<UploadedFile>>(
-      buildRequestUrl(env.NEXT_PUBLIC_API_URL, FILES_API.upload),
+      buildRequestUrl(getApiBaseUrl(), FILES_API.upload),
       formData,
       {
         withCredentials: true,

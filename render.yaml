@@ -1,6 +1,7 @@
 # Render Blueprint for Universal Healthcare Frontend
-# Set NEXT_PUBLIC_API_URL to your deployed backend, e.g.:
-#   https://universal-healthcare-api.onrender.com/api/v1
+# Browser calls always go to same-origin /api/v1 (mobile-safe auth cookies).
+# Set NEXT_PUBLIC_API_URL (or BACKEND_API_URL) to your deployed backend, e.g.:
+#   https://universal-healthcare-backend.onrender.com/api/v1
 # Set NEXT_PUBLIC_APP_URL to this frontend URL, e.g.:
 #   https://universal-healthcare-frontend.onrender.com
 
@@ -15,6 +16,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: BACKEND_API_URL
         sync: false
       - key: NEXT_PUBLIC_APP_URL
         sync: false

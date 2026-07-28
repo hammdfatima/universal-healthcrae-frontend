@@ -6,13 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect } from "react"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import { env } from "@/env"
 import { useFetch } from "@/hooks/use-fetch"
 import {
   SUBSCRIPTIONS_API,
   SUBSCRIPTIONS_QUERY_KEYS,
   type SubscriptionMeResponse,
 } from "@/lib/api/subscriptions"
+import { getApiBaseUrl } from "@/lib/api-base"
 import { readAuthSession } from "@/lib/auth/session"
 import { buildRequestUrl } from "@/lib/utils"
 
@@ -46,7 +46,7 @@ function SubscriptionSuccessContent() {
       try {
         await axios.get(
           buildRequestUrl(
-            env.NEXT_PUBLIC_API_URL,
+            getApiBaseUrl(),
             SUBSCRIPTIONS_API.verifyCheckout(sessionId)
           ),
           {

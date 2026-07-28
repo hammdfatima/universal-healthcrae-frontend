@@ -1,12 +1,9 @@
 "use client"
 
-import { RefreshCw } from "lucide-react"
 import Link from "next/link"
 
 import {
-  type FamilyMemberCreateFormValues,
   type FamilyMemberFormValues,
-  familyMemberCreateSchema,
   familyMemberDefaultValues,
   familyMemberSchema,
   relationshipOptions,
@@ -14,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import FormModified from "@/components/ui/form-modified"
-import { Input } from "@/components/ui/input"
 import { Loader } from "@/components/ui/loader"
 import {
   Select,
@@ -24,15 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Typography } from "@/components/ui/typography"
-import { generateTemporaryPassword } from "@/lib/auth/generate-password"
 
 type FamilyMemberFormProps = {
   title: string
   description: string
-  defaultValues?: FamilyMemberFormValues | FamilyMemberCreateFormValues
-  onSubmit: (
-    values: FamilyMemberFormValues | FamilyMemberCreateFormValues
-  ) => void
+  defaultValues?: FamilyMemberFormValues
+  onSubmit: (values: FamilyMemberFormValues) => void
   submitLabel: string
   mode?: "create" | "edit"
   isCouplePlan?: boolean
@@ -106,32 +99,10 @@ function FamilyMemberFields({
       </div>
 
       {isCreate ? (
-        <Field
-          name="password"
-          label="Temporary Password"
-          description="This password is emailed to the member. They must change it on first login."
-        >
-          {(field: { value: unknown; onChange: (value: unknown) => void }) => (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={field.value as string}
-                onChange={(event) => field.onChange(event.target.value)}
-                readOnly
-                className="bg-muted/40"
-                aria-label="Temporary password"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => field.onChange(generateTemporaryPassword())}
-              >
-                <RefreshCw className="size-4" aria-hidden />
-                Regenerate
-              </Button>
-            </div>
-          )}
-        </Field>
+        <Typography variant="muted" className="text-sm">
+          We email them a secure link to set their own password. No temporary
+          password is shared with you or sent in plain text.
+        </Typography>
       ) : null}
 
       <Field name="isEmergencyContact">
@@ -182,74 +153,39 @@ export default function FamilyMemberForm({
       </Typography>
 
       <div className="mt-8 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-        {isCreate ? (
-          <FormModified
-            schema={familyMemberCreateSchema}
-            defaultValues={defaultValues as FamilyMemberCreateFormValues}
-            fieldsetProps={{ className: "space-y-5" }}
-            onSubmit={(values) => {
-              onSubmit(
-                isCouplePlan ? { ...values, relationship: "Spouse" } : values
-              )
-            }}
-          >
-            {({ components }) => (
-              <>
-                <FamilyMemberFields
-                  isCouplePlan={isCouplePlan}
-                  isCreate
-                  components={components}
-                />
-                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="outline" asChild>
-                    <Link href="/patient/family-members">Cancel</Link>
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <Loader variant="button" color="white" />
-                    ) : (
-                      submitLabel
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
-          </FormModified>
-        ) : (
-          <FormModified
-            schema={familyMemberSchema}
-            defaultValues={defaultValues as FamilyMemberFormValues}
-            fieldsetProps={{ className: "space-y-5" }}
-            onSubmit={(values) => {
-              onSubmit(
-                isCouplePlan ? { ...values, relationship: "Spouse" } : values
-              )
-            }}
-          >
-            {({ components }) => (
-              <>
-                <FamilyMemberFields
-                  isCouplePlan={isCouplePlan}
-                  isCreate={false}
-                  components={components}
-                  disableEmail
-                />
-                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-                  <Button type="button" variant="outline" asChild>
-                    <Link href="/patient/family-members">Cancel</Link>
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <Loader variant="button" color="white" />
-                    ) : (
-                      submitLabel
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
-          </FormModified>
-        )}
+        <FormModified
+          schema={familyMemberSchema}
+          defaultValues={defaultValues}
+          fieldsetProps={{ className: "space-y-5" }}
+          onSubmit={(values) => {
+            onSubmit(
+              isCouplePlan ? { ...values, relationship: "Spouse" } : values
+            )
+          }}
+        >
+          {({ components }) => (
+            <>
+              <FamilyMemberFields
+                isCouplePlan={isCouplePlan}
+                isCreate={isCreate}
+                components={components}
+                disableEmail={!isCreate}
+              />
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/patient/family-members">Cancel</Link>
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader variant="button" color="white" />
+                  ) : (
+                    submitLabel
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </FormModified>
       </div>
     </div>
   )

@@ -12,6 +12,8 @@ export type AuthUser = {
   mustChangePassword?: boolean
   isFamilyMemberAccount?: boolean
   mfaEnabled?: boolean
+  /** HIPAA §2.5: server signal to prompt MFA enrollment right after sign-in. */
+  mfaSetupRequired?: boolean
 }
 
 /** Successful authenticated session (cookie set by API). */
@@ -47,4 +49,9 @@ export type ResetTokenResponse = {
 
 export type MessageResponse = {
   message: string
+}
+
+/** HIPAA §2.4: short-lived token proving a recent password re-entry. */
+export type StepUpTokenResponse = {
+  stepUpToken: string
 }

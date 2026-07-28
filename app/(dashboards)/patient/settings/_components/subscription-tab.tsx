@@ -23,7 +23,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader } from "@/components/ui/loader"
 import { Typography } from "@/components/ui/typography"
-import { env } from "@/env"
 import useApi from "@/hooks/use-api"
 import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
@@ -33,6 +32,7 @@ import {
   type SubscriptionMeResponse,
   type UserSubscription,
 } from "@/lib/api/subscriptions"
+import { getApiBaseUrl } from "@/lib/api-base"
 import { ensureCurrencyPrice } from "@/lib/subscription/format-price"
 import { buildRequestUrl } from "@/lib/utils"
 
@@ -114,7 +114,7 @@ export default function SubscriptionTab() {
     if (!sessionId) return
 
     const verifyUrl = buildRequestUrl(
-      env.NEXT_PUBLIC_API_URL,
+      getApiBaseUrl(),
       SUBSCRIPTIONS_API.verifyCheckout(sessionId)
     )
 

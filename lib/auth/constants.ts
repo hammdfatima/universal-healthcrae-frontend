@@ -7,12 +7,14 @@ export const AUTH_API = {
   forgotPassword: "/auth/forgot-password",
   verifyResetOtp: "/auth/verify-reset-otp",
   resetPassword: "/auth/reset-password",
+  setPassword: "/auth/set-password",
   session: "/auth/session",
   verifyMfaLogin: "/auth/mfa/verify-login",
   mfaStatus: "/auth/mfa",
   mfaSetup: "/auth/mfa/setup",
   mfaEnable: "/auth/mfa/enable",
   mfaDisable: "/auth/mfa/disable",
+  stepUpVerify: "/auth/step-up/verify",
 } as const
 
 export const AUTH_STORAGE_KEYS = {
@@ -31,8 +33,11 @@ export const AUTH_COOKIE_KEYS = {
 /** Matches backend JWT expiry (24 hours). */
 export const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
-/** Sign out after this period with no user interaction. */
-export const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000
+/** Sign out after this period with no user interaction (HIPAA §2.5). */
+export const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000
+
+/** Warn the user ~2 minutes before the inactivity sign-out fires. */
+export const INACTIVITY_WARNING_MS = 13 * 60 * 1000
 
 export type SessionEndReason =
   | "expired"

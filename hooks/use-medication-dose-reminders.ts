@@ -10,7 +10,6 @@ import {
   getMedicationDosesDueNow,
   getUpcomingMedicationDoses,
 } from "@/app/(dashboards)/patient/_lib/medications"
-import { env } from "@/env"
 import { useFetch } from "@/hooks/use-fetch"
 import {
   MEDICATIONS_API,
@@ -22,6 +21,7 @@ import {
   type NotificationsListResponse,
   notificationsListPath,
 } from "@/lib/api/notifications"
+import { getApiBaseUrl } from "@/lib/api-base"
 import { buildRequestUrl } from "@/lib/utils"
 
 const FIRED_KEY_PREFIX = "uhc:med-dose-fired:"
@@ -129,7 +129,7 @@ export function useMedicationDoseReminders(enabled = true) {
 
       try {
         const response = await axios.get(
-          buildRequestUrl(env.NEXT_PUBLIC_API_URL, notificationsListPath()),
+          buildRequestUrl(getApiBaseUrl(), notificationsListPath()),
           { withCredentials: true }
         )
         const payload = (response.data?.data ??

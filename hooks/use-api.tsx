@@ -2,8 +2,8 @@
 import { useMutation } from "@tanstack/react-query"
 import type { AxiosProgressEvent } from "axios"
 import axios from "axios"
-import { env } from "@/env"
 import useToast from "@/hooks/use-toast"
+import { getApiBaseUrl } from "@/lib/api-base"
 import { buildRequestUrl } from "@/lib/utils"
 
 type DataRequestType<T> = {
@@ -37,7 +37,7 @@ const useApi = <T,>({
   key,
   method = "post",
 }: IUsePostApi<T> = {}) => {
-  const API_URL = env.NEXT_PUBLIC_API_URL
+  const API_URL = getApiBaseUrl()
   const { toastError, toastSuccess } = useToast()
 
   const postRequest = ({

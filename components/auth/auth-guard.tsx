@@ -1,7 +1,7 @@
 "use client"
 
 import type { Route } from "next"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
 
 import { Loader } from "@/components/ui/loader"
@@ -17,6 +17,16 @@ type AuthGuardProps = {
   fallback?: React.ReactNode
 }
 
+function buildLoginRedirect(pathname: string, search: string): Route {
+  const returnTo = `${pathname}${search ? `?${search}` : ""}`
+  // Only bounce back to in-app paths after sign-in.
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) {
+    return "/login"
+  }
+
+  return `/login?next=${encodeURIComponent(returnTo)}` as Route
+}
+
 export default function AuthGuard({
   children,
   allowedRoles,
@@ -24,6 +34,8 @@ export default function AuthGuard({
   fallback,
 }: AuthGuardProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { toastError } = useToast()
   const { isAuthenticated, isReady, user, hasRole } = useAuth()
 
@@ -38,7 +50,11 @@ export default function AuthGuard({
     }
 
     if (!isAuthenticated || !user) {
-      router.replace(redirectTo)
+      const target =
+        redirectTo === "/login"
+          ? buildLoginRedirect(pathname, searchParams.toString())
+          : redirectTo
+      router.replace(target)
       return
     }
 
@@ -51,8 +67,10 @@ export default function AuthGuard({
     hasRole,
     isAuthenticated,
     isReady,
+    pathname,
     redirectTo,
     router,
+    searchParams,
     toastError,
     user,
   ])

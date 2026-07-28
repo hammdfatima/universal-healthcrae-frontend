@@ -2,7 +2,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
-import { env } from "@/env"
 import useToast from "@/hooks/use-toast"
 import {
   type CloudinaryResourceType,
@@ -10,6 +9,7 @@ import {
   FILES_QUERY_KEYS,
   type UploadedFile,
 } from "@/lib/api/files"
+import { getApiBaseUrl } from "@/lib/api-base"
 import { buildRequestUrl } from "@/lib/utils"
 
 type ApiResponse<T> = {
@@ -39,7 +39,7 @@ export function useFileUpload() {
       formData.append("file", file)
 
       const response = await axios.post<ApiResponse<UploadedFile>>(
-        buildRequestUrl(env.NEXT_PUBLIC_API_URL, FILES_API.upload),
+        buildRequestUrl(getApiBaseUrl(), FILES_API.upload),
         formData,
         {
           withCredentials: true,
@@ -59,7 +59,7 @@ export function useFileUpload() {
       resourceType?: CloudinaryResourceType
     }) => {
       const response = await axios.delete<ApiResponse<{ message: string }>>(
-        buildRequestUrl(env.NEXT_PUBLIC_API_URL, FILES_API.delete),
+        buildRequestUrl(getApiBaseUrl(), FILES_API.delete),
         {
           headers: {
             "Content-Type": "application/json",

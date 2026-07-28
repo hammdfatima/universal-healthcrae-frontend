@@ -8,6 +8,7 @@ import {
   type ChangePasswordPayload,
   changePasswordSchema,
 } from "@/app/(dashboards)/admin/_lib/settings"
+import PasswordRequirements from "@/components/password-requirements"
 import { Button } from "@/components/ui/button"
 import FormModified from "@/components/ui/form-modified"
 import { Input } from "@/components/ui/input"
@@ -56,7 +57,8 @@ export default function AdminChangePasswordTab() {
         Change Password
       </Typography>
       <Typography variant="muted" className="mt-1">
-        Use a strong password with at least 8 characters.
+        Use a strong password with at least 10 characters, including uppercase,
+        lowercase, a number, and a special character.
       </Typography>
 
       <div className="mt-6">
@@ -67,8 +69,9 @@ export default function AdminChangePasswordTab() {
           fieldsetProps={{ className: "space-y-5" }}
           onSubmit={handleSubmit}
         >
-          {({ components }) => {
+          {({ methods, components }) => {
             const { Field } = components
+            const newPassword = methods.watch("newPassword") ?? ""
 
             return (
               <>
@@ -135,6 +138,10 @@ export default function AdminChangePasswordTab() {
                     </div>
                   )}
                 </Field>
+
+                {newPassword.length > 0 ? (
+                  <PasswordRequirements password={newPassword} />
+                ) : null}
 
                 <Field name="confirmPassword" label="Confirm New Password">
                   {(field) => (

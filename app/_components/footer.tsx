@@ -18,6 +18,10 @@ const authItems = [
 
 const legalItems = [
   { label: "Privacy Policy", href: "/privacy-policy" as Route },
+  {
+    label: "Notice of Privacy Practices",
+    href: "/notice-of-privacy-practices" as Route,
+  },
   { label: "Terms of Use", href: "/terms-of-use" as Route },
   {
     label: "Emergency Access Authorization",

@@ -12,6 +12,8 @@ import {
   PATIENT_PROFILE_QUERY_KEYS,
   type PatientProfileResponse,
 } from "@/lib/api/patient-profile"
+import { isMfaSetupRequiredError } from "@/lib/auth/mfa-setup"
+import { updateAuthUser } from "@/lib/auth/session"
 
 type OnboardingGuardProps = {
   children: React.ReactNode
@@ -22,6 +24,8 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
   const { user } = useAuth()
   const [ready, setReady] = useState(false)
   const isFamilyMember = Boolean(user?.isFamilyMemberAccount)
+  // Patient APIs enforce MFA enrollment; skip until setup completes.
+  const mfaSetupRequired = Boolean(user?.mfaSetupRequired)
 
   const {
     data: profile,
@@ -36,18 +40,25 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
     // Managed family accounts are created with onboarding completed and their
     // access is validated during login/session checks. Do not let an unnecessary
     // profile request block their entire dashboard.
-    enabled: Boolean(user) && !isFamilyMember,
+    enabled: Boolean(user) && !isFamilyMember && !mfaSetupRequired,
     staleTime: 60_000,
   })
 
   useEffect(() => {
-    if (isFamilyMember) {
+    if (isFamilyMember || mfaSetupRequired) {
       setReady(true)
       return
     }
 
     // Still loading the first response — wait.
     if (isLoading && !profile) return
+
+    // Stale sessions may lack mfaSetupRequired until /auth/session refreshes.
+    if (isError && !profile && isMfaSetupRequiredError(error)) {
+      updateAuthUser({ mfaEnabled: false, mfaSetupRequired: true })
+      router.replace("/patient/settings?tab=mfa")
+      return
+    }
 
     // Only block the app when we have no usable profile yet.
     // A background refetch failure must not cover the dashboard.
@@ -62,14 +73,31 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
     }
 
     setReady(true)
-  }, [profile, isLoading, isError, isFamilyMember, router])
+  }, [
+    profile,
+    isLoading,
+    isError,
+    error,
+    isFamilyMember,
+    mfaSetupRequired,
+    router,
+  ])
 
-  if (isFamilyMember) {
+  if (isFamilyMember || mfaSetupRequired) {
     return children
   }
 
   if (isLoading && !profile) {
     return <Loader variant="full-page" label="Loading your dashboard..." />
+  }
+
+  if (isError && !profile && isMfaSetupRequiredError(error)) {
+    return (
+      <Loader
+        variant="full-page"
+        label="Redirecting to authenticator setup..."
+      />
+    )
   }
 
   if (isError && !profile) {

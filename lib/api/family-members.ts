@@ -28,7 +28,6 @@ export type CreateFamilyMemberPayload = {
   email: string
   phone: string
   relationship: string
-  password: string
   isEmergencyContact: boolean
 }
 

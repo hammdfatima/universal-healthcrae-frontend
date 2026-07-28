@@ -8,6 +8,7 @@ import {
   MessageSquare,
   ScrollText,
   Settings,
+  ShieldAlert,
   Tags,
   Users,
 } from "lucide-react"
@@ -56,6 +57,11 @@ const managementNav: NavItem[] = [
     label: "Audit Logs",
     href: "/admin/audit-logs" as Route,
     icon: ScrollText,
+  },
+  {
+    label: "Breach Center",
+    href: "/admin/breach-incidents" as Route,
+    icon: ShieldAlert,
   },
 ]
 

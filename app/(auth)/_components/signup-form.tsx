@@ -35,11 +35,19 @@ const signupSchema = z
     email: z.string().email("Please enter a valid email address."),
     password: strongPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm your password."),
+    // Field names mirror the backend's SignupBody schema exactly.
     agreeToTerms: z.boolean().refine((value) => value === true, {
-      message: "You must agree to the Terms of Use and Privacy Policy.",
+      message: "You must agree to the Terms of Use.",
+    }),
+    agreeToPrivacy: z.boolean().refine((value) => value === true, {
+      message: "You must agree to the Privacy Policy.",
     }),
     agreeToEmergencyAccess: z.boolean().refine((value) => value === true, {
       message: "You must accept the Emergency Access Authorization.",
+    }),
+    // Not sent to the backend — a client-side HIPAA acknowledgment gate.
+    agreeToNpp: z.boolean().refine((value) => value === true, {
+      message: "You must acknowledge the Notice of Privacy Practices.",
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -54,7 +62,9 @@ const defaultValues = {
   password: "",
   confirmPassword: "",
   agreeToTerms: false,
+  agreeToPrivacy: false,
   agreeToEmergencyAccess: false,
+  agreeToNpp: false,
 }
 
 type SignupFormProps = {
@@ -85,6 +95,9 @@ export default function SignupForm({
     lastName: string
     email: string
     password: string
+    agreeToTerms: boolean
+    agreeToPrivacy: boolean
+    agreeToEmergencyAccess: boolean
   }>({
     key: "signup",
     showSuccessToast: true,
@@ -140,6 +153,9 @@ export default function SignupForm({
                 lastName: values.lastName,
                 email: values.email,
                 password: values.password,
+                agreeToTerms: values.agreeToTerms,
+                agreeToPrivacy: values.agreeToPrivacy,
+                agreeToEmergencyAccess: values.agreeToEmergencyAccess,
               },
               onSuccess: () => {
                 setSignupData({
@@ -253,9 +269,14 @@ export default function SignupForm({
                       <Checkbox
                         id="agreeToTerms"
                         checked={field.value}
-                        onCheckedChange={(checked) =>
-                          field.onChange(checked === true)
-                        }
+                        onCheckedChange={(checked) => {
+                          const isChecked = checked === true
+                          field.onChange(isChecked)
+                          // One checkbox covers both backend consent fields.
+                          methods.setValue("agreeToPrivacy", isChecked, {
+                            shouldValidate: methods.formState.isSubmitted,
+                          })
+                        }}
                       />
                       <label
                         htmlFor="agreeToTerms"
@@ -278,6 +299,35 @@ export default function SignupForm({
                           Privacy Policy
                         </Link>
                         .
+                      </label>
+                    </div>
+                  )}
+                </Field>
+
+                <Field name="agreeToNpp">
+                  {(field) => (
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="agreeToNpp"
+                        checked={field.value}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                      />
+                      <label
+                        htmlFor="agreeToNpp"
+                        className="text-sm leading-snug text-muted-foreground"
+                      >
+                        I acknowledge the{" "}
+                        <Link
+                          href={"/notice-of-privacy-practices" as Route}
+                          className="font-medium text-primary hover:underline"
+                          target="_blank"
+                        >
+                          Notice of Privacy Practices
+                        </Link>{" "}
+                        describing how my health information may be used and
+                        disclosed.
                       </label>
                     </div>
                   )}

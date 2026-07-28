@@ -12,6 +12,8 @@ import {
   SUBSCRIPTIONS_QUERY_KEYS,
   type SubscriptionMeResponse,
 } from "@/lib/api/subscriptions"
+import { isMfaSetupRequiredError } from "@/lib/auth/mfa-setup"
+import { updateAuthUser } from "@/lib/auth/session"
 
 type SubscriptionGuardProps = {
   children: React.ReactNode
@@ -24,6 +26,8 @@ export default function SubscriptionGuard({
   const { user } = useAuth()
   const [ready, setReady] = useState(false)
   const isFamilyMember = Boolean(user?.isFamilyMemberAccount)
+  // Patient APIs enforce MFA enrollment; skip until setup completes.
+  const mfaSetupRequired = Boolean(user?.mfaSetupRequired)
 
   const {
     data: subscription,
@@ -36,17 +40,23 @@ export default function SubscriptionGuard({
     path: SUBSCRIPTIONS_API.me,
     queryKey: SUBSCRIPTIONS_QUERY_KEYS.me,
     // Family members inherit the owner's plan; login/session already enforce coverage.
-    enabled: !isFamilyMember,
+    enabled: !isFamilyMember && !mfaSetupRequired,
     staleTime: 60_000,
   })
 
   useEffect(() => {
-    if (isFamilyMember) {
+    if (isFamilyMember || mfaSetupRequired) {
       setReady(true)
       return
     }
 
     if (isLoading && !subscription) return
+
+    if (isError && !subscription && isMfaSetupRequiredError(error)) {
+      updateAuthUser({ mfaEnabled: false, mfaSetupRequired: true })
+      router.replace("/patient/settings?tab=mfa")
+      return
+    }
 
     if (isError && !subscription) {
       setReady(false)
@@ -59,14 +69,31 @@ export default function SubscriptionGuard({
     }
 
     setReady(true)
-  }, [subscription, isLoading, isError, isFamilyMember, router])
+  }, [
+    subscription,
+    isLoading,
+    isError,
+    error,
+    isFamilyMember,
+    mfaSetupRequired,
+    router,
+  ])
 
-  if (isFamilyMember) {
+  if (isFamilyMember || mfaSetupRequired) {
     return children
   }
 
   if (isLoading && !subscription) {
     return <Loader variant="full-page" label="Checking your subscription..." />
+  }
+
+  if (isError && !subscription && isMfaSetupRequiredError(error)) {
+    return (
+      <Loader
+        variant="full-page"
+        label="Redirecting to authenticator setup..."
+      />
+    )
   }
 
   if (isError && !subscription) {

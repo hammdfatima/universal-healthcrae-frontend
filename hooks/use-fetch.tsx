@@ -3,7 +3,8 @@
 import type { UseQueryOptions } from "@tanstack/react-query"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
-import { env } from "@/env"
+import { getApiBaseUrl } from "@/lib/api-base"
+import { isLoggingOut } from "@/lib/auth/logout-state"
 import { getAuthUser } from "@/lib/auth/session"
 import { handleSessionEnd } from "@/lib/auth/unauthorized"
 import { buildRequestUrl } from "@/lib/utils"
@@ -43,7 +44,7 @@ export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
   if (!path) {
     throw new Error("path is required")
   }
-  const REQUEST_URL = buildRequestUrl(env.NEXT_PUBLIC_API_URL, path)
+  const REQUEST_URL = buildRequestUrl(getApiBaseUrl(), path)
 
   const fetchData = async ({
     signal,
@@ -75,6 +76,7 @@ export function useFetch<T>({ path, queryKey, ...config }: IUseFetch<T>) {
       // Cookie session is invalid — clear local user. Skip guests and public emergency unlock.
       const shouldEndSession =
         !isPublicEmergency &&
+        !isLoggingOut() &&
         Boolean(getAuthUser()) &&
         (status === 401 ||
           (status === 403 &&

@@ -1,7 +1,5 @@
 import { z } from "zod"
 
-import { strongPasswordSchema } from "@/lib/auth/password"
-
 export const relationshipOptions = [
   { label: "Spouse", value: "Spouse" },
   { label: "Child", value: "Child" },
@@ -18,14 +16,7 @@ export const familyMemberSchema = z.object({
   isEmergencyContact: z.boolean(),
 })
 
-export const familyMemberCreateSchema = familyMemberSchema.extend({
-  password: strongPasswordSchema,
-})
-
 export type FamilyMemberFormValues = z.infer<typeof familyMemberSchema>
-export type FamilyMemberCreateFormValues = z.infer<
-  typeof familyMemberCreateSchema
->
 
 export const familyMemberDefaultValues: FamilyMemberFormValues = {
   firstName: "",

@@ -1,6 +1,7 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { formatDistanceToNow } from "date-fns"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -10,6 +11,7 @@ import {
   type AccountSettings,
   initialAccountSettings,
 } from "@/app/(dashboards)/patient/_lib/settings"
+import StepUpPasswordDialog from "@/components/auth/step-up-password-dialog"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -30,14 +32,19 @@ import { useAuth } from "@/hooks/use-auth"
 import { useFetch } from "@/hooks/use-fetch"
 import useToast from "@/hooks/use-toast"
 import {
+  type AuthSessionsList,
   type DeleteAccountPayload,
   PATIENT_SETTINGS_API,
   PATIENT_SETTINGS_QUERY_KEYS,
   type PatientSettings,
+  revokeAuthSession,
+  revokeOtherAuthSessions,
   type UpdateAccountPayload,
 } from "@/lib/api/patient-settings"
 
 const DELETE_CONFIRMATION_TEXT = "DELETE"
+
+type StepUpAction = "export" | "delete"
 
 export default function AccountTab() {
   const router = useRouter()
@@ -50,12 +57,22 @@ export default function AccountTab() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState("")
   const [isExporting, setIsExporting] = useState(false)
+  const [stepUpAction, setStepUpAction] = useState<StepUpAction | null>(null)
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(
+    null
+  )
+  const [isRevokingOthers, setIsRevokingOthers] = useState(false)
 
   const { data, isLoading, isError, error, refetch } =
     useFetch<PatientSettings>({
       path: PATIENT_SETTINGS_API.get,
       queryKey: PATIENT_SETTINGS_QUERY_KEYS.settings,
     })
+
+  const sessionsQuery = useFetch<AuthSessionsList>({
+    path: PATIENT_SETTINGS_API.sessions,
+    queryKey: PATIENT_SETTINGS_QUERY_KEYS.sessions,
+  })
 
   const { onRequest: updateAccount, isPending: isSaving } =
     useApi<UpdateAccountPayload>({
@@ -100,17 +117,39 @@ export default function AccountTab() {
     })
   }
 
-  async function handleExportData() {
-    setIsExporting(true)
+  async function handleStepUpVerified(token: string) {
+    const action = stepUpAction
+    setStepUpAction(null)
 
-    try {
-      await downloadPatientDataExport()
-      toastSuccess("Your health data has been downloaded.")
-    } catch {
-      toastError("Failed to export your data. Please try again.")
-    } finally {
-      setIsExporting(false)
+    if (action === "export") {
+      setIsExporting(true)
+      try {
+        await downloadPatientDataExport(token)
+        toastSuccess("Your health data has been downloaded.")
+      } catch {
+        toastError("Failed to export your data. Please try again.")
+      } finally {
+        setIsExporting(false)
+      }
+      return
     }
+
+    if (action === "delete") {
+      deleteAccount({
+        path: PATIENT_SETTINGS_API.deleteAccount,
+        data: { confirmation: DELETE_CONFIRMATION_TEXT, stepUpToken: token },
+        onSuccess: () => {
+          setDeleteOpen(false)
+          toastSuccess("Your account has been permanently deleted.")
+          logout("/" as Route)
+          router.replace("/" as Route)
+        },
+      })
+    }
+  }
+
+  function handleExportClick() {
+    setStepUpAction("export")
   }
 
   function handleDeleteAccount() {
@@ -118,19 +157,43 @@ export default function AccountTab() {
       return
     }
 
-    deleteAccount({
-      path: PATIENT_SETTINGS_API.deleteAccount,
-      data: { confirmation: DELETE_CONFIRMATION_TEXT },
-      onSuccess: () => {
-        setDeleteOpen(false)
-        toastSuccess("Your account has been permanently deleted.")
-        logout("/" as Route)
-        router.replace("/" as Route)
-      },
-    })
+    setDeleteOpen(false)
+    setStepUpAction("delete")
+  }
+
+  async function handleRevokeSession(sessionId: string) {
+    setRevokingSessionId(sessionId)
+    try {
+      await revokeAuthSession(sessionId)
+      toastSuccess("Session revoked.")
+      await sessionsQuery.refetch()
+    } catch {
+      toastError("Failed to revoke that session. Please try again.")
+    } finally {
+      setRevokingSessionId(null)
+    }
+  }
+
+  async function handleRevokeOtherSessions() {
+    if (!sessionsQuery.data) return
+
+    setIsRevokingOthers(true)
+    try {
+      await revokeOtherAuthSessions(sessionsQuery.data.sessions)
+      toastSuccess("Signed out of all other devices.")
+      await sessionsQuery.refetch()
+    } catch {
+      toastError("Failed to sign out other devices. Please try again.")
+    } finally {
+      setIsRevokingOthers(false)
+    }
   }
 
   const canDeleteAccount = deleteConfirmation === DELETE_CONFIRMATION_TEXT
+  const sessions = sessionsQuery.data?.sessions ?? []
+  const otherSessionsCount = sessions.filter(
+    (session) => !session.isCurrent
+  ).length
 
   if (isLoading) {
     return (
@@ -228,11 +291,100 @@ export default function AccountTab() {
       </div>
 
       <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <Typography as="h2" variant="h4">
+              Active Sessions
+            </Typography>
+            <Typography variant="muted" className="mt-1">
+              Devices currently signed in to your account (HIPAA §2.5).
+            </Typography>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isRevokingOthers || otherSessionsCount === 0}
+            onClick={() => void handleRevokeOtherSessions()}
+          >
+            {isRevokingOthers ? (
+              <Loader variant="button" />
+            ) : (
+              "Log out other devices"
+            )}
+          </Button>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {sessionsQuery.isLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader variant="fetch" label="Loading sessions..." />
+            </div>
+          ) : sessionsQuery.isError ? (
+            <Typography variant="muted" className="text-center text-sm">
+              Could not load your active sessions.
+            </Typography>
+          ) : sessions.length === 0 ? (
+            <Typography variant="muted" className="text-center text-sm">
+              No active sessions found.
+            </Typography>
+          ) : (
+            sessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex flex-col gap-3 rounded-xl border border-border/60 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <Typography
+                    variant="small"
+                    className="flex flex-wrap items-center gap-2 font-medium"
+                  >
+                    {session.userAgent ?? "Unknown device"}
+                    {session.isCurrent ? (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        This device
+                      </span>
+                    ) : null}
+                  </Typography>
+                  <Typography
+                    variant="muted"
+                    className="mt-0.5 text-xs break-all"
+                  >
+                    {session.ip ?? "Unknown IP"} · Last active{" "}
+                    {formatDistanceToNow(new Date(session.lastSeenAt), {
+                      addSuffix: true,
+                    })}
+                  </Typography>
+                </div>
+
+                {!session.isCurrent ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 self-start text-destructive hover:text-destructive"
+                    disabled={revokingSessionId === session.sessionId}
+                    onClick={() => void handleRevokeSession(session.sessionId)}
+                  >
+                    {revokingSessionId === session.sessionId ? (
+                      <Loader variant="button" />
+                    ) : (
+                      "Revoke"
+                    )}
+                  </Button>
+                ) : null}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
         <Typography as="h2" variant="h4">
           Data & account
         </Typography>
         <Typography variant="muted" className="mt-1">
-          Export your data or permanently close your account.
+          Export your data or permanently close your account. Both actions
+          require re-entering your password (HIPAA §2.4).
         </Typography>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -240,7 +392,7 @@ export default function AccountTab() {
             type="button"
             variant="outline"
             disabled={isExporting}
-            onClick={() => void handleExportData()}
+            onClick={handleExportClick}
           >
             {isExporting ? <Loader variant="button" /> : "Export My Data"}
           </Button>
@@ -299,6 +451,24 @@ export default function AccountTab() {
           </AlertDialog>
         </div>
       </div>
+
+      <StepUpPasswordDialog
+        open={stepUpAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setStepUpAction(null)
+        }}
+        title={
+          stepUpAction === "delete"
+            ? "Confirm account deletion"
+            : "Confirm data export"
+        }
+        description={
+          stepUpAction === "delete"
+            ? "Re-enter your password to permanently delete your account and health records."
+            : "Re-enter your password to download a copy of your health records."
+        }
+        onVerified={(token) => void handleStepUpVerified(token)}
+      />
     </div>
   )
 }

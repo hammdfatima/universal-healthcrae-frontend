@@ -59,14 +59,30 @@ export function readAuthSession(): AuthSession | null {
   return { user }
 }
 
+/**
+ * Recomputes `mfaSetupRequired` from `mfaEnabled` whenever we know the latter.
+ * The lightweight session-validation endpoint doesn't echo `mfaSetupRequired`,
+ * so deriving it locally keeps the MFA enrollment gate accurate across polls
+ * instead of only reflecting whatever the last response happened to include.
+ */
+function normalizeAuthUser(user: AuthUser): AuthUser {
+  if (typeof user.mfaEnabled !== "boolean") {
+    return user
+  }
+
+  return { ...user, mfaSetupRequired: !user.mfaEnabled }
+}
+
 export function setAuthSession(user: AuthUser) {
   if (!canUseStorage()) {
     return
   }
 
+  const normalized = normalizeAuthUser(user)
+
   localStorage.removeItem(AUTH_STORAGE_KEYS.token)
-  localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(user))
-  setAuthCookies(user.role)
+  localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(normalized))
+  setAuthCookies(normalized.role)
   touchActivity()
   dispatchAuthSessionChange()
 }
@@ -119,6 +135,11 @@ export function clearResetToken() {
 export function getPostAuthRedirect(user: AuthUser): Route {
   if (user.mustChangePassword) {
     return "/patient/change-password" as Route
+  }
+
+  // HIPAA §2.5: nudge patients straight to authenticator enrollment.
+  if (user.role === "USER" && user.mfaSetupRequired) {
+    return "/patient/settings?tab=mfa" as Route
   }
 
   return user.role === "ADMIN" ? "/admin" : "/patient"

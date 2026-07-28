@@ -1,4 +1,5 @@
 import type { SessionEndReason } from "@/lib/auth/constants"
+import { isLoggingOut } from "@/lib/auth/logout-state"
 
 type SessionEndHandler = ((reason: SessionEndReason) => void) | null
 
@@ -17,6 +18,10 @@ export function registerSessionEndHandler(
 }
 
 export function handleSessionEnd(reason: SessionEndReason) {
+  if (isLoggingOut()) {
+    return
+  }
+
   sessionEndHandler?.(reason)
 }
 

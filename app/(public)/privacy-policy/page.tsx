@@ -1,4 +1,5 @@
-import type { Metadata } from "next"
+import type { Metadata, Route } from "next"
+import Link from "next/link"
 
 import LegalPageLayout, {
   LegalList,
@@ -74,12 +75,23 @@ export default function PrivacyPolicyPage() {
         </LegalParagraph>
         <LegalList
           items={[
-            "Encryption",
+            "Field-level encryption of sensitive health data",
             "Secure cloud storage",
-            "Password protection",
-            "Access controls",
+            "Password protection and multi-factor authentication",
+            "Role-based access controls and audit logging",
           ]}
         />
+        <LegalParagraph>
+          For details on how protected health information (PHI) is used and
+          disclosed under HIPAA, see our{" "}
+          <Link
+            href={"/notice-of-privacy-practices" as Route}
+            className="font-medium text-primary hover:underline"
+          >
+            Notice of Privacy Practices
+          </Link>
+          .
+        </LegalParagraph>
       </LegalSection>
 
       <LegalSection title="5. Member Rights">

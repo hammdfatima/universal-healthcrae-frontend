@@ -14,12 +14,19 @@ import {
   useState,
 } from "react"
 
+import InactivityWarningModal from "@/components/auth/inactivity-warning-modal"
 import SessionExpiredModal from "@/components/auth/session-expired-modal"
-import { env } from "@/env"
 import useToast from "@/hooks/use-toast"
-import { clearActivity, isInactive, touchActivity } from "@/lib/auth/activity"
+import { getApiBaseUrl } from "@/lib/api-base"
+import {
+  clearActivity,
+  isInactive,
+  isNearInactivityTimeout,
+  touchActivity,
+} from "@/lib/auth/activity"
 import { AUTH_API, type SessionEndReason } from "@/lib/auth/constants"
 import { AUTH_SESSION_CHANGE_EVENT } from "@/lib/auth/events"
+import { beginLogout, endLogout, isLoggingOut } from "@/lib/auth/logout-state"
 import { hasRole, isAdmin, isUser } from "@/lib/auth/roles"
 import {
   clearAuthSession,
@@ -53,7 +60,8 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const SESSION_CHECK_INTERVAL_MS = 30_000
+// Kept short so the "still there?" warning and idle sign-out fire promptly.
+const SESSION_CHECK_INTERVAL_MS = 5_000
 const SESSION_VALIDATION_INTERVAL_MS = 20_000
 const ACTIVITY_EVENTS = [
   "mousedown",
@@ -73,10 +81,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false)
   const [sessionEndReason, setSessionEndReason] =
     useState<SessionEndReason | null>(null)
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false)
   const sessionEndHandledRef = useRef(false)
 
   const endSession = useCallback((reason: SessionEndReason) => {
-    if (sessionEndHandledRef.current) {
+    if (sessionEndHandledRef.current || isLoggingOut()) {
       return
     }
 
@@ -102,26 +111,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(
     (redirectTo: Route = "/login") => {
-      const clearLocal = () => {
-        clearAuthSession()
-        clearActivity()
-        setSession(null)
-        setSessionEndReason(null)
-        sessionEndHandledRef.current = false
-        queryClient.clear()
-        router.push(redirectTo)
-      }
+      // Clear locally first so in-flight 401s during cookie clear never open
+      // the "Session expired" modal on top of an intentional logout.
+      beginLogout()
+      sessionEndHandledRef.current = true
+      setSessionEndReason(null)
+      setShowInactivityWarning(false)
+      clearAuthSession()
+      clearActivity()
+      setSession(null)
+      queryClient.clear()
+      router.push(redirectTo)
 
       void axios
         .post(
-          buildRequestUrl(env.NEXT_PUBLIC_API_URL, AUTH_API.logout),
+          buildRequestUrl(getApiBaseUrl(), AUTH_API.logout),
           {},
           { withCredentials: true }
         )
         .catch(() => {
-          // Cookie may already be invalid; still clear local state.
+          // Cookie may already be invalid; local state is already cleared.
         })
-        .finally(clearLocal)
+        .finally(() => {
+          endLogout()
+        })
     },
     [queryClient, router]
   )
@@ -134,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (authSession: AuthTokenResponse | { user: AuthUser }) => {
       sessionEndHandledRef.current = false
       setSessionEndReason(null)
+      setShowInactivityWarning(false)
       setAuthSession(authSession.user)
       setSession({ user: authSession.user })
     },
@@ -142,12 +156,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkLocalSessionState = useCallback(() => {
     if (isInactive()) {
+      setShowInactivityWarning(false)
       endSession("inactive")
       return false
     }
 
+    setShowInactivityWarning(isNearInactivityTimeout())
     return true
   }, [endSession])
+
+  const staySignedIn = useCallback(() => {
+    touchActivity()
+    setShowInactivityWarning(false)
+  }, [])
 
   useEffect(() => {
     refreshSession()
@@ -173,13 +194,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (axios.isAxiosError(error) && getAuthUser()) {
+        if (axios.isAxiosError(error) && getAuthUser() && !isLoggingOut()) {
           const requestUrl = String(error.config?.url ?? "")
+          const isLogoutRequest = requestUrl.includes(AUTH_API.logout)
           const isPublicEmergency = requestUrl.includes(
             "/emergency-access/public/"
           )
 
-          if (!isPublicEmergency) {
+          if (!isLogoutRequest && !isPublicEmergency) {
             const status = error.response?.status
             const message = error.response?.data?.message as string | undefined
             const normalizedMessage = message?.toLowerCase() ?? ""
@@ -270,7 +292,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const response = await axios.get<{
           data: SessionValidationResponse
-        }>(buildRequestUrl(env.NEXT_PUBLIC_API_URL, AUTH_API.session), {
+        }>(buildRequestUrl(getApiBaseUrl(), AUTH_API.session), {
           withCredentials: true,
         })
 
@@ -323,6 +345,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      <InactivityWarningModal
+        open={showInactivityWarning && sessionEndReason === null}
+        onStaySignedIn={staySignedIn}
+      />
       <SessionExpiredModal
         open={sessionEndReason !== null}
         reason={sessionEndReason}
