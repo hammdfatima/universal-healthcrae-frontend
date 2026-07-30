@@ -47,6 +47,8 @@ export type Pet = {
   ownerEmail: string | null
   veterinaryClinic: string | null
   veterinaryPhone: string | null
+  emergencyVeterinaryClinic: string | null
+  emergencyVeterinaryPhone: string | null
   veterinaryRecords: string | null
   additionalNotes: string | null
   medicalConditions: PetMedicalConditionItem[]
@@ -107,6 +109,8 @@ export type CreatePetPayload = {
   ownerEmail?: string
   veterinaryClinic?: string
   veterinaryPhone?: string
+  emergencyVeterinaryClinic?: string
+  emergencyVeterinaryPhone?: string
   veterinaryRecords?: string
   additionalNotes?: string
   medicalConditions?: PetMedicalConditionItem[]

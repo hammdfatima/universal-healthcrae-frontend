@@ -1,6 +1,7 @@
 "use client"
 
 import { LogOut, Menu, X } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
+  { label: "Pet Profiles", href: "/pet-profiles" as Route },
   { label: "Pricing", href: "/pricing" },
   { label: "Contact", href: "/contact" },
 ] as const

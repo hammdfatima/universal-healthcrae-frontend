@@ -8,7 +8,7 @@ import { Typography } from "@/components/ui/typography"
 export const metadata: Metadata = {
   title: "Contact | Universal Health Charts",
   description:
-    "Get in touch with Universal Health Charts — we're here to help with questions about your secure health record.",
+    "Get in touch with Universal Health Charts — questions about preparedness, family plans, and pet profiles.",
 }
 
 const contactDetails = [

@@ -295,10 +295,28 @@ function PetFormFields({
             placeholder="(555) 000-0000"
           />
         </div>
+      </FormSection>
+
+      <FormSection
+        title="Emergency Veterinary Clinic"
+        description="After-hours or emergency clinic to contact when your regular vet is unavailable."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormInput
+            name="emergencyVeterinaryClinic"
+            label="Emergency Veterinary Clinic"
+            placeholder="Emergency clinic name"
+          />
+          <FormInput
+            name="emergencyVeterinaryPhone"
+            label="Emergency Clinic Phone"
+            placeholder="(555) 000-0000"
+          />
+        </div>
         <FormTextarea
           name="veterinaryRecords"
-          label="Additional Veterinary Notes"
-          placeholder="Visit notes, surgeries, or other veterinary history..."
+          label="Veterinary Documents & Notes"
+          placeholder="Visit notes, surgeries, document references, or other veterinary history..."
           rows={3}
         />
       </FormSection>

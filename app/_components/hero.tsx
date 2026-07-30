@@ -45,8 +45,8 @@ export default function Hero() {
                 color="inherit"
                 className="mt-5 text-base leading-relaxed text-white/90 sm:text-lg"
               >
-                Securely organize important medical information for your
-                family—and even your pets—all in one place.
+                Protect the people—and pets—you love by keeping their important
+                health information ready when it matters most.
               </Typography>
 
               <div className="mt-8">

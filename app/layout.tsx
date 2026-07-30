@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s | Universal Health Charts",
   },
   description:
-    "Your secure personal health record — store, access, and share your complete medical data in one place.",
+    "Protect the people—and pets—you love by keeping their important health information ready when it matters most.",
   icons: {
     icon: "/logo-half.png",
     shortcut: "/logo-half.png",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Universal Health Charts",
     description:
-      "Your secure personal health record — store, access, and share your complete medical data in one place.",
+      "Protect the people—and pets—you love by keeping their important health information ready when it matters most.",
     type: "website",
     images: [
       {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Universal Health Charts",
     description:
-      "Your secure personal health record — store, access, and share your complete medical data in one place.",
+      "Protect the people—and pets—you love by keeping their important health information ready when it matters most.",
     images: ["/logo-half.png"],
   },
 }

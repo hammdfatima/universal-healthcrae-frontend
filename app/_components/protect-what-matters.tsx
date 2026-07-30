@@ -39,7 +39,8 @@ export default function ProtectWhatMatters() {
           </Typography>
 
           <Typography variant="lead" color="muted" className="mt-4">
-            Universal Health Charts helps families stay prepared.
+            Protect the people—and pets—you love by keeping their important
+            health information ready when it matters most.
           </Typography>
 
           <Typography as="h3" variant="h5" className="mt-10">

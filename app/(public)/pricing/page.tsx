@@ -6,7 +6,7 @@ import { Typography } from "@/components/ui/typography"
 export const metadata: Metadata = {
   title: "Pricing | Universal Health Charts",
   description:
-    "Choose the right Universal Health Charts plan — Individual, Couple, or Family — starting at $9.95/month.",
+    "Protect the people—and pets—you love with plans starting at $9.95/month.",
 }
 
 export default function PricingPage() {
@@ -18,9 +18,9 @@ export default function PricingPage() {
             Simple, Transparent Pricing
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Choose the plan that fits your family. Every plan includes your
-            family&apos;s secure medical information center and Emergency QR
-            access.
+            Choose the plan that fits your family. Protect the people—and
+            pets—you love with important health information ready when it
+            matters most, plus Emergency QR access.
           </Typography>
         </div>
       </section>

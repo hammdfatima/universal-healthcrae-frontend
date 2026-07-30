@@ -22,19 +22,19 @@ const audiences: { icon: LucideIcon; label: string; description: string }[] = [
     icon: Users,
     label: "Families",
     description:
-      "Households who want everyone's health information organized in one secure place.",
+      "Households who want everyone they love prepared—with health details ready when something unexpected happens.",
   },
   {
     icon: PawPrint,
     label: "Pet Parents",
     description:
-      "People who worry about their dog or cat as much as anyone else in the family.",
+      "People who protect their dog or cat as part of the family, not as an afterthought.",
   },
   {
     icon: Plane,
     label: "Travelers",
     description:
-      "People who need their medical history available wherever life takes them.",
+      "People who need important health information ready wherever life takes them.",
   },
   {
     icon: GraduationCap,
@@ -59,8 +59,8 @@ export default function WhoItsFor() {
             Who It&apos;s For
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Built for real families facing real moments — not just healthcare
-            systems.
+            Built for real families facing real moments — a preparedness
+            platform for the people and pets you love.
           </Typography>
         </div>
 

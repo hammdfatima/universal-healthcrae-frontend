@@ -7,7 +7,7 @@ import { Typography } from "@/components/ui/typography"
 export const metadata: Metadata = {
   title: "About | Universal Health Charts",
   description:
-    "Learn how families securely organize medical information for loved ones—and pets—in one place.",
+    "Protect the people—and pets—you love by keeping their important health information ready when it matters most.",
 }
 
 const securityFeatures = [
@@ -40,9 +40,8 @@ export default function AboutPage() {
             Protect What Matters Most
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Because the people you worry about—Mom, Dad, your spouse, your
-            grandchildren, even your pets—deserve to have their important
-            medical information ready when it matters.
+            Protect the people—and pets—you love by keeping their important
+            health information ready when it matters most.
           </Typography>
         </div>
       </section>
@@ -55,9 +54,10 @@ export default function AboutPage() {
           <Typography variant="p" color="muted" className="mt-4">
             Healthcare information is scattered across providers, hospitals, and
             patient portals—and pet records are often even more disorganized.
-            Families need one secure place for medications, allergies,
-            conditions, vaccinations, and emergency contacts for everyone they
-            care about.
+            Universal Health Charts is a preparedness platform for the entire
+            family, including pets—so medications, allergies, conditions,
+            vaccinations, and emergency contacts are ready when life gets
+            urgent.
           </Typography>
           <Typography variant="p" color="muted" className="mt-4">
             Whether you&apos;re at home, traveling, or facing an unexpected

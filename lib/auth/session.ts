@@ -60,12 +60,18 @@ export function readAuthSession(): AuthSession | null {
 }
 
 /**
- * Recomputes `mfaSetupRequired` from `mfaEnabled` whenever we know the latter.
- * The lightweight session-validation endpoint doesn't echo `mfaSetupRequired`,
- * so deriving it locally keeps the MFA enrollment gate accurate across polls
- * instead of only reflecting whatever the last response happened to include.
+ * Prefer the server's `mfaSetupRequired` when present (respects ENABLE_MFA).
+ * Always clear the setup gate once MFA is enabled on the account.
  */
 function normalizeAuthUser(user: AuthUser): AuthUser {
+  if (user.mfaEnabled === true) {
+    return { ...user, mfaSetupRequired: false }
+  }
+
+  if (typeof user.mfaSetupRequired === "boolean") {
+    return user
+  }
+
   if (typeof user.mfaEnabled !== "boolean") {
     return user
   }

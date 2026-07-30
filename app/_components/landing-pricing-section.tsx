@@ -14,7 +14,8 @@ export default function LandingPricingSection() {
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
             Simple, transparent pricing for individuals, couples, and families.
-            Every plan includes secure storage and Emergency QR access.
+            Every plan helps you protect the people—and pets—you love with
+            important health information ready when it matters most.
           </Typography>
           <Typography variant="p" color="muted" className="mt-3 text-sm">
             Starting at less than a dollar a day — because peace of mind

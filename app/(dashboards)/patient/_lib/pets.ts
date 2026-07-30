@@ -34,6 +34,8 @@ export const petSchema = z.object({
   ownerEmail: z.string().email("Enter a valid owner email."),
   veterinaryClinic: z.string().optional(),
   veterinaryPhone: z.string().optional(),
+  emergencyVeterinaryClinic: z.string().optional(),
+  emergencyVeterinaryPhone: z.string().optional(),
   veterinaryRecords: z.string().optional(),
   additionalNotes: z.string().optional(),
   medicalConditions: z.array(
@@ -84,6 +86,8 @@ export const petDefaultValues: PetFormValues = {
   ownerEmail: "",
   veterinaryClinic: "",
   veterinaryPhone: "",
+  emergencyVeterinaryClinic: "",
+  emergencyVeterinaryPhone: "",
   veterinaryRecords: "",
   additionalNotes: "",
   medicalConditions: [],
@@ -154,6 +158,8 @@ export function petFormValuesToPayload(
     ownerEmail: values.ownerEmail,
     veterinaryClinic: values.veterinaryClinic ?? "",
     veterinaryPhone: values.veterinaryPhone ?? "",
+    emergencyVeterinaryClinic: values.emergencyVeterinaryClinic ?? "",
+    emergencyVeterinaryPhone: values.emergencyVeterinaryPhone ?? "",
     veterinaryRecords: values.veterinaryRecords ?? "",
     additionalNotes: values.additionalNotes ?? "",
     medicalConditions: values.medicalConditions,
@@ -184,6 +190,8 @@ export function petToFormValues(pet: {
   ownerEmail?: string | null
   veterinaryClinic: string | null
   veterinaryPhone: string | null
+  emergencyVeterinaryClinic?: string | null
+  emergencyVeterinaryPhone?: string | null
   veterinaryRecords: string | null
   additionalNotes?: string | null
   medicalConditions?: { name: string; notes?: string }[]
@@ -212,6 +220,8 @@ export function petToFormValues(pet: {
     ownerEmail: pet.ownerEmail ?? "",
     veterinaryClinic: pet.veterinaryClinic ?? "",
     veterinaryPhone: pet.veterinaryPhone ?? "",
+    emergencyVeterinaryClinic: pet.emergencyVeterinaryClinic ?? "",
+    emergencyVeterinaryPhone: pet.emergencyVeterinaryPhone ?? "",
     veterinaryRecords: pet.veterinaryRecords ?? "",
     additionalNotes: pet.additionalNotes ?? "",
     medicalConditions: (pet.medicalConditions ?? []).map((item) => ({

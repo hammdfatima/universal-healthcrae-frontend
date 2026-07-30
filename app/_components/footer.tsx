@@ -7,6 +7,7 @@ import { Typography } from "@/components/ui/typography"
 const navItems = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
+  { label: "Pet Profiles", href: "/pet-profiles" as Route },
   { label: "Pricing", href: "/pricing" },
   { label: "Contact", href: "/contact" },
 ] as const
@@ -56,8 +57,8 @@ export default function Footer() {
               color="inherit"
               className="mt-4 max-w-md text-sm leading-relaxed text-primary-foreground/80"
             >
-              Your family&apos;s healthcare information, all in one place —
-              secure, accessible, and ready when it matters most.
+              Protect the people—and pets—you love by keeping their important
+              health information ready when it matters most.
             </Typography>
           </div>
 

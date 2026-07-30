@@ -62,8 +62,8 @@ export default function SubscriptionPlanFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="border-b border-border/60 px-6 py-5 text-left">
+      <DialogContent className="flex max-h-[min(90vh,40rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-5 text-left">
           <DialogTitle>
             {isEditing ? "Edit Subscription Plan" : "Add Subscription Plan"}
           </DialogTitle>
@@ -74,7 +74,7 @@ export default function SubscriptionPlanFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           <FormModified
             key={formKey}
             schema={subscriptionPlanSchema}
@@ -185,7 +185,7 @@ export default function SubscriptionPlanFormDialog({
                     description="Add each plan feature on a separate line."
                   />
 
-                  <DialogFooter className="gap-2 px-0 pt-2 sm:justify-end">
+                  <DialogFooter className="sticky bottom-0 -mx-6 mt-2 gap-2 border-t border-border/60 bg-background px-6 pt-4 pb-1 sm:justify-end">
                     <Button
                       type="button"
                       variant="outline"

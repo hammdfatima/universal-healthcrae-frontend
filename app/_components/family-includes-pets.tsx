@@ -1,6 +1,7 @@
 "use client"
 
 import { PawPrint } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -24,7 +25,7 @@ export default function FamilyIncludesPets() {
               </div>
 
               <Typography as="h2" variant="h2" className="mt-5">
-                Because Family Includes Pets
+                Your Family Includes Your Pets
               </Typography>
 
               <Typography
@@ -32,22 +33,25 @@ export default function FamilyIncludesPets() {
                 color="muted"
                 className="mt-4 max-w-md text-base leading-relaxed sm:text-lg"
               >
-                Store veterinary records, vaccinations, medications, allergies,
-                and emergency contacts for your pets in the same secure family
-                account.
+                Protect the pets you love by keeping their veterinary records,
+                vaccinations, medications, allergies, and emergency contacts
+                ready when it matters most.
               </Typography>
 
               <div className="mt-8">
-                <Button size="lg" onClick={() => router.push("/about")}>
-                  Learn More
+                <Button
+                  size="lg"
+                  onClick={() => router.push("/pet-profiles" as Route)}
+                >
+                  Learn About Pet Profiles
                 </Button>
               </div>
             </div>
 
             <div className="relative min-h-[18rem] sm:min-h-[22rem] lg:min-h-full">
               <Image
-                src="/pets.webp"
-                alt="Dog and kitten resting together in a pet bed"
+                src="/family-include-pets.jpg"
+                alt="Family with their dog outdoors"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover object-center"

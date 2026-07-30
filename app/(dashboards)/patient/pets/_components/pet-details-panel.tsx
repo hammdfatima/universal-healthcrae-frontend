@@ -162,10 +162,22 @@ export default function PetDetailsPanel({ pet }: { pet: Pet }) {
         </Typography>
       </div>
 
+      <div>
+        <Typography variant="small" className="font-medium">
+          Emergency Veterinary Clinic
+        </Typography>
+        <Typography variant="muted" className="mt-1 text-sm">
+          {pet.emergencyVeterinaryClinic?.trim() || "—"}
+          {pet.emergencyVeterinaryPhone
+            ? ` · ${pet.emergencyVeterinaryPhone}`
+            : ""}
+        </Typography>
+      </div>
+
       {pet.veterinaryRecords?.trim() ? (
         <div>
           <Typography variant="small" className="font-medium">
-            Additional Veterinary Notes
+            Veterinary Documents & Notes
           </Typography>
           <Typography
             variant="muted"
