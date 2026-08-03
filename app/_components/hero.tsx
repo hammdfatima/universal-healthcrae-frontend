@@ -31,6 +31,16 @@ export default function Hero() {
 
           <div className="relative z-10 grid min-h-[inherit] items-center gap-10 px-6 py-12 sm:px-10 sm:py-14 lg:grid-cols-2 lg:gap-12 lg:px-14 lg:py-16">
             <div className="max-w-xl text-left">
+              <div className="mb-5 inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
+                <Typography
+                  variant="small"
+                  color="inherit"
+                  className="text-xs font-medium tracking-wide text-white/90 uppercase sm:text-sm"
+                >
+                  A Family Preparedness Platform
+                </Typography>
+              </div>
+
               <Typography
                 as="h1"
                 variant="h1"

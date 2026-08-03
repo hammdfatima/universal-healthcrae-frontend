@@ -84,19 +84,19 @@ const petQuestions: Question[] = [
 const scenarios = [
   {
     icon: Building2,
-    question: "Mom is hospitalized?",
+    question: "Mom needs care suddenly?",
     detail:
-      "Doctors need her medications and allergies immediately — not scattered across old paperwork.",
+      "Could you immediately share her medications and allergies—or would everyone be searching through old paperwork?",
     image: "/preparedness1.jpg",
-    alt: "Caregiver helping a family member at home",
+    alt: "Family member organizing important documents at home",
   },
   {
     icon: HeartHandshake,
     question: "Your spouse can't communicate?",
     detail:
-      "In an emergency, caregivers need accurate health details without guessing.",
-    image: "/preparedness2.jpg",
-    alt: "Emergency medical ID card being taken from a wallet",
+      "In a crisis, caregivers need accurate health details ready—not guesses under pressure.",
+    image: "/preparedness4.jpg",
+    alt: "Family preparing important information together at home",
   },
   {
     icon: GraduationCap,
@@ -108,9 +108,9 @@ const scenarios = [
   },
   {
     icon: PawPrint,
-    question: "Your pet needs emergency care?",
+    question: "Your pet needs urgent care?",
     detail:
-      "Vets need vaccinations, medications, and allergies fast — not a scramble through old folders.",
+      "Vets need vaccinations, medications, and allergies fast—not a scramble through old folders.",
     image: "/pet1.jpg",
     alt: "Family dog outdoors",
   },
@@ -261,11 +261,15 @@ export default function AreYouPrepared() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
           <Typography as="h2" variant="h2">
-            Are You Prepared?
+            If an Emergency Happened Tonight, Would Your Family Be Ready?
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            What if something unexpected happens and the people who need your
-            family&apos;s medical history can&apos;t find it in time?
+            Could they immediately provide your medications, allergies,
+            emergency contacts, and essential medical history?
+          </Typography>
+          <Typography variant="p" color="muted" className="mt-3">
+            Universal Health Charts helps you prepare that information now, so
+            the people you love aren&apos;t left searching during a crisis.
           </Typography>
         </div>
 

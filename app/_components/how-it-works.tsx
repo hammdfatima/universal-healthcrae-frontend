@@ -42,7 +42,7 @@ const steps: {
     icon: Globe,
     title: "Access it when it matters",
     description:
-      "From home, on the road, or at the hospital—your family's information is there when you need it.",
+      "From home, on the road, or in an unexpected moment—your family's information is there when you need it.",
   },
 ]
 

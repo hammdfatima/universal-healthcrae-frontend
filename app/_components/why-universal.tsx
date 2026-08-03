@@ -30,18 +30,19 @@ export default function WhyUniversal() {
             Why Universal Health Charts?
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Healthcare information is often scattered across multiple providers,
-            hospital systems, and patient portals.
+            Protect the people—and pets—you love by keeping their important
+            health information ready when it matters most.
           </Typography>
           <Typography variant="p" color="muted" className="mt-3">
-            Universal Health Charts brings everything together in one secure
-            location.
+            Universal Health Charts is a family preparedness platform—so you
+            aren&apos;t left searching across providers, portals, and old
+            paperwork during a crisis.
           </Typography>
         </div>
 
         <div className="mt-14">
           <Typography as="h3" variant="h3" className="text-center">
-            Store Important Medical Information
+            Keep Essential Health Information Ready
           </Typography>
 
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

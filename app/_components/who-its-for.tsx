@@ -59,8 +59,8 @@ export default function WhoItsFor() {
             Who It&apos;s For
           </Typography>
           <Typography variant="lead" color="muted" className="mt-4">
-            Built for real families facing real moments — a preparedness
-            platform for the people and pets you love.
+            Built for real families facing real moments — a Family Preparedness
+            Platform for the people and pets you love.
           </Typography>
         </div>
 

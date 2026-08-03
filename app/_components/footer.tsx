@@ -58,7 +58,8 @@ export default function Footer() {
               className="mt-4 max-w-md text-sm leading-relaxed text-primary-foreground/80"
             >
               Protect the people—and pets—you love by keeping their important
-              health information ready when it matters most.
+              health information ready when it matters most. A Family
+              Preparedness Platform for your whole household.
             </Typography>
           </div>
 

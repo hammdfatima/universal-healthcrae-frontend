@@ -54,10 +54,10 @@ export default function AboutPage() {
           <Typography variant="p" color="muted" className="mt-4">
             Healthcare information is scattered across providers, hospitals, and
             patient portals—and pet records are often even more disorganized.
-            Universal Health Charts is a preparedness platform for the entire
-            family, including pets—so medications, allergies, conditions,
-            vaccinations, and emergency contacts are ready when life gets
-            urgent.
+            Universal Health Charts is a Family Preparedness Platform for the
+            entire household, including pets—so medications, allergies,
+            conditions, vaccinations, and emergency contacts are ready when life
+            gets urgent.
           </Typography>
           <Typography variant="p" color="muted" className="mt-4">
             Whether you&apos;re at home, traveling, or facing an unexpected
