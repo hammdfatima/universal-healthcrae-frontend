@@ -1,7 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+import { getBackendApiBaseUrl } from "@/lib/backend-url"
+
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+export const maxDuration = 60
 
 /** Render free / Neon cold starts can take 30–60s before the API accepts traffic. */
 const UPSTREAM_TIMEOUT_MS = 55_000
@@ -23,20 +26,6 @@ const HOP_BY_HOP_HEADERS = new Set([
 
 type RouteContext = {
   params: Promise<{ path: string[] }>
-}
-
-function getBackendBaseUrl() {
-  const backendApiUrl = process.env.BACKEND_API_URL?.trim()
-  if (backendApiUrl) {
-    return backendApiUrl.replace(/\/+$/, "")
-  }
-
-  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
-  if (publicApiUrl && /^https?:\/\//i.test(publicApiUrl)) {
-    return publicApiUrl.replace(/\/+$/, "")
-  }
-
-  return "http://localhost:8080/api/v1"
 }
 
 /**
@@ -109,7 +98,7 @@ async function fetchUpstream(targetUrl: string, init: RequestInit) {
 
 async function proxyRequest(request: NextRequest, context: RouteContext) {
   const { path } = await context.params
-  const targetUrl = `${getBackendBaseUrl()}/${path.join("/")}${request.nextUrl.search}`
+  const targetUrl = `${getBackendApiBaseUrl()}/${path.join("/")}${request.nextUrl.search}`
 
   const headers = new Headers()
   request.headers.forEach((value, key) => {

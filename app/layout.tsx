@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
+import { BackendWakeupBanner } from "@/components/backend-wakeup-banner"
 import Provider from "@/provider"
 import "./globals.css"
 
@@ -56,7 +57,10 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       <body className="font-sans antialiased">
         <NuqsAdapter>
-          <Provider>{children}</Provider>
+          <Provider>
+            {children}
+            <BackendWakeupBanner />
+          </Provider>
         </NuqsAdapter>
       </body>
     </html>

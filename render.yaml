@@ -4,6 +4,12 @@
 #   https://universal-healthcare-backend.onrender.com/api/v1
 # Set NEXT_PUBLIC_APP_URL to this frontend URL, e.g.:
 #   https://universal-healthcare-frontend.onrender.com
+#
+# Free-plan services sleep after ~15 minutes idle. Opening the frontend URL
+# only wakes this service. The app pings BACKEND_API_URL /health on boot
+# (instrumentation.ts + /api/wake). To prevent sleep entirely, ping both
+# https://<frontend>/api/wake and https://<backend>/health every 5–10 minutes
+# (UptimeRobot, cron-job.org, etc.).
 
 services:
   - type: web
